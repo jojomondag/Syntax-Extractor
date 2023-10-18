@@ -1,9 +1,7 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "syntaxExtractor" is now active!');
 
@@ -18,49 +16,37 @@ export function activate(context: vscode.ExtensionContext) {
             }
         );
 
-        panel.webview.html = getWebviewContent();
+        panel.webview.html = getWebviewContent(context, panel);  // Updated line
 
-		//Opens the WebPage
-
-		panel.webview.onDidReceiveMessage(
-			message => {
-				switch (message.command) {
-					case 'openWebpage':
-						vscode.env.openExternal(vscode.Uri.parse('https://example.com'));
-						return;
-				}
-			},
-			undefined,
-			context.subscriptions
-		);
+        panel.webview.onDidReceiveMessage(
+            message => {
+                console.log("message received");
+                switch (message.command) {
+                    case 'openWebpage':
+                        vscode.env.openExternal(vscode.Uri.parse('https://chat.openai.com/'));
+                        return;
+                }
+            },
+            undefined,
+            context.subscriptions
+        );
     });
 
     context.subscriptions.push(disposable);
 }
 
-function getWebviewContent() {
-    return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Syntax Extractor</title>
-        </head>
-        <body>
-            <button id="openWebpageButton">Open Webpage</button>
+function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
+    const filePath = path.join(context.extensionPath, 'dist', 'webview.html');
+    let content = fs.readFileSync(filePath, 'utf8');
 
-            <script>
-                document.getElementById('openWebpageButton').addEventListener('click', () => {
-                    const vscode = acquireVsCodeApi();
-                    vscode.postMessage({ command: 'openWebpage' });
-                });
-            </script>
-        </body>
-        </html>
-    `;
+    const scriptPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
+    const scriptUri = panel.webview.asWebviewUri(scriptPathOnDisk);
+    content = content.replace(
+        new RegExp('src="webview.js"', 'g'),
+        `src="${scriptUri}"`
+    );
+
+    return content;
 }
 
-
-// This method is called when your extension is deactivated
 export function deactivate() {}

@@ -33,6 +33,23 @@
 				"npm: watch-tests"
 			],
 			"problemMatcher": []
-		}
+		},
+		{
+			"label": "Compile Project",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"compile"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always"
+			},
+			"problemMatcher": "$tsc"
+		}		
 	]
 }
