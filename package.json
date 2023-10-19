@@ -1,11 +1,17 @@
 {
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
+  "publisher": "JosefNobach",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jojomondag/syntaxExtractor.git"
+  },
   "description": "This an extension that allows you to extract information about the names of classes and functions in your project. This tool makes it easier to communicate the context and scope of your currently opened project. The extracted information is automatically saved as text documents and clipboard data.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.83.0"
   },
+  
   "categories": [
     "Other"
   ],
@@ -17,7 +23,24 @@
         "command": "syntaxExtractor.openGui",
         "title": "Open GUI"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "syntaxExtractorButton",
+          "title": "Syntax Extractor",
+          "icon": "./src/resources/extractWave.png"
+        }
+      ]
+    },
+    "views": {
+      "syntaxExtractorButton": [
+        {
+          "id": "syntaxExtractorView",
+          "name": "Syntax Extractor View"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
