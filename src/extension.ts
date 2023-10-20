@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { handleExtractStructure } from './commands/copyHierarchy';
+import { handleOpenWebpage } from './commands/openWebpage';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "syntaxExtractor" is now active!');
@@ -24,11 +26,13 @@ export function activate(context: vscode.ExtensionContext) {
 
         panel.webview.onDidReceiveMessage(
             message => {
-                console.log("message received");
                 switch (message.command) {
+                    case 'extractStructure':
+                        handleExtractStructure(context);
+                        break;
                     case 'openWebpage':
-                        vscode.env.openExternal(vscode.Uri.parse('https://chat.openai.com/'));
-                        return;
+                        handleOpenWebpage();
+                        break;
                 }
             },
             undefined,

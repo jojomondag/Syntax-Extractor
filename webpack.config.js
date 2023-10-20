@@ -15,7 +15,8 @@ const extensionConfig = {
 
     entry: {
         extension: './src/extension.ts',  // existing entry point
-        webview: './src/webview/webview.ts'  // new entry point for webview
+        webview: './src/webview/webview.ts',  // new entry point for webview
+        copyHierarchy: './src/commands/copyHierarchy.ts'  // another new entry point
     },
 
     output: {

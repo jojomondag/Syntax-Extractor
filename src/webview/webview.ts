@@ -1,9 +1,11 @@
 declare const acquireVsCodeApi: any;
 
-if (document) {
-    console.log('Document loaded');  // add this line
-    document.getElementById('openWebpageButton')?.addEventListener('click', () => {
-        const vscode = acquireVsCodeApi();
-        vscode.postMessage({ command: 'openWebpage' });
-    });
-}
+const vscode = acquireVsCodeApi();
+
+document.getElementById('openWebpageButton')?.addEventListener('click', () => {
+    vscode.postMessage({ command: 'openWebpage' });
+});
+
+document.getElementById('copyHierarchyBtn')?.addEventListener('click', () => {
+    vscode.postMessage({ command: 'extractStructure' });
+});

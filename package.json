@@ -28,7 +28,7 @@
       "activitybar": [
         {
           "id": "syntaxExtractorButton",
-          "title": "Syntax Extractor",
+          "title": "SE",
           "icon": "dist/resources/SyntaxExtractor256x256.png"
         }
       ]
@@ -37,7 +37,7 @@
       "syntaxExtractorButton": [
         {
           "id": "syntaxExtractorView",
-          "name": "Syntax Extractor View"
+          "name": "Syntax Extractor"
         }
       ]
     }
@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.2",
-    "@types/node": "18.x",
+    "@types/node": "^20.8.7",
     "@types/vscode": "^1.83.0",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
