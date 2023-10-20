@@ -6,12 +6,12 @@
     "type": "git",
     "url": "https://github.com/jojomondag/syntaxExtractor.git"
   },
+  "icon": "dist/resources/SyntaxExtractor256x256.png",
   "description": "This an extension that allows you to extract information about the names of classes and functions in your project. This tool makes it easier to communicate the context and scope of your currently opened project. The extracted information is automatically saved as text documents and clipboard data.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.83.0"
   },
-  
   "categories": [
     "Other"
   ],
@@ -29,7 +29,7 @@
         {
           "id": "syntaxExtractorButton",
           "title": "Syntax Extractor",
-          "icon": "./src/resources/extractWave.png"
+          "icon": "dist/resources/SyntaxExtractor256x256.png"
         }
       ]
     },
@@ -60,6 +60,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
     "@vscode/test-electron": "^2.3.4",
+    "copy-webpack-plugin": "^11.0.0",
     "eslint": "^8.50.0",
     "glob": "^10.3.3",
     "html-webpack-plugin": "^5.5.3",

@@ -4,6 +4,7 @@
 
 const path = require('path');
 const htmlWebpackPlugin = require('html-webpack-plugin');
+const copyPlugin = require('copy-webpack-plugin');  // Import the copy-webpack-plugin
 
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
@@ -58,7 +59,12 @@ const extensionConfig = {
             filename: 'webview.html',
             chunks: ['webview'],
             inject: 'head',  // This ensures the script is placed in the head element
-        })
+        }),
+        new copyPlugin({  // Add this plugin to your plugins array
+            patterns: [
+                { from: 'src/resources', to: 'resources' },  // adjust this path if your icon is located elsewhere
+            ],
+        }),
     ]
 };
 
