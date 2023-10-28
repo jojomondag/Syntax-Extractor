@@ -22,8 +22,21 @@
       {
         "command": "syntaxExtractor.openGui",
         "title": "Open GUI"
+      },
+      {
+        "command": "syntaxExtractor.getSelectedFiles",
+        "title": "Get Selected Files",
+        "category": "Syntax Extractor"
       }
     ],
+    "menus": {
+      "explorer/context": [
+          {
+              "command": "syntaxExtractor.getSelectedFiles",
+              "group": "navigation"
+          }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {

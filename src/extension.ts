@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
             message => {
                 switch (message.command) {
                     case 'extractStructure':
-                        handleExtractStructure(context);
+                        //handleExtractStructure(context);
                         break;
                     case 'openWebpage':
                         handleOpenWebpage();
@@ -39,6 +39,9 @@ export function activate(context: vscode.ExtensionContext) {
             context.subscriptions
         );
     });
+
+    let getSelectedFilesDisposable = vscode.commands.registerCommand('syntaxExtractor.getSelectedFiles', handleExtractStructure);
+    context.subscriptions.push(getSelectedFilesDisposable);
 
     context.subscriptions.push(disposable);
 }
