@@ -8,7 +8,7 @@
   },
   "icon": "dist/resources/SyntaxExtractor256x256.png",
   "description": "This an extension that allows you to extract information about the names of classes and functions in your project. This tool makes it easier to communicate the context and scope of your currently opened project. The extracted information is automatically saved as text documents and clipboard data.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.83.0"
   },
@@ -24,17 +24,26 @@
         "title": "Open GUI"
       },
       {
-        "command": "syntaxExtractor.getSelectedFiles",
-        "title": "Get Selected Files",
+        "command": "syntaxExtractor.extractAndCopyText",
+        "title": "extractAndCopyText",
+        "category": "Syntax Extractor"
+      },
+      {
+        "command": "syntaxExtractor.extractFileFolderTree",
+        "title": "extractFileFolderTree",
         "category": "Syntax Extractor"
       }
     ],
     "menus": {
       "explorer/context": [
-          {
-              "command": "syntaxExtractor.getSelectedFiles",
-              "group": "navigation"
-          }
+        {
+          "command": "syntaxExtractor.extractAndCopyText",
+          "group": "0_navigation@0"
+        },
+        {
+          "command": "syntaxExtractor.extractFileFolderTree",
+          "group": "0_navigation@0"
+        }
       ]
     },
     "viewsContainers": {

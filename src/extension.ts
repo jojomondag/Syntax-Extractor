@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { handleExtractStructure } from './commands/copyHierarchy';
+import { handleExtractStructure, extractFileFolderTree } from './commands/copyHierarchy';
 import { handleOpenWebpage } from './commands/openWebpage';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -11,7 +11,7 @@ export function activate(context: vscode.ExtensionContext) {
     const treeDataProvider = new MyDataProvider();
     vscode.window.registerTreeDataProvider('syntaxExtractorView', treeDataProvider);
 
-    // Register the command
+    // Register WebView commands
     let disposable = vscode.commands.registerCommand('syntaxExtractor.openGui', () => {
         const panel = vscode.window.createWebviewPanel(
             'webview',
@@ -40,8 +40,11 @@ export function activate(context: vscode.ExtensionContext) {
         );
     });
 
-    let getSelectedFilesDisposable = vscode.commands.registerCommand('syntaxExtractor.getSelectedFiles', handleExtractStructure);
-    context.subscriptions.push(getSelectedFilesDisposable);
+    let extractFileFolderTreeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree);
+    context.subscriptions.push(extractFileFolderTreeDisposable);
+
+    let extractAndCopyTextDisposable = vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', handleExtractStructure);
+    context.subscriptions.push(extractAndCopyTextDisposable);
 
     context.subscriptions.push(disposable);
 }

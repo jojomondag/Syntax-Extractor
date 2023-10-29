@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
 import * as vscode from 'vscode';
+import * as fileTypes from '../config/fileTypesToRead.json';
 
 export function walkDirectory(dir: string, rootPath: string, prefix = ""): string[] {
     let results: string[] = [];
@@ -43,9 +44,18 @@ export function copyToClipboard(text: string) {
     execSync(command, { input: text });
 }
 export function handleExtractStructure(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
-    copyAllText(allSelections);
+    extractAndCopyText(allSelections);
 }
-export function oldhandleExtractStructure(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
+function readTextFromFile(filePath: string): string {
+    try {
+        // Read file content as a string and return it
+        return fs.readFileSync(filePath, 'utf8');
+    } catch (error) {
+        console.error(`Failed to read file ${filePath}:`, error);
+        return '';  // Return an empty string in case of an error
+    }
+}
+export function extractFileFolderTree(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
     // Determine the common directory path
     const commonDir = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
     if (!commonDir) {
@@ -84,18 +94,12 @@ export function oldhandleExtractStructure(contextSelection: vscode.Uri, allSelec
     // Optionally, notify the user that the paths have been copied
     vscode.window.showInformationMessage('Paths copied to clipboard!');
 }
-function readTextFromFile(filePath: string): string {
-    try {
-        // Read file content as a string and return it
-        return fs.readFileSync(filePath, 'utf8');
-    } catch (error) {
-        console.error(`Failed to read file ${filePath}:`, error);
-        return '';  // Return an empty string in case of an error
-    }
-}
-export function copyAllText(allSelections: vscode.Uri[]) {
+export default function extractAndCopyText(allSelections: vscode.Uri[]) {
+    // Load text extensions from fileTypes.json
+const textExtensions = fileTypes.textExtensions;
+
     let allText = '';
-    
+
     function processItem(itemPath: string) {
         const stat = fs.statSync(itemPath);
 
@@ -111,7 +115,6 @@ export function copyAllText(allSelections: vscode.Uri[]) {
             });
         } else {
             // If it's a file, check if it has a text-based extension
-            const textExtensions = ['.txt', '.js', '.ts', '.html', '.css', '.json', '.xml', '.md', '.yml', '.yaml'];
             const extension = path.extname(itemPath);
             if (textExtensions.includes(extension)) {
                 // If it's a text file, simply read its text and append it to allText
@@ -121,7 +124,6 @@ export function copyAllText(allSelections: vscode.Uri[]) {
             }
         }
     }
-
     // Iterate through all selected items
     allSelections.forEach(itemUri => {
         const itemPath = itemUri.fsPath;
