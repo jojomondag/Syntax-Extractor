@@ -17,7 +17,7 @@ Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pe
 
 ## 🚀 Getting Started
 
-1. Download the tool from [https://marketplace.visualstudio.com/items?itemName=JosefNobach.syntax-extractor].
+1. Download the tool from https://marketplace.visualstudio.com/items?itemName=JosefNobach.syntax-extractor.
    
 2. Select your desired folder or file in the Explorer and right-click to select 'extractAndCopyText or extractFileFolderTree'.
    
