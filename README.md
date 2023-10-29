@@ -1,5 +1,6 @@
-![Syntax Extractor Logo](https://github.com/jojomondag/MyIconsForMyProjects/blob/e4c9eb892cca0e9a9f3a9d1792cc890ac051d10d/SyntaxExtractor256x256.png)
-
+<p align="center">
+  <img src="https://github.com/jojomondag/MyIconsForMyProjects/blob/e4c9eb892cca0e9a9f3a9d1792cc890ac051d10d/SyntaxExtractor256x256.png" width="200" height="200">
+</p>
 Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pet project, the **Syntax Extractor**. Born out of countless hours navigating through messy code and folders, and the sheer need to communicate effectively with language models, this tool might just be the breather you've been looking for.
 
 ## 🌟 Features
