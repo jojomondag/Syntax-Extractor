@@ -1,4 +1,4 @@
-![Syntax Extractor Logo](https://github.com/jojomondag/MyIconsForMyProjects/blob/a7743585bd88e6c0a3ca1db60dca38f81d4e7dbe/Syntax%20Extractor%20256x256.png)
+![Syntax Extractor Logo](https://github.com/jojomondag/MyIconsForMyProjects/blob/e4c9eb892cca0e9a9f3a9d1792cc890ac051d10d/SyntaxExtractor256x256.png)
 
 Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pet project, the **Syntax Extractor**. Born out of countless hours navigating through messy code and folders, and the sheer need to communicate effectively with language models, this tool might just be the breather you've been looking for.
 
