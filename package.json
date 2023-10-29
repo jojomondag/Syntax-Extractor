@@ -7,8 +7,8 @@
     "url": "https://github.com/jojomondag/syntaxExtractor.git"
   },
   "icon": "dist/resources/SyntaxExtractor256x256.png",
-  "description": "This an extension that allows you to extract information about the names of classes and functions in your project. This tool makes it easier to communicate the context and scope of your currently opened project. The extracted information is automatically saved as text documents and clipboard data.",
-  "version": "0.0.2",
+  "description": "Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pet project, the Syntax Extractor. Born out of countless hours navigating through messy code and folders, and the sheer need to communicate effectively with language models, this tool might just be the breather you've been looking for.",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.83.0"
   },
