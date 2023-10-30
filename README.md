@@ -14,7 +14,9 @@ Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pe
    
 4. **Seamless Language Model Communication** - Are you into language models? We've got you. My tool enhances the communication speed between your code and the AI, making conversations fluid.
    
-[![Video](https://img.youtube.com/vi/CRpBg0mb8qY/maxresdefault.jpg)](https://youtube.com/shorts/CRpBg0mb8qY?si=TqlSQ7E2LlUQREYb)
+<a href="https://youtube.com/shorts/CRpBg0mb8qY?si=TqlSQ7E2LlUQREYb">
+    <img src="https://img.youtube.com/vi/CRpBg0mb8qY/maxresdefault.jpg" alt="Video" style="width:100%; max-width:300px; object-fit:cover; object-position:center; border-radius: 8px;" />
+</a>
 
 ## 🚀 Getting Started
 
