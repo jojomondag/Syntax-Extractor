@@ -1,10 +1,9 @@
 //@ts-check
-
 'use strict';
 
 const path = require('path');
 const htmlWebpackPlugin = require('html-webpack-plugin');
-const copyPlugin = require('copy-webpack-plugin');  // Import the copy-webpack-plugin
+const copyPlugin = require('copy-webpack-plugin');
 
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
@@ -14,16 +13,16 @@ const extensionConfig = {
     mode: 'production',
 
     entry: {
-        extension: './src/extension.ts',  // existing entry point
-        webview: './src/webview/webview.ts',  // new entry point for webview
-        copyHierarchy: './src/commands/copyHierarchy.ts'  // another new entry point
+        extension: './src/extension.ts',
+        webview: './src/webview/webview.ts',
+        copyHierarchy: './src/commands/copyHierarchy.ts'
     },
 
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].js',  // updated to handle multiple entry files
+        filename: '[name].js',
         libraryTarget: 'commonjs2',
-        publicPath: ''  // Added this line
+        publicPath: ''
     },
 
     externals: {
@@ -59,11 +58,11 @@ const extensionConfig = {
             template: './src/webview/webview.html',
             filename: 'webview.html',
             chunks: ['webview'],
-            inject: 'head',  // This ensures the script is placed in the head element
+            inject: 'head',
         }),
-        new copyPlugin({  // Add this plugin to your plugins array
+        new copyPlugin({
             patterns: [
-                { from: 'src/resources', to: 'resources' },  // adjust this path if your icon is located elsewhere
+                { from: 'src/resources', to: 'resources' },
             ],
         }),
     ]
