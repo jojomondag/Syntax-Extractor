@@ -6,7 +6,7 @@ Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pe
 
 ## 🌟 Features
 
-1. **Deep Dive Extraction** - Extract from folders, subfolders, files all text.
+1. **Deep Dive Extraction** - Extract all text from marked folders, subfolders, and files.
 
 2. **Syntax Tree Transformation** - It's not just about pulling out the code. Watch as entire folders and files transform into a beautiful syntax tree text representation. Visual learners, rejoice!
    
@@ -14,12 +14,13 @@ Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pe
    
 4. **Seamless Language Model Communication** - Are you into language models? We've got you. My tool enhances the communication speed between your code and the AI, making conversations fluid.
    
+[![Video](https://img.youtube.com/vi/CRpBg0mb8qY/maxresdefault.jpg)](https://youtube.com/shorts/CRpBg0mb8qY?si=TqlSQ7E2LlUQREYb)
 
 ## 🚀 Getting Started
 
-1. Download the tool from https://marketplace.visualstudio.com/items?itemName=JosefNobach.syntax-extractor.
+1. Download: https://marketplace.visualstudio.com/items?itemName=JosefNobach.syntax-extractor.
    
-2. Select your desired folder or file in the Explorer and right-click to select 'extractAndCopyText or extractFileFolderTree'.
+2. Select desired folder's or file's in the Explorer and right-click to use **extractAndCopyText** or **extractFileFolderTree**.
    
 3. Syntax extractor automatically walks through all directories and extracts All code from any Language.
 

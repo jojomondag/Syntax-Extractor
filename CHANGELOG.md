@@ -8,6 +8,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - syntax-extractor-0.0.1.vsix I was learning how to create a Extention for Visualstudio Code, i created a Icon, and a Webview that lets you open Open Ai Webpage.
 
-- syntax-extractor-0.0.2.vsix I implemented the core functionality that lets a user Extract important code and information from their Projects in VisualstudioCode.
+- syntax-extractor-0.0.2.vsix: I implemented the core functionality that allows users to extract important code and information from their projects in Visual Studio Code.
+[![Video](https://img.youtube.com/vi/CRpBg0mb8qY/maxresdefault.jpg)](https://youtube.com/shorts/CRpBg0mb8qY?si=TqlSQ7E2LlUQREYb)
 
-- syntax-extractor-0.0.3.vsix I reuploaded this cause the old Readme was outdated.
+- syntax-extractor-0.0.3.vsix: I reuploaded this version because the old README was outdated.
+
+- syntax-extractor-0.0.4.vsix: I learned that "rawlink" must be used for logos on the Visual Studio Marketplace.
+
+- syntax-extractor-0.0.5.vsix: I learned that the description in the package.json supports up to 200 characters.
