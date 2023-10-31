@@ -8,7 +8,7 @@
   },
   "icon": "dist/resources/SyntaxExtractor256x256.png",
   "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.83.0"
   },

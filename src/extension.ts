@@ -1,7 +1,5 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import { handleExtractStructure, extractFileFolderTree } from './commands/copyHierarchy';
+import { fs, path, vscode } from '.';
+import { extractAndCopyText, extractFileFolderTree } from './operations';
 import { handleOpenWebpage } from './commands/openWebpage';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -22,14 +20,12 @@ export function activate(context: vscode.ExtensionContext) {
             }
         );
 
+        // Adjusting the path to point to the correct location of webview.html in the new structure
         panel.webview.html = getWebviewContent(context, panel);
 
         panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
-                    case 'extractStructure':
-                        //handleExtractStructure(context);
-                        break;
                     case 'openWebpage':
                         handleOpenWebpage();
                         break;
@@ -43,8 +39,8 @@ export function activate(context: vscode.ExtensionContext) {
     let extractFileFolderTreeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree);
     context.subscriptions.push(extractFileFolderTreeDisposable);
 
-    let extractAndCopyTextDisposable = vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', handleExtractStructure);
-    context.subscriptions.push(extractAndCopyTextDisposable);
+    let extractAndCopyTextDisposable = vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', extractAndCopyText);
+    context.subscriptions.push(extractAndCopyTextDisposable);    
 
     context.subscriptions.push(disposable);
 }
@@ -64,19 +60,17 @@ class MyDataProvider implements vscode.TreeDataProvider<string> {
         return ['Open GUI'];
     }
 }
-
 function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
-    const filePath = path.join(context.extensionPath, 'dist', 'webview.html');
+    const filePath = path.join(context.extensionPath, 'webview', 'webview.html'); 
     let content = fs.readFileSync(filePath, 'utf8');
 
-    const scriptPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
+    const scriptPathOnDisk = vscode.Uri.file(path.join(context.extensionPath, 'webview', 'webview.ts'));
     const scriptUri = panel.webview.asWebviewUri(scriptPathOnDisk);
     content = content.replace(
-        new RegExp('src="webview.js"', 'g'),
+        new RegExp('src="webview.ts"', 'g'),
         `src="${scriptUri}"`
     );
 
     return content;
 }
-
 export function deactivate() {}

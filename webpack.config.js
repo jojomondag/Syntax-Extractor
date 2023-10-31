@@ -15,7 +15,6 @@ const extensionConfig = {
     entry: {
         extension: './src/extension.ts',
         webview: './src/webview/webview.ts',
-        copyHierarchy: './src/commands/copyHierarchy.ts'
     },
 
     output: {
@@ -63,6 +62,7 @@ const extensionConfig = {
         new copyPlugin({
             patterns: [
                 { from: 'src/resources', to: 'resources' },
+                { from: 'src/config/fileTypesToRead.json', to: 'config' },
             ],
         }),
     ]
