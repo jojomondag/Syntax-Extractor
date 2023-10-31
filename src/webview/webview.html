@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src vscode-webview-resource:; style-src vscode-webview-resource:;">
     <title>Syntax Extractor</title>
+    <link href="webview.css" rel="stylesheet">
 </head>
 <body>
+    <button class="compression-button" id="compressionLevelHard">Compression Hard</button>
+    <button class="compression-button" id="compressionLevelMedium">Compression Medium</button>
+    <button class="compression-button" id="compressionLevelLight">Compression Light</button>
     <button id="openWebpageButton">Open Webpage</button>
+    <script src="webview.ts"></script>
 </body>
 </html>

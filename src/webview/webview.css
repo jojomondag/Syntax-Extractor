@@ -1,0 +1,35 @@
+/* General button styling */
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 5px;
+}
+
+/* Styling for compression buttons */
+.compression-button {
+    background-color: #e7e7e7; /* A light gray background */
+    color: #333; /* Dark text */
+}
+
+.compression-button:hover {
+    background-color: #d4d4d4; /* A slightly darker gray on hover */
+}
+
+/* Selected button styling */
+.compression-button.selected {
+    background-color: #4CAF50; /* Green background for selected state */
+    color: white; /* White text for selected state */
+}
+
+/* Styling for the "Open Webpage" button, if you want to differentiate it */
+#openWebpageButton {
+    background-color: #007BFF; /* Blue background */
+    color: white;
+}
+
+#openWebpageButton:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}

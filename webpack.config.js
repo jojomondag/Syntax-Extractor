@@ -42,6 +42,13 @@ const extensionConfig = {
                         loader: 'ts-loader'
                     }
                 ]
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    'style-loader',
+                    'css-loader'
+                ]
             }
         ]
     },
@@ -55,7 +62,7 @@ const extensionConfig = {
     plugins: [
         new htmlWebpackPlugin({
             template: './src/webview/webview.html',
-            filename: 'webview.html',
+            filename: 'webview/webview.html',
             chunks: ['webview'],
             inject: 'head',
         }),
@@ -63,9 +70,9 @@ const extensionConfig = {
             patterns: [
                 { from: 'src/resources', to: 'resources' },
                 { from: 'src/config/fileTypesToRead.json', to: 'config' },
+                { from: 'src/config/config.json', to: 'config' },
             ],
         }),
     ]
 };
-
 module.exports = [extensionConfig];

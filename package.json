@@ -8,7 +8,7 @@
   },
   "icon": "dist/resources/SyntaxExtractor256x256.png",
   "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
-  "version": "0.0.7",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.83.0"
   },
@@ -21,7 +21,7 @@
     "commands": [
       {
         "command": "syntaxExtractor.openGui",
-        "title": "Open GUI"
+        "title": "Syntax Extractor Settings"
       },
       {
         "command": "syntaxExtractor.extractAndCopyText",
@@ -83,13 +83,18 @@
     "@typescript-eslint/parser": "^6.7.3",
     "@vscode/test-electron": "^2.3.4",
     "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.8.1",
     "eslint": "^8.50.0",
     "glob": "^10.3.3",
     "html-webpack-plugin": "^5.5.3",
     "mocha": "^10.2.0",
+    "style-loader": "^3.3.3",
     "ts-loader": "^9.4.4",
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "clipboardy": "^4.0.0"
   }
 }
