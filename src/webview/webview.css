@@ -1,35 +1,110 @@
-/* General button styling */
+/* Resetting default styles for consistency across browsers */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Universal styles */
+.input-text-box, .counter input {
+    padding: 10px;
+    border: 1px solid #e7e7e7;
+    border-radius: 5px;
+    margin: 5px 0;
+    background-color: #f7f7f7;
+}
+
+.input-text-box {
+    width: 100%;
+    resize: vertical;
+    min-height: 30px;
+    overflow: auto;
+}
+
+/* Button styles */
 button {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
+    margin: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    margin: 5px;
 }
 
-/* Styling for compression buttons */
 .compression-button {
-    background-color: #e7e7e7; /* A light gray background */
-    color: #333; /* Dark text */
+    background-color: #e7e7e7;
+    color: #333;
 }
 
 .compression-button:hover {
-    background-color: #d4d4d4; /* A slightly darker gray on hover */
+    background-color: #d4d4d4;
 }
 
-/* Selected button styling */
 .compression-button.selected {
-    background-color: #4CAF50; /* Green background for selected state */
-    color: white; /* White text for selected state */
+    background-color: #4CAF50;
+    color: white;
 }
 
-/* Styling for the "Open Webpage" button, if you want to differentiate it */
 #openWebpageButton {
-    background-color: #007BFF; /* Blue background */
+    background-color: #007BFF;
     color: white;
 }
 
 #openWebpageButton:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+    background-color: #0056b3;
+}
+
+/* Layout styles */
+.main-container {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.control-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.compression-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.label-style {
+    margin-bottom: 5px;
+}
+
+#compression-buttons {
+    display: flex;
+}
+
+.counters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 5px;
+}
+
+.counter input {
+    width: 60px;
+    text-align: center;
+    cursor: not-allowed;
 }

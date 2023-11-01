@@ -23,6 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         panel.webview.html = getWebviewContent(context, panel);
 
+        // Existing message listener, if there is one
         panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
@@ -30,20 +31,29 @@ export function activate(context: vscode.ExtensionContext) {
                         handleOpenWebpage();
                         break;
                     case 'setCompressionLevel':
-                        configManager.compressionLevel = message.level; // Use configManager to set compressionLevel
+                        configManager.compressionLevel = message.level; 
+                        break;
+                    // Add the new message handling here
+                    case 'updateInputBoxHeight':
+                        configManager.inputTextBoxHeight = message.height;
                         break;
                 }
             },
             undefined,
             context.subscriptions
         );
+
+        // Read clipboard content and send it to the webview
+        vscode.env.clipboard.readText().then((clipText) => {
+            panel.webview.postMessage({ command: 'setClipboardContent', content: clipText });
+        });
     });
 
     let extractFileFolderTreeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree);
     context.subscriptions.push(extractFileFolderTreeDisposable);
 
     let extractAndCopyTextDisposable = vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', extractAndCopyText);
-    context.subscriptions.push(extractAndCopyTextDisposable);    
+    context.subscriptions.push(extractAndCopyTextDisposable);
 
     context.subscriptions.push(disposable);
 }
@@ -51,16 +61,16 @@ export function activate(context: vscode.ExtensionContext) {
 class MyDataProvider implements vscode.TreeDataProvider<string> {
     getTreeItem(element: string): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return {
-            label: 'Syntax Extractor Settings',
+            label: 'SE: Settings',
             command: {
                 command: 'syntaxExtractor.openGui',
-                title: 'Syntax Extractor Settings'
+                title: 'SE: Settings'
             }
         };
     }
 
     getChildren(element?: string): vscode.ProviderResult<string[]> {
-        return ['Syntax Extractor Settings'];
+        return ['SE: Settings'];
     }
 }
 
@@ -85,10 +95,17 @@ function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.Webvi
     content = content.replace('<link rel="stylesheet" href="webview.css">', `<link rel="stylesheet" href="${cssUri}">`);
     content = content.replace('</body>', `<script src="${scriptUri}"></script></body>`);
 
+    // Set the height of the input text box using the value from the configManager
+    const inputTextBoxHeight = configManager.inputTextBoxHeight;
+    content = content.replace('<textarea class="input-text-box" id="textInput" placeholder="Enter some text">', `<textarea class="input-text-box" id="textInput" placeholder="Enter some text" style="height: ${inputTextBoxHeight};">`);
+
+
     return content;
 }
+
 function capitalizeFirstLetter(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 export function deactivate() {}
+

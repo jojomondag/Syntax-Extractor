@@ -20,6 +20,7 @@
         ".sh",
         ".bash",
         ".swift",
+        ".mjs",
         ".m",
         ".scss",
         ".less",

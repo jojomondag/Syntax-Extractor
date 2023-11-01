@@ -95,6 +95,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "clipboardy": "^4.0.0"
+    "clipboardy": "^4.0.0",
+    "openai-gpt-token-counter": "^1.1.0"
   }
 }

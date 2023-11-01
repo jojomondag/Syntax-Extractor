@@ -5,10 +5,33 @@
     <link href="webview.css" rel="stylesheet">
 </head>
 <body>
-    <button class="compression-button" id="compressionLevelHard">Compression Hard</button>
-    <button class="compression-button" id="compressionLevelMedium">Compression Medium</button>
-    <button class="compression-button" id="compressionLevelLight">Compression Light</button>
-    <button id="openWebpageButton">Open Webpage</button>
+    <div class="main-container">
+        <div class="control-container">
+            <textarea class="input-text-box" id="textInput" placeholder="Enter some text"></textarea>
+            
+            <div class="button-group">
+                <div class="compression-section">
+                    <label for="compression-buttons" class="label-style">Compression:</label>
+                    <div id="compression-buttons">
+                        <button class="compression-button" id="compressionLevelHard">Hard</button>
+                        <button class="compression-button" id="compressionLevelMedium">Medium</button>
+                        <button class="compression-button" id="compressionLevelLight">Light</button>
+                    </div>
+                </div>
+                <div class="counters">
+                    <div class="counter">
+                        <label for="tokenCount" class="label-style">Tokens:</label>
+                        <input type="text" id="tokenCount" readonly value="256">
+                    </div>
+                    <div class="counter">
+                        <label for="charCount" class="label-style">Chars:</label>
+                        <input type="text" id="charCount" readonly value="256">
+                    </div>
+                </div>
+                <button id="openWebpageButton">Open Webpage</button>
+            </div>
+        </div>
+    </div>
     <script src="webview.ts"></script>
 </body>
 </html>

@@ -36,9 +36,35 @@ if (compressionLevelLightButton) {
         vscode.postMessage({ command: 'setCompressionLevel', level: 'light' });
     });
 }
+
 const openWebpageButton = document.getElementById('openWebpageButton');
 if (openWebpageButton) {
     openWebpageButton.addEventListener('click', () => {
         vscode.postMessage({ command: 'openWebpage' });
     });
 }
+
+const textarea = document.getElementById('textInput');
+
+if (textarea) {
+    const resizeObserver = new ResizeObserver(() => {
+        const height = window.getComputedStyle(textarea).height;
+        vscode.postMessage({
+            command: 'updateInputBoxHeight',
+            height: height
+        });
+    });
+
+    resizeObserver.observe(textarea);
+}
+
+// New code for receiving clipboard content and setting it in the textarea
+window.addEventListener('message', event => {
+    const message = event.data;
+    if (message.command === 'setClipboardContent') {
+        const textInput = document.getElementById('textInput') as HTMLTextAreaElement; // Cast to specific type
+        if (textInput) {
+            textInput.value = message.content;
+        }
+    }
+});
