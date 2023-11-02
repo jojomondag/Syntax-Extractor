@@ -1,5 +1,5 @@
 import { fs, path, vscode } from '.';
-import { extractAndCopyText, extractFileFolderTree } from './operations';
+import { extractAndCopyText, extractFileFolderTree, getTokenCount  } from './operations';
 import { handleOpenWebpage } from './commands/openWebpage';
 import { configManager } from './config/ConfigManager';
 
@@ -23,7 +23,6 @@ export function activate(context: vscode.ExtensionContext) {
 
         panel.webview.html = getWebviewContent(context, panel);
 
-        // Existing message listener, if there is one
         panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
@@ -31,9 +30,14 @@ export function activate(context: vscode.ExtensionContext) {
                         handleOpenWebpage();
                         break;
                     case 'setCompressionLevel':
-                        configManager.compressionLevel = message.level; 
+                        configManager.compressionLevel = message.level;
                         break;
-                    // Add the new message handling here
+                    case 'countTokens':  // New case for handling token count
+                        console.log('Send them tokens');
+                        const tokenCount = getTokenCount(message.text);
+                        panel.webview.postMessage({ command: 'setTokenCount', count: tokenCount });
+                        break;
+                    // ... other existing cases ...
                     case 'updateInputBoxHeight':
                         configManager.inputTextBoxHeight = message.height;
                         break;

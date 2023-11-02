@@ -96,6 +96,6 @@
   },
   "dependencies": {
     "clipboardy": "^4.0.0",
-    "openai-gpt-token-counter": "^1.1.0"
+    "gpt-token-utils": "^1.2.0"
   }
 }

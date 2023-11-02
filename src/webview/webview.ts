@@ -44,9 +44,13 @@ if (openWebpageButton) {
     });
 }
 
-const textarea = document.getElementById('textInput');
+const textarea = document.getElementById('textInput') as HTMLTextAreaElement;
 
 if (textarea) {
+    textarea.addEventListener('input', () => {
+        vscode.postMessage({ command: 'countTokens', text: textarea.value });
+    });
+
     const resizeObserver = new ResizeObserver(() => {
         const height = window.getComputedStyle(textarea).height;
         vscode.postMessage({
@@ -61,10 +65,18 @@ if (textarea) {
 // New code for receiving clipboard content and setting it in the textarea
 window.addEventListener('message', event => {
     const message = event.data;
-    if (message.command === 'setClipboardContent') {
-        const textInput = document.getElementById('textInput') as HTMLTextAreaElement; // Cast to specific type
-        if (textInput) {
-            textInput.value = message.content;
-        }
+    switch (message.command) {
+        case 'setClipboardContent':
+            const textInput = document.getElementById('textInput') as HTMLTextAreaElement; // Cast to specific type
+            if (textInput) {
+                textInput.value = message.content;
+            }
+            break;
+        case 'setTokenCount':
+            const tokenCountInput = document.getElementById('tokenCount') as HTMLInputElement;
+            if (tokenCountInput) {
+                tokenCountInput.value = message.count.toString();
+            }
+            break;
     }
 });
