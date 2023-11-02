@@ -3,6 +3,8 @@ import { extractAndCopyText, extractFileFolderTree, getTokenCount  } from './ope
 import { handleOpenWebpage } from './commands/openWebpage';
 import { configManager } from './config/ConfigManager';
 
+let lastClipText = '';
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "syntaxExtractor" is now active!');
 
@@ -23,6 +25,24 @@ export function activate(context: vscode.ExtensionContext) {
 
         panel.webview.html = getWebviewContent(context, panel);
 
+        // Setup interval to check clipboard and update token count every second
+        setInterval(async () => {
+            const clipText = await vscode.env.clipboard.readText();
+            if (clipText !== lastClipText) {
+                lastClipText = clipText;
+                panel.webview.postMessage({ command: 'setClipboardContent', content: clipText });
+        
+                // Update the token count at each tick
+                const tokenCount = getTokenCount(clipText);
+                panel.webview.postMessage({ command: 'setTokenCount', count: tokenCount });
+        
+                // Update the char count at each tick
+                const charCount = clipText.length;  // New line for counting characters
+                panel.webview.postMessage({ command: 'setCharCount', count: charCount });  // New line for sending char count
+            }
+        }, 800);  // checks every second
+        
+
         panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
@@ -32,12 +52,16 @@ export function activate(context: vscode.ExtensionContext) {
                     case 'setCompressionLevel':
                         configManager.compressionLevel = message.level;
                         break;
-                    case 'countTokens':  // New case for handling token count
-                        console.log('Send them tokens');
+                    case 'countTokens':
+                        // This code now handles token counting for both clipboard changes and textarea input
                         const tokenCount = getTokenCount(message.text);
                         panel.webview.postMessage({ command: 'setTokenCount', count: tokenCount });
                         break;
-                    // ... other existing cases ...
+                    case 'countChars':
+                        // New case for counting characters
+                        const charCount = message.text.length;
+                        panel.webview.postMessage({ command: 'setCharCount', count: charCount });
+                        break;
                     case 'updateInputBoxHeight':
                         configManager.inputTextBoxHeight = message.height;
                         break;
@@ -46,11 +70,6 @@ export function activate(context: vscode.ExtensionContext) {
             undefined,
             context.subscriptions
         );
-
-        // Read clipboard content and send it to the webview
-        vscode.env.clipboard.readText().then((clipText) => {
-            panel.webview.postMessage({ command: 'setClipboardContent', content: clipText });
-        });
     });
 
     let extractFileFolderTreeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree);

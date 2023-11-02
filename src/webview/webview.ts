@@ -49,6 +49,7 @@ const textarea = document.getElementById('textInput') as HTMLTextAreaElement;
 if (textarea) {
     textarea.addEventListener('input', () => {
         vscode.postMessage({ command: 'countTokens', text: textarea.value });
+        vscode.postMessage({ command: 'countChars', text: textarea.value });  // New command for counting characters
     });
 
     const resizeObserver = new ResizeObserver(() => {
@@ -76,6 +77,12 @@ window.addEventListener('message', event => {
             const tokenCountInput = document.getElementById('tokenCount') as HTMLInputElement;
             if (tokenCountInput) {
                 tokenCountInput.value = message.count.toString();
+            }
+            break;
+        case 'setCharCount':
+            const charCountInput = document.getElementById('charCount') as HTMLInputElement;
+            if (charCountInput) {
+                charCountInput.value = message.count.toString();
             }
             break;
     }
