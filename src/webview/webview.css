@@ -1,11 +1,9 @@
-/* Resetting default styles for consistency across browsers */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Universal styles */
 .input-text-box, .counter input {
     padding: 10px;
     border: 1px solid #e7e7e7;
@@ -21,7 +19,6 @@
     overflow: auto;
 }
 
-/* Button styles */
 button {
     padding: 10px 20px;
     border: none;
@@ -54,7 +51,6 @@ button {
     background-color: #0056b3;
 }
 
-/* Layout styles */
 .main-container {
     padding: 10px;
     display: flex;

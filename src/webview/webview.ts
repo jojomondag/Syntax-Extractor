@@ -49,7 +49,7 @@ const textarea = document.getElementById('textInput') as HTMLTextAreaElement;
 if (textarea) {
     textarea.addEventListener('input', () => {
         vscode.postMessage({ command: 'countTokens', text: textarea.value });
-        vscode.postMessage({ command: 'countChars', text: textarea.value });  // New command for counting characters
+        vscode.postMessage({ command: 'countChars', text: textarea.value });
     });
 
     const resizeObserver = new ResizeObserver(() => {
@@ -68,7 +68,7 @@ window.addEventListener('message', event => {
     const message = event.data;
     switch (message.command) {
         case 'setClipboardContent':
-            const textInput = document.getElementById('textInput') as HTMLTextAreaElement; // Cast to specific type
+            const textInput = document.getElementById('textInput') as HTMLTextAreaElement;
             if (textInput) {
                 textInput.value = message.content;
             }

@@ -1,15 +1,15 @@
 {
-    "compilerOptions": {
-        "resolveJsonModule": true,
-        "esModuleInterop": true,
-        "module": "commonjs",
-        "target": "ES2020",
-        "lib": [
-            "dom",
-            "ES2020"
-        ],
-        "sourceMap": true,
-        "rootDir": "src",
-        "strict": true
-    }
+  "compilerOptions": {
+      "resolveJsonModule": true,
+      "esModuleInterop": true,
+      "module": "commonjs",
+      "target": "ES2020",
+      "lib": [
+          "dom",
+          "ES2020"
+      ],
+      "sourceMap": true,
+      "rootDir": "src",
+      "strict": true
+  }
 }

@@ -5,60 +5,57 @@ const path = require('path');
 const htmlWebpackPlugin = require('html-webpack-plugin');
 const copyPlugin = require('copy-webpack-plugin');
 
-/** @typedef {import('webpack').Configuration} WebpackConfig **/
-
-/** @type WebpackConfig */
+/** @type {import('webpack').Configuration} */
 const extensionConfig = {
     target: 'node',
-    mode: 'production',
-
+    mode: 'development',
     entry: {
         extension: './src/extension.ts',
         webview: './src/webview/webview.ts',
     },
-
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         libraryTarget: 'commonjs2',
-        publicPath: ''
+        publicPath: '',
     },
-
     externals: {
-        vscode: 'commonjs vscode'
+        vscode: 'commonjs vscode',
     },
-
     resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.ts', '.js'],
     },
-
+    experiments: {
+        syncWebAssembly: true, // Enabling WebAssembly support
+    },
     module: {
         rules: [
             {
                 test: /\.ts$/,
                 exclude: /node_modules/,
-                use: [
-                    {
-                        loader: 'ts-loader'
-                    }
-                ]
+                use: ['ts-loader'],
             },
             {
                 test: /\.css$/,
-                use: [
-                    'style-loader',
-                    'css-loader'
-                ]
-            }
-        ]
+                use: ['style-loader', 'css-loader'],
+            },
+            {
+                test: /\.wasm$/, // WebAssembly loader
+                type: "webassembly/sync",
+                parser: {
+                    wasm: true,
+                },
+            },
+        ],
     },
-
     devtool: 'source-map',
-
     infrastructureLogging: {
         level: "log",
     },
-
+    optimization: {
+        minimize: true,
+        usedExports: true,
+    },
     plugins: [
         new htmlWebpackPlugin({
             template: './src/webview/webview.html',
@@ -70,9 +67,12 @@ const extensionConfig = {
             patterns: [
                 { from: 'src/resources', to: 'resources' },
                 { from: 'src/config/fileTypesToRead.json', to: 'config' },
-                { from: 'src/config/config.json', to: 'config' }
+                { from: 'src/config/config.json', to: 'config' },
+                { from: 'node_modules/tiktoken/tiktoken_bg.wasm', to: '.' },
+                { from: 'node_modules/tiktoken/lite/tiktoken_bg.wasm', to: 'lite/' }
             ],
         }),
-    ]
+    ],
 };
+
 module.exports = [extensionConfig];

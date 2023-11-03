@@ -9,12 +9,9 @@ class ConfigManager {
         this.configPath = path.join(__dirname, 'config', 'config.json');
         const configData = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
         
-        // Initialize values from config.json
         this._compressionLevel = configData.compressionLevel;
         this._inputTextBoxHeight = configData.inputTextBoxHeight;
     }
-
-    // Getter and Setter for compressionLevel
     get compressionLevel(): string {
         return this._compressionLevel;
     }
@@ -23,7 +20,6 @@ class ConfigManager {
         if(['hard', 'medium', 'light'].includes(level)) {
             this._compressionLevel = level;
 
-            // Save changes to config.json
             this.saveConfig();
         } else {
             throw new Error("Invalid compression level value");

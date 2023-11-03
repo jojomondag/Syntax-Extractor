@@ -1,21 +1,25 @@
 {
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
+  "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
+  "version": "0.1.4",
   "publisher": "JosefNobach",
+  "icon": "dist/resources/SyntaxExtractor256x256.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/jojomondag/syntaxExtractor.git"
   },
-  "icon": "dist/resources/SyntaxExtractor256x256.png",
-  "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
-  "version": "0.1.2",
   "engines": {
     "vscode": "^1.83.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:syntaxExtractor.openGui",
+    "onCommand:syntaxExtractor.extractAndCopyText",
+    "onCommand:syntaxExtractor.extractFileFolderTree"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -25,12 +29,12 @@
       },
       {
         "command": "syntaxExtractor.extractAndCopyText",
-        "title": "extractAndCopyText",
+        "title": "Extract and Copy Text",
         "category": "Syntax Extractor"
       },
       {
         "command": "syntaxExtractor.extractFileFolderTree",
-        "title": "extractFileFolderTree",
+        "title": "Extract File/Folder Tree",
         "category": "Syntax Extractor"
       }
     ],
@@ -82,7 +86,6 @@
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
     "@vscode/test-electron": "^2.3.4",
-    "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.8.1",
     "eslint": "^8.50.0",
     "glob": "^10.3.3",
@@ -92,11 +95,11 @@
     "ts-loader": "^9.4.4",
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "copy-webpack-plugin": "^11.0.0"
   },
   "dependencies": {
     "clipboardy": "^4.0.0",
-    "gpt-3-token-count": "^1.0.2",
     "tiktoken": "^1.0.10"
   }
 }

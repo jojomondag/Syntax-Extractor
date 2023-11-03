@@ -29,4 +29,8 @@ Changes to "syntaxExtractor" extension.
 
 - 2023-10-32 - syntax-extractor-0.1.1.vsix: Webview shows compression level. Settings saved in config.json.
 
-- 2023-11-02 - syntax-extractor-0.1.2.vsix: Added a textarea so one can see whats being copied and how its being converted also its counting the tokens. And it updates each 800ms too get the current copy buffer data.
+- 2023-11-02 - syntax-extractor-0.1.2.vsix: Added a textarea for previewing and token counting of clipboard data, updating every 800ms.
+
+- 2023-11-03 - syntax-extractor-0.1.3.vsix: ...
+
+- 2023-11-03 - syntax-extractor-0.1.4.vsix: Resolved major issues; realized that files don't always build as expected—sometimes they're local, other times personal.
