@@ -38,5 +38,15 @@
         ".yml",
         ".ini",
         ".properties"
+    ],
+    "excludedPaths": [
+        "\\.git",
+        "\\node_modules",
+        "\\.eslintrc.json",
+        "\\.gitignore",
+        "\\.vscodeignore",
+        "\\CHANGELOG.md",
+        "\\package-lock.json",
+        "\\README.md"
     ]
 }

@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "JosefNobach",
   "icon": "dist/resources/SyntaxExtractor256x256.png",
   "repository": {
@@ -15,11 +15,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:syntaxExtractor.openGui",
-    "onCommand:syntaxExtractor.extractAndCopyText",
-    "onCommand:syntaxExtractor.extractFileFolderTree"
-  ],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -69,6 +65,7 @@
     }
   },
   "scripts": {
+    "webpack": "webpack --config webpack.config.js",
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
@@ -86,6 +83,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
     "@vscode/test-electron": "^2.3.4",
+    "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.8.1",
     "eslint": "^8.50.0",
     "glob": "^10.3.3",
@@ -94,9 +92,8 @@
     "style-loader": "^3.3.3",
     "ts-loader": "^9.4.4",
     "typescript": "^5.2.2",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4",
-    "copy-webpack-plugin": "^11.0.0"
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "clipboardy": "^4.0.0",

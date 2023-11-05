@@ -26,7 +26,7 @@ const extensionConfig = {
         extensions: ['.ts', '.js'],
     },
     experiments: {
-        syncWebAssembly: true, // Enabling WebAssembly support
+        syncWebAssembly: true,
     },
     module: {
         rules: [
@@ -40,7 +40,7 @@ const extensionConfig = {
                 use: ['style-loader', 'css-loader'],
             },
             {
-                test: /\.wasm$/, // WebAssembly loader
+                test: /\.wasm$/,
                 type: "webassembly/sync",
                 parser: {
                     wasm: true,
@@ -68,8 +68,7 @@ const extensionConfig = {
                 { from: 'src/resources', to: 'resources' },
                 { from: 'src/config/fileTypesToRead.json', to: 'config' },
                 { from: 'src/config/config.json', to: 'config' },
-                { from: 'node_modules/tiktoken/tiktoken_bg.wasm', to: '.' },
-                { from: 'node_modules/tiktoken/lite/tiktoken_bg.wasm', to: 'lite/' }
+                { from: 'node_modules/tiktoken/tiktoken_bg.wasm', to: '' }
             ],
         }),
     ],

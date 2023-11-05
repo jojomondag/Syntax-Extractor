@@ -41,7 +41,6 @@ export function activate(context: vscode.ExtensionContext) {
     let extractAndCopyTextDisposable = vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', extractAndCopyText);
     context.subscriptions.push(extractAndCopyTextDisposable);
 }
-
 function setupClipboardPolling(panel: vscode.WebviewPanel) {
     setInterval(async () => {
         const clipText = await vscode.env.clipboard.readText();
@@ -55,7 +54,6 @@ function setupClipboardPolling(panel: vscode.WebviewPanel) {
         }
     }, 800);
 }
-
 class MyDataProvider implements vscode.TreeDataProvider<string> {
     getTreeItem(element: string): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return { label: 'SE: Settings', command: { command: 'syntaxExtractor.openGui', title: 'SE: Settings' } };
@@ -64,7 +62,6 @@ class MyDataProvider implements vscode.TreeDataProvider<string> {
         return ['SE: Settings'];
     }
 }
-
 function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.WebviewPanel): string {
     const htmlPath = path.join(context.extensionPath, 'dist', 'webview', 'webview.html');
     let content = fs.readFileSync(htmlPath, 'utf8');
@@ -80,9 +77,6 @@ function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.Webvi
     content = content.replace('<textarea class="input-text-box" id="textInput" placeholder="Enter some text">', `<textarea class="input-text-box" id="textInput" placeholder="Enter some text" style="height: ${inputTextBoxHeight};">`);
     return content;
 }
-
 function capitalizeFirstLetter(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
-
-export function deactivate() {}

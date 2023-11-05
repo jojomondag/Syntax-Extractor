@@ -9,6 +9,12 @@ export function processSelectedItems(
     const processedFilesAndDirs = new Set<string>();
 
     function walkAndProcess(itemPath: string) {
+
+        if (fileTypesToRead.excludedPaths.includes(itemPath)) {
+            console.log(`Skipping excluded path: ${itemPath}`);
+            return;
+        }
+
         const stat = fs.statSync(itemPath);
 
         if (!processedFilesAndDirs.has(itemPath)) {

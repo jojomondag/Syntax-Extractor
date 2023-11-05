@@ -8,7 +8,7 @@ export function extractAndCopyText(contextSelection: vscode.Uri, allSelections: 
 
     processSelectedItems(
         allSelections,
-        (filePath) => { // File callback
+        (filePath) => {
             const extension = path.extname(filePath);
             if (fileTypesToRead.textExtensions.includes(extension)) {
                 allText += readTextFromFile(filePath) + '\n\n';

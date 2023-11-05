@@ -2,20 +2,14 @@ import { path, vscode } from '..';
 import { copyToClipboard } from '../commands';
 import { processSelectedItems } from './processSelectedItems';
 import { getConfig } from '../config/configUtil';
+import { getAdjustedCommonDir } from '.';
 
 export function extractFileFolderTree(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
-    console.log('extractFileFolderTree function called');
-
-    console.log('1: Fetching config');
     try {
         const config = getConfig();
-        console.log('2: Fetched config:', config);
-
         const compressionLevel = config.compressionLevel;
-        console.log('3: Compression level:', compressionLevel);
 
         const commonDir = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-        console.log('4: Common directory:', commonDir);
 
         if (!commonDir) {
             vscode.window.showErrorMessage('No workspace folder found');
@@ -23,7 +17,7 @@ export function extractFileFolderTree(contextSelection: vscode.Uri, allSelection
         }
 
         let pathsString = "";
-        console.log('5: Setting up pathsString based on compressionLevel:', compressionLevel);
+
         switch (compressionLevel) {
             case 'hard':
                 pathsString = generatePathStringCompressionHard(allSelections, commonDir);
@@ -39,7 +33,6 @@ export function extractFileFolderTree(contextSelection: vscode.Uri, allSelection
                 return;
         }
 
-        console.log('6: Copying pathsString to clipboard:', pathsString);
         copyToClipboard(pathsString);
         vscode.window.showInformationMessage('Paths copied to clipboard!');
     } catch (error) {
@@ -49,30 +42,19 @@ export function extractFileFolderTree(contextSelection: vscode.Uri, allSelection
 function generatePathStringCompressionHard(allSelections: vscode.Uri[], commonDir: string): string {
     const fileMap: { [directory: string]: string[] } = {};
 
-    let nextDirLevel = "";
-    for (let selection of allSelections) {
-        const relativePath = path.relative(commonDir, selection.fsPath);
-        const splitPath = relativePath.split(path.sep);
-
-        if (splitPath[0]) {
-            nextDirLevel = splitPath[0];
-            break;
-        }
-    }
-
-    const adjustedCommonDir = path.join(commonDir, nextDirLevel);
+    const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);
 
     processSelectedItems(
         allSelections,
-        (filePath) => { // File callback
-            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/'); // Normalize path separators
+        (filePath) => {
+            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
             const dir = path.dirname(relativePath);
             if (!fileMap[dir]) {
                 fileMap[dir] = [];
             }
             fileMap[dir].push(path.basename(relativePath));
         },
-        (dirPath) => { } // No need for Directory callback as we are grouping by directory.
+        (dirPath) => { }
     );
 
     const compressedPaths = [];
@@ -89,23 +71,12 @@ function generatePathStringCompressionHard(allSelections: vscode.Uri[], commonDi
 function generatePathStringCompressionMedium(allSelections: vscode.Uri[], commonDir: string): string {
     const directoryMap: { [directory: string]: string[] } = {};
 
-    let nextDirLevel = "";
-    for (let selection of allSelections) {
-        const relativePath = path.relative(commonDir, selection.fsPath);
-        const splitPath = relativePath.split(path.sep);
-
-        if (splitPath[0]) {
-            nextDirLevel = splitPath[0];
-            break;
-        }
-    }
-
-    const adjustedCommonDir = path.join(commonDir, nextDirLevel);
+    const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);  // Use the function
 
     processSelectedItems(
         allSelections,
-        (filePath) => { // File callback
-            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/'); // Normalize path separators
+        (filePath) => {
+            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
             const dir = path.dirname(relativePath);
             if (!directoryMap[dir]) {
                 directoryMap[dir] = [];
@@ -116,7 +87,7 @@ function generatePathStringCompressionMedium(allSelections: vscode.Uri[], common
 
     const pathsList: string[] = [];
     Object.keys(directoryMap).sort().forEach(dir => {
-        if (dir !== '.') { // Exclude the root directory itself
+        if (dir !== '.') {
             pathsList.push(dir);
             directoryMap[dir].sort().forEach(fileName => {
                 pathsList.push('/' + fileName);
@@ -133,23 +104,12 @@ function generatePathStringCompressionMedium(allSelections: vscode.Uri[], common
 function generatePathStringCompressionLight(allSelections: vscode.Uri[], commonDir: string): string {
     const directoryMap: { [directory: string]: string[] } = {};
 
-    let nextDirLevel = "";
-    for (let selection of allSelections) {
-        const relativePath = path.relative(commonDir, selection.fsPath);
-        const splitPath = relativePath.split(path.sep);
-
-        if (splitPath[0]) {
-            nextDirLevel = splitPath[0];
-            break;
-        }
-    }
-
-    const adjustedCommonDir = path.join(commonDir, nextDirLevel);
+    const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);  // Use the function
 
     processSelectedItems(
         allSelections,
-        (filePath) => { // File callback
-            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/'); // Normalize path separators
+        (filePath) => {
+            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
             const dir = path.dirname(relativePath);
             if (!directoryMap[dir]) {
                 directoryMap[dir] = [];
