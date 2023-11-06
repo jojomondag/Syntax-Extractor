@@ -34,3 +34,7 @@ Changes to "syntaxExtractor" extension.
 - 2023-11-03 - syntax-extractor-0.1.3.vsix: ...
 
 - 2023-11-03 - syntax-extractor-0.1.4.vsix: Resolved major issues; realized that files don't always build as expected—sometimes they're local, other times personal.
+
+- 2023-11-05 - syntax-extractor-0.1.5.vsix: Resolved major issues; realized that files don't always build as expected—sometimes they're local, other times personal.
+
+- 2023-11-06 - syntax-extractor-0.1.6.vsix: Resolved major issues; realized that files don't always build as expected—sometimes they're local, other times personal.

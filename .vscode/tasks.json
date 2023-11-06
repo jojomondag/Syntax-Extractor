@@ -1,27 +1,22 @@
+// tasks.json
 {
-	"version": "2.0.0",
-	"tasks": [
-	  {
-		"label": "tsc",
-		"type": "shell",
-		"command": "tsc",
-		"group": "build"
-	  },
-	  {
-		"label": "webpack",
-		"type": "shell",
-		"command": "npm",
-		"args": ["run", "webpack"],
-		"group": "build"
-	  },
-	  {
-		"label": "build",
-		"dependsOn": ["tsc", "webpack"],
-		"group": {
-		  "kind": "build",
-		  "isDefault": true
-		}
-	  }
-	]
-  }
-  
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "webpack",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "webpack"],
+            "group": "build",
+            "problemMatcher": "$tsc"
+        },
+        {
+            "label": "build",
+            "dependsOn": ["webpack"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

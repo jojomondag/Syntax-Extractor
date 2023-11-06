@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "JosefNobach",
   "icon": "dist/resources/SyntaxExtractor256x256.png",
   "repository": {
@@ -79,6 +79,8 @@
   "devDependencies": {
     "@types/mocha": "^10.0.2",
     "@types/node": "^20.8.7",
+    "@types/react": "^18.2.36",
+    "@types/react-dom": "^18.2.14",
     "@types/vscode": "^1.83.0",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
@@ -96,7 +98,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "clipboardy": "^4.0.0",
     "tiktoken": "^1.0.10"
   }
 }

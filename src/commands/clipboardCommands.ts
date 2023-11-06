@@ -1,5 +1,5 @@
-import clipboardy from 'clipboardy';
+import * as vscode from 'vscode';
 
-export function copyToClipboard(text: string) {
-    clipboardy.writeSync(text);
+export async function copyToClipboard(text: string) {
+    await vscode.env.clipboard.writeText(text);
 }

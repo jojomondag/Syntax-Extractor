@@ -1,23 +1,16 @@
-//@ts-check
-'use strict';
-
 const path = require('path');
-const htmlWebpackPlugin = require('html-webpack-plugin');
-const copyPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
-/** @type {import('webpack').Configuration} */
 const extensionConfig = {
     target: 'node',
     mode: 'development',
-    entry: {
-        extension: './src/extension.ts',
-        webview: './src/webview/webview.ts',
-    },
+    entry: './src/extension.ts',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].js',
+        filename: 'extension.js',
         libraryTarget: 'commonjs2',
-        publicPath: '',
+        publicPath: './',
     },
     externals: {
         vscode: 'commonjs vscode',
@@ -25,53 +18,65 @@ const extensionConfig = {
     resolve: {
         extensions: ['.ts', '.js'],
     },
-    experiments: {
-        syncWebAssembly: true,
+    module: {
+        rules: [
+            {
+                test: /\.ts$/,
+                exclude: /node_modules/,
+                use: 'ts-loader',
+            },
+        ],
+    },
+    devtool: 'source-map',
+    optimization: {
+        minimize: true,
+        usedExports: true,
+    },
+};
+
+const webviewConfig = {
+    target: 'web',
+    mode: 'development',
+    entry: './src/webview/webview.ts',
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'webview.js',
+        libraryTarget: 'umd',
+        globalObject: 'this',
+        publicPath: './',
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
     },
     module: {
         rules: [
             {
                 test: /\.ts$/,
                 exclude: /node_modules/,
-                use: ['ts-loader'],
+                use: 'ts-loader',
             },
             {
                 test: /\.css$/,
                 use: ['style-loader', 'css-loader'],
             },
-            {
-                test: /\.wasm$/,
-                type: "webassembly/sync",
-                parser: {
-                    wasm: true,
-                },
-            },
         ],
     },
     devtool: 'source-map',
-    infrastructureLogging: {
-        level: "log",
-    },
-    optimization: {
-        minimize: true,
-        usedExports: true,
-    },
     plugins: [
-        new htmlWebpackPlugin({
+        new HtmlWebpackPlugin({
             template: './src/webview/webview.html',
             filename: 'webview/webview.html',
             chunks: ['webview'],
             inject: 'head',
         }),
-        new copyPlugin({
+        new CopyPlugin({
             patterns: [
                 { from: 'src/resources', to: 'resources' },
                 { from: 'src/config/fileTypesToRead.json', to: 'config' },
                 { from: 'src/config/config.json', to: 'config' },
-                { from: 'node_modules/tiktoken/tiktoken_bg.wasm', to: '' }
             ],
         }),
     ],
 };
 
-module.exports = [extensionConfig];
+module.exports = [extensionConfig, webviewConfig];
