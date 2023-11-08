@@ -1,6 +1,6 @@
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
+const htmlWebpackPlugin = require('html-webpack-plugin');
+const copyPlugin = require('copy-webpack-plugin');
 
 const extensionConfig = {
     target: 'node',
@@ -63,13 +63,13 @@ const webviewConfig = {
     },
     devtool: 'source-map',
     plugins: [
-        new HtmlWebpackPlugin({
+        new htmlWebpackPlugin({
             template: './src/webview/webview.html',
             filename: 'webview/webview.html',
             chunks: ['webview'],
             inject: 'head',
         }),
-        new CopyPlugin({
+        new copyPlugin({
             patterns: [
                 { from: 'src/resources', to: 'resources' },
                 { from: 'src/config/fileTypesToRead.json', to: 'config' },

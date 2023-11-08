@@ -9,10 +9,14 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "syntaxExtractor" is now active!');
     const treeDataProvider = new MyDataProvider();
     vscode.window.registerTreeDataProvider('syntaxExtractorView', treeDataProvider);
+    
     let disposable = vscode.commands.registerCommand('syntaxExtractor.openGui', () => {
         const panel = vscode.window.createWebviewPanel('webview', 'Syntax Extractor', vscode.ViewColumn.One, { enableScripts: true });
         panel.webview.html = getWebviewContent(context, panel);
-        setupClipboardPolling(panel);
+        let clipboardPollingInterval = setupClipboardPolling(panel, context);
+        panel.onDidDispose(() => {
+            clearInterval(clipboardPollingInterval);
+        }, null, context.subscriptions);
         panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'openWebpage':
@@ -36,13 +40,23 @@ export function activate(context: vscode.ExtensionContext) {
         }, undefined, context.subscriptions);
     });
     context.subscriptions.push(disposable);
+    
     let extractFileFolderTreeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree);
     context.subscriptions.push(extractFileFolderTreeDisposable);
     let extractAndCopyTextDisposable = vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', extractAndCopyText);
     context.subscriptions.push(extractAndCopyTextDisposable);
 }
-function setupClipboardPolling(panel: vscode.WebviewPanel) {
-    setInterval(async () => {
+
+function setupClipboardPolling(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    let isDisposed = false;
+    panel.onDidDispose(() => {
+        isDisposed = true;
+    }, null, context.subscriptions);
+    const intervalId = setInterval(async () => {
+        if (isDisposed) {
+            clearInterval(intervalId);
+            return;
+        }
         const clipText = await vscode.env.clipboard.readText();
         if (clipText !== lastClipText) {
             lastClipText = clipText;
@@ -53,6 +67,7 @@ function setupClipboardPolling(panel: vscode.WebviewPanel) {
             panel.webview.postMessage({ command: 'setCharCount', count: charCount });
         }
     }, 800);
+    return intervalId;
 }
 class MyDataProvider implements vscode.TreeDataProvider<string> {
     getTreeItem(element: string): vscode.TreeItem | Thenable<vscode.TreeItem> {

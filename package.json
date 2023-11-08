@@ -42,7 +42,7 @@
         },
         {
           "command": "syntaxExtractor.extractFileFolderTree",
-          "group": "0_navigation@0"
+          "group": "0_navigation@1"
         }
       ]
     },

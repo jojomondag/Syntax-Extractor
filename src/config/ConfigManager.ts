@@ -1,8 +1,13 @@
-import { path, fs } from '../index';
+// File: ConfigManager.ts
+import { path, fs } from '../index'; // Adjust the import path as necessary
 
 class ConfigManager {
     private configPath = path.join(__dirname, 'config', 'config.json');
-    private configData = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+    private configData: { [key: string]: any }; // Define the shape of your config or leave as any if not predefined
+
+    constructor() {
+        this.configData = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+    }
 
     get compressionLevel(): string {
         return this.configData.compressionLevel;
@@ -24,6 +29,10 @@ class ConfigManager {
     set inputTextBoxHeight(height: string) {
         this.configData.inputTextBoxHeight = height;
         this.saveConfig();
+    }
+
+    public getConfig(): { [key: string]: any } {
+        return this.configData;
     }
 
     private saveConfig() {

@@ -1,16 +1,19 @@
+// File: extractFileFolderTree.ts
 import { path, vscode } from '..';
 import { copyToClipboard } from '../commands';
 import { processSelectedItems } from './processSelectedItems';
-import { getConfig } from '../config/configUtil';
+import { configManager } from '../config/ConfigManager';
 import { getAdjustedCommonDir } from '.';
 
 export function extractFileFolderTree(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
-    try {
-        const config = getConfig();
-        const compressionLevel = config.compressionLevel;
+    console.log("extractFileFolderTree: Function called");
 
+    try {
+        // Directly access the compressionLevel from configManager
+        const compressionLevel = configManager.compressionLevel;
         const commonDir = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
+        console.log(`Common Directory: ${commonDir}`);
         if (!commonDir) {
             vscode.window.showErrorMessage('No workspace folder found');
             return;
@@ -33,30 +36,30 @@ export function extractFileFolderTree(contextSelection: vscode.Uri, allSelection
                 return;
         }
 
+        console.log(`Generated Paths String: ${pathsString}`);
         copyToClipboard(pathsString);
         vscode.window.showInformationMessage('Paths copied to clipboard!');
     } catch (error) {
-        console.error('Error in extractFileFolderTree:', error);
+        if (error instanceof Error) {
+            console.error('Error in extractFileFolderTree:', error.message);
+            vscode.window.showErrorMessage(`An error occurred while generating the file tree: ${error.message}`);
+        } else {
+            console.error('Unknown error in extractFileFolderTree:', error);
+            vscode.window.showErrorMessage('An unknown error occurred while generating the file tree.');
+        }
     }
 }
 function generatePathStringCompressionHard(allSelections: vscode.Uri[], commonDir: string): string {
     const fileMap: { [directory: string]: string[] } = {};
-
     const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);
-
-    processSelectedItems(
-        allSelections,
-        (filePath) => {
-            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
-            const dir = path.dirname(relativePath);
-            if (!fileMap[dir]) {
-                fileMap[dir] = [];
-            }
-            fileMap[dir].push(path.basename(relativePath));
-        },
-        (dirPath) => { }
-    );
-
+    processSelectedItems(allSelections, (filePath) => {
+        let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
+        const dir = path.dirname(relativePath);
+        if (!fileMap[dir]) {
+            fileMap[dir] = [];
+        }
+        fileMap[dir].push(path.basename(relativePath));
+    }, (dirPath) => { });
     const compressedPaths = [];
     for (let dir in fileMap) {
         if (fileMap[dir].length > 0) {
@@ -65,26 +68,20 @@ function generatePathStringCompressionHard(allSelections: vscode.Uri[], commonDi
             compressedPaths.push(dir);
         }
     }
-
     return `${adjustedCommonDir}\n${compressedPaths.join('\n')}`;
 }
+
 function generatePathStringCompressionMedium(allSelections: vscode.Uri[], commonDir: string): string {
     const directoryMap: { [directory: string]: string[] } = {};
-
-    const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);  // Use the function
-
-    processSelectedItems(
-        allSelections,
-        (filePath) => {
-            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
-            const dir = path.dirname(relativePath);
-            if (!directoryMap[dir]) {
-                directoryMap[dir] = [];
-            }
-            directoryMap[dir].push(path.basename(relativePath));
+    const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);
+    processSelectedItems(allSelections, (filePath) => {
+        let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
+        const dir = path.dirname(relativePath);
+        if (!directoryMap[dir]) {
+            directoryMap[dir] = [];
         }
-    );
-
+        directoryMap[dir].push(path.basename(relativePath));
+    });
     const pathsList: string[] = [];
     Object.keys(directoryMap).sort().forEach(dir => {
         if (dir !== '.') {
@@ -98,28 +95,21 @@ function generatePathStringCompressionMedium(allSelections: vscode.Uri[], common
             });
         }
     });
-
     return `${adjustedCommonDir}\n${pathsList.join('\n')}`;
 }
+
 function generatePathStringCompressionLight(allSelections: vscode.Uri[], commonDir: string): string {
     const directoryMap: { [directory: string]: string[] } = {};
-
-    const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);  // Use the function
-
-    processSelectedItems(
-        allSelections,
-        (filePath) => {
-            let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
-            const dir = path.dirname(relativePath);
-            if (!directoryMap[dir]) {
-                directoryMap[dir] = [];
-            }
-            directoryMap[dir].push(path.basename(relativePath));
+    const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);
+    processSelectedItems(allSelections, (filePath) => {
+        let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
+        const dir = path.dirname(relativePath);
+        if (!directoryMap[dir]) {
+            directoryMap[dir] = [];
         }
-    );
-
+        directoryMap[dir].push(path.basename(relativePath));
+    });
     let resultString = `${adjustedCommonDir}\n`;
-
     const sortedDirs = Object.keys(directoryMap).sort();
     sortedDirs.forEach((dir, index) => {
         const isLastDir = index === sortedDirs.length - 1;
@@ -136,6 +126,5 @@ function generatePathStringCompressionLight(allSelections: vscode.Uri[], commonD
             });
         }
     });
-
     return resultString;
 }
