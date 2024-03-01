@@ -1,34 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syntax Extractor</title>
+    <link rel="stylesheet" href="./webview.css">
 </head>
 <body>
     <div class="main-container">
         <div class="control-container">
             <textarea class="input-text-box" id="textInput" placeholder="Enter some text"></textarea>
-            
-            <div class="button-group">
-                <div class="compression-section">
-                    <label for="compression-buttons" class="label-style">Compression:</label>
-                    <div id="compression-buttons">
-                        <button class="compression-button" id="compressionLevelHard">Hard</button>
-                        <button class="compression-button" id="compressionLevelMedium">Medium</button>
-                        <button class="compression-button" id="compressionLevelLight">Light</button>
+            <div class="mid-section">
+                <!-- Compression buttons div container -->
+                <div class="section-container">
+                    <div class="compression-section">
+                        <label for="compression-buttons" class="label-style">Compression</label>
+                        <div id="compression-buttons">
+                            <button class="compression-button" id="compressionLevelHard">Hard</button>
+                            <button class="compression-button" id="compressionLevelMedium">Medium</button>
+                            <button class="compression-button" id="compressionLevelLight">Light</button>
+                        </div>
                     </div>
                 </div>
-                <div class="counters">
-                    <div class="counter">
-                        <label for="tokenCount" class="label-style">Tokens:</label>
-                        <input type="text" id="tokenCount" readonly value="256">
-                    </div>
-                    <div class="counter">
-                        <label for="charCount" class="label-style">Chars:</label>
-                        <input type="text" id="charCount" readonly value="256">
+                
+                <!-- Tokens and Chars counters div container -->
+                <div class="section-container">
+                    <div class="counters">
+                        <div class="counter">
+                            <label for="tokenCount" class="label-style">Tokens</label>
+                            <input type="text" id="tokenCount" readonly value="507">
+                        </div>
+                        <div class="counter">
+                            <label for="charCount" class="label-style">Chars</label>
+                            <input type="text" id="charCount" readonly value="2034">
+                        </div>
                     </div>
                 </div>
-                <button id="openWebpageButton">Open Webpage</button>
-            </div>
+                
+                <!-- Open Webpage button div container -->
+                <div class="section-container">
+                    <button id="openWebpageButton">Open Webpage</button>
+                </div>
+                </div>
+                <!-- JSON types and input box container -->
+                <div class="json-types-container">
+                    <ul id="file-types-container"></ul>
+                    <input type="text" id="fileTypeInput" placeholder="Enter file extension to Add or Remove. Press Enter to Accept">
+                </div>
         </div>
     </div>
 </body>

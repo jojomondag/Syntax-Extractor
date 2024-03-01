@@ -1,33 +1,51 @@
-* {
+/* CSS reset for margin and padding */
+*, *::before, *::after {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Include padding and borders in width and height */
 }
 
-.input-text-box, .counter input {
+/* Ensure html and body take full viewport height and no auto margin is applied by browsers */
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden; /* Prevents horizontal scrollbar */
+}
+
+/* Full-width main container styles */
+.main-container {
+    padding: 5px 10px 0 10px; /* Top, Right, Bottom, Left */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Align children to stretch across the main axis */
+    width: calc(100vw - 20px); /* Subtract the total horizontal padding from the viewport width */
+    max-width: 100%; /* Prevent the container from extending beyond the viewport width */
+    box-sizing: border-box; /* Include padding in the width calculation */
+}
+
+/* Text input area styles */
+.input-text-box {
+    width: 100%;
     padding: 10px;
     border: 1px solid #e7e7e7;
     border-radius: 5px;
     margin: 5px 0;
     background-color: #f7f7f7;
-}
-
-.input-text-box {
-    width: 100%;
     resize: vertical;
     min-height: 30px;
     overflow: auto;
 }
 
+/* Button general styles */
 button {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
-    margin: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
+/* Compression buttons styles */
 .compression-button {
     background-color: #e7e7e7;
     color: #333;
@@ -42,6 +60,7 @@ button {
     color: white;
 }
 
+/* Open Webpage button styles */
 #openWebpageButton {
     background-color: #007BFF;
     color: white;
@@ -51,56 +70,87 @@ button {
     background-color: #0056b3;
 }
 
-.main-container {
-    padding: 10px;
+/* Mid-section styles */
+.mid-section {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
+    justify-content: space-around; /* Distribute space around items */
+    align-items: center; /* Align items vertically */
+    width: 100%; /* Full width of the main container */
+    margin-bottom: 20px; /* Space below mid-section */
 }
 
-.control-container {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-}
-
-.button-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 10px 0;
-}
-
+/* Compression section styles */
 .compression-section {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center; /* Center buttons horizontally */
+    align-items: center; /* Center buttons vertically */
+    flex-wrap: wrap; /* Allow wrapping for smaller screens */
 }
 
-.label-style {
-    margin-bottom: 5px;
-}
-
-#compression-buttons {
-    display: flex;
-}
-
+/* Counter styles */
 .counters {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-
+    justify-content: space-between; /* Space out the counters */
 }
 
 .counter {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 5px;
+    margin: 0 20px; /* Space between counters */
 }
 
 .counter input {
-    width: 60px;
+    width: 60px; /* Fixed width for token and char count boxes */
     text-align: center;
-    cursor: not-allowed;
+    cursor: not-allowed; /* Indicates the field is read-only */
+}
+
+/* JSON types container styles */
+.json-types-container {
+    width: 100%; /* Full width of the main container */
+    margin-bottom: 20px; /* Space below the container */
+}
+
+/* JSON file type input styles */
+#fileTypeInput {
+    width: 100%; /* Full width to match the container */
+    padding: 8px 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 10px; /* Space below the input */
+}
+
+/* JSON file types list styles */
+#file-types-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style-type: none; /* Remove default list bullets */
+    padding: 0;
+    width: 100%; /* Full width to match the container */
+}
+
+#file-types-container li {
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: #f0f0f0; /* Light grey background */
+    color: #333; /* Dark grey text for readability */
+}
+/* Ensure that all containers within main-container also span full width */
+.control-container, .mid-section, .json-types-container {
+    width: 100%;
+    box-sizing: border-box; /* Include padding and border in the width calculation */
+}
+.section-container {
+    border: 1px solid #e7e7e7; /* This matches the .compression-button border color */
+    border-radius: 5px; /* This matches the .compression-button border-radius */
+    padding: 10px; /* Optional: if you want padding inside the border */
+    background-color: #f7f7f7; /* This matches the .compression-button background color when not selected */
+    margin: 5px 0; /* Consistent with other elements */
+    display: flex; /* To align the counters inline */
+    justify-content: center; /* To center the counters horizontally */
+    align-items: center; /* To center the counters vertically */
 }

@@ -2,6 +2,7 @@ import { fs, path, vscode } from '.';
 import { extractAndCopyText, extractFileFolderTree, getTokenCount } from './operations';
 import { handleOpenWebpage } from './commands/openWebpage';
 import { configManager } from './config/ConfigManager';
+import fileTypesToRead from './config/fileTypesToRead.json';
 
 let lastClipText = '';
 
@@ -13,11 +14,13 @@ export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('syntaxExtractor.openGui', () => {
         const panel = vscode.window.createWebviewPanel('webview', 'Syntax Extractor', vscode.ViewColumn.One, { enableScripts: true });
         panel.webview.html = getWebviewContent(context, panel);
+        //This sends my config.json to my webview
+        sendFileTypesToWebview(panel);
         let clipboardPollingInterval = setupClipboardPolling(panel, context);
         panel.onDidDispose(() => {
             clearInterval(clipboardPollingInterval);
         }, null, context.subscriptions);
-        panel.webview.onDidReceiveMessage(message => {
+        panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case 'openWebpage':
                     handleOpenWebpage();
@@ -36,6 +39,11 @@ export function activate(context: vscode.ExtensionContext) {
                 case 'updateInputBoxHeight':
                     configManager.inputTextBoxHeight = message.height;
                     break;
+                case 'toggleFileType':
+                    toggleFileType(panel, message.fileType);
+                    // Optionally, send the updated list back to the webview
+                    sendFileTypesToWebview(panel);
+                    break;
             }
         }, undefined, context.subscriptions);
     });
@@ -45,6 +53,52 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(extractFileFolderTreeDisposable);
     let extractAndCopyTextDisposable = vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', extractAndCopyText);
     context.subscriptions.push(extractAndCopyTextDisposable);
+}
+function sendFileTypesToWebview(panel: vscode.WebviewPanel) {
+    fs.readFile(path.join(__dirname, 'config', 'fileTypesToRead.json'), 'utf8', (err, data) => {
+        if (err) {
+            console.error('Failed to read file types:', err);
+            return;
+        }
+        const config = JSON.parse(data);
+        panel.webview.postMessage({
+            command: 'setFileTypes',
+            fileTypes: config.textExtensions, 
+        });
+    });
+}
+// Adjusted to return a boolean indicating success
+async function toggleFileTypeOperation(fileType: string): Promise<boolean> {
+    const fileTypesPath = path.join(__dirname, 'config', 'fileTypesToRead.json');
+    fileType = fileType.toLowerCase(); // Normalize fileType for consistent comparison
+
+    try {
+        const data = await fs.promises.readFile(fileTypesPath, 'utf8');
+        const config = JSON.parse(data);
+        const index = config.textExtensions.indexOf(fileType);
+
+        if (index > -1) {
+            config.textExtensions.splice(index, 1);
+        } else {
+            config.textExtensions.push(fileType);
+        }
+
+        await fs.promises.writeFile(fileTypesPath, JSON.stringify(config, null, 4), 'utf8');
+        return true; // Operation succeeded
+    } catch (err) {
+        console.error(`Failed to toggle file type ${fileType}:`, err);
+        return false; // Operation failed
+    }
+}
+
+// Modify how operations are added to the queue
+function toggleFileType(panel: vscode.WebviewPanel, fileType: string) {
+    fileOperationQueue.addToQueue(() => toggleFileTypeOperation(fileType).then(success => {
+        if (success) {
+            // If the toggle was successful, then refresh the webview
+            sendFileTypesToWebview(panel);
+        }
+    }));
 }
 
 function setupClipboardPolling(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
@@ -73,7 +127,7 @@ class MyDataProvider implements vscode.TreeDataProvider<string> {
     getTreeItem(element: string): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return { label: 'SE: Settings', command: { command: 'syntaxExtractor.openGui', title: 'SE: Settings' } };
     }
-    getChildren(element?: string): vscode.ProviderResult<string[]> {
+    getChildren(): vscode.ProviderResult<string[]> {
         return ['SE: Settings'];
     }
 }
@@ -95,3 +149,16 @@ function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.Webvi
 function capitalizeFirstLetter(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
+class OperationQueue {
+    private queue: Promise<void>; // Define the queue property
+
+    constructor() {
+        this.queue = Promise.resolve(); // Initial promise chain
+    }
+
+    addToQueue(operation: () => Promise<void>) { // Provide a type for the operation parameter
+        this.queue = this.queue.then(() => operation());
+    }
+}
+
+const fileOperationQueue = new OperationQueue();

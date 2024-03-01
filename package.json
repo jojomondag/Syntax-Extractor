@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "publisher": "JosefNobach",
   "icon": "dist/resources/SyntaxExtractor256x256.png",
   "repository": {

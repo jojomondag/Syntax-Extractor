@@ -1,4 +1,5 @@
 import './webview.css';
+import fileTypesToRead from '../config/fileTypesToRead.json';
 
 declare const acquireVsCodeApi: any;
 const vscode = acquireVsCodeApi();
@@ -85,5 +86,39 @@ window.addEventListener('message', event => {
                 charCountInput.value = message.count.toString();
             }
             break;
+        case 'setFileTypes': // Handle the new message
+            updateFileTypeList(message.fileTypes);
+            break;
+    }
+    function updateFileTypeList(fileTypes: string[]) {
+        const container = document.getElementById('file-types-container'); // Ensure this exists in your webview HTML
+        if (!container) {
+            console.error('File types container not found');
+            return;
+        }
+        // Clear existing list
+        container.innerHTML = '';
+        // Add each file type as a list item
+        fileTypes.forEach(type => {
+            const item = document.createElement('li');
+            item.textContent = type;
+            container.appendChild(item);
+        });
+    }
+});
+
+// Handling the Enter keypress in the fileTypeInput to add/remove file types
+const fileTypeInput = document.getElementById('fileTypeInput') as HTMLInputElement;
+fileTypeInput?.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        const fileType = fileTypeInput.value.trim();
+        if (fileType) {
+            vscode.postMessage({
+                command: 'toggleFileType',
+                fileType: fileType
+            });
+            fileTypeInput.value = ''; // Clear the input field after sending
+            event.preventDefault(); // Prevent form submission
+        }
     }
 });
