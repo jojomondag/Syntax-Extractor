@@ -26,7 +26,7 @@ export class ConfigManager {
 
     set fileTypes(types: string[]) {
         this.config.update('fileTypes', types, vscode.ConfigurationTarget.Workspace);
-    }
+    }    
 
     get excludedPaths(): string[] {
         return this.config.get('excludedPaths') || ['\\.git', '\\node_modules', '\\.eslintrc.json', '\\.gitignore', '\\.vscodeignore', '\\CHANGELOG.md', '\\package-lock.json', '\\README.md'];
@@ -45,20 +45,21 @@ export class ConfigManager {
     }
 
     public addFileType(fileType: string): void {
-        const currentFileTypes = vscode.workspace.getConfiguration().get('syntax-extractor.fileTypes') as string[];
+        const currentFileTypes = this.fileTypes; // Use the getter to ensure you're working with the latest list
         if (!currentFileTypes.includes(fileType)) {
             currentFileTypes.push(fileType);
-            vscode.workspace.getConfiguration().update('syntax-extractor.fileTypes', currentFileTypes, vscode.ConfigurationTarget.Global);
+            // Use the setter to ensure the update is applied with the correct scope
+            this.fileTypes = currentFileTypes;
         }
     }
 
     public removeFileType(fileType: string): void {
-        const currentFileTypes = this.fileTypes;
+        const currentFileTypes = this.fileTypes; // Use the getter to ensure you're working with the latest list
         const index = currentFileTypes.indexOf(fileType);
         if (index > -1) {
             currentFileTypes.splice(index, 1);
+            // Use the setter to ensure the update is applied with the correct scope
             this.fileTypes = currentFileTypes;
-            vscode.workspace.getConfiguration().update('syntax-extractor.fileTypes', currentFileTypes, vscode.ConfigurationTarget.Global);
         }
     }
 

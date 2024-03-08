@@ -8,7 +8,6 @@ let configManager = new ConfigManager();
 let panel: vscode.WebviewPanel | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
-    let panel: vscode.WebviewPanel | null = null; // Define the panel here to access it later
 
     const treeDataProvider = new MyDataProvider();
     vscode.window.registerTreeDataProvider('syntaxExtractorView', treeDataProvider);
@@ -87,7 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
                 sendFileTypesToWebview(panel);
             }
         }
-    });
+    });    
     
     let extractFileFolderTreeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree);
     context.subscriptions.push(extractFileFolderTreeDisposable);
@@ -95,7 +94,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(extractAndCopyTextDisposable);
 }
 function sendFileTypesToWebview(panel: vscode.WebviewPanel) {
-    const fileTypes = configManager.fileTypes;
+    // Always fetch the latest fileTypes from the configuration to ensure synchronization.
+    const fileTypes = vscode.workspace.getConfiguration('syntax-extractor').get('fileTypes', []);
     panel.webview.postMessage({
         command: 'setFileTypes',
         fileTypes: fileTypes,
@@ -149,16 +149,3 @@ function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.Webvi
 function capitalizeFirstLetter(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
-class OperationQueue {
-    private queue: Promise<void>; // Define the queue property
-
-    constructor() {
-        this.queue = Promise.resolve(); // Initial promise chain
-    }
-
-    addToQueue(operation: () => Promise<void>) { // Provide a type for the operation parameter
-        this.queue = this.queue.then(() => operation());
-    }
-}
-
-const fileOperationQueue = new OperationQueue();
