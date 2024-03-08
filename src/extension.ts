@@ -1,25 +1,41 @@
 import { fs, path, vscode } from '.';
 import { extractAndCopyText, extractFileFolderTree, getTokenCount } from './operations';
 import { handleOpenWebpage } from './commands/openWebpage';
-import { configManager } from './config/ConfigManager';
-import fileTypesToRead from './config/fileTypesToRead.json';
+import { ConfigManager } from './config/ConfigManager';
 
 let lastClipText = '';
+let configManager = new ConfigManager();
+let panel: vscode.WebviewPanel | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Congratulations, your extension "syntaxExtractor" is now active!');
+    let panel: vscode.WebviewPanel | null = null; // Define the panel here to access it later
+
     const treeDataProvider = new MyDataProvider();
     vscode.window.registerTreeDataProvider('syntaxExtractorView', treeDataProvider);
-    
+
     let disposable = vscode.commands.registerCommand('syntaxExtractor.openGui', () => {
-        const panel = vscode.window.createWebviewPanel('webview', 'Syntax Extractor', vscode.ViewColumn.One, { enableScripts: true });
+        panel = vscode.window.createWebviewPanel('webview', 'Syntax Extractor', vscode.ViewColumn.One, { enableScripts: true });
         panel.webview.html = getWebviewContent(context, panel);
-        //This sends my config.json to my webview
+
+        // Immediately send the current file types to the newly opened webview
         sendFileTypesToWebview(panel);
+
+        // Add an event listener for when the webview panel's view state changes
+        panel.onDidChangeViewState(e => {
+            if (e.webviewPanel.visible) {
+                // The webview panel is visible, send the updated file types
+                if (panel !== null) {
+                    sendFileTypesToWebview(panel);
+                }
+            }
+        });
+
         let clipboardPollingInterval = setupClipboardPolling(panel, context);
         panel.onDidDispose(() => {
             clearInterval(clipboardPollingInterval);
+            panel = null; // Reset the panel on dispose
         }, null, context.subscriptions);
+
         panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case 'openWebpage':
@@ -30,24 +46,48 @@ export function activate(context: vscode.ExtensionContext) {
                     break;
                 case 'countTokens':
                     const tokenCount = getTokenCount(message.text);
-                    panel.webview.postMessage({ command: 'setTokenCount', count: tokenCount });
+                    if (panel) {
+                        panel.webview.postMessage({ command: 'setTokenCount', count: tokenCount });
+                    }
                     break;
                 case 'countChars':
                     const charCount = message.text.length;
-                    panel.webview.postMessage({ command: 'setCharCount', count: charCount });
+                    if (panel) {
+                        panel.webview.postMessage({ command: 'setCharCount', count: charCount });
+                    }
                     break;
                 case 'updateInputBoxHeight':
                     configManager.inputTextBoxHeight = message.height;
                     break;
                 case 'toggleFileType':
-                    toggleFileType(panel, message.fileType);
-                    // Optionally, send the updated list back to the webview
-                    sendFileTypesToWebview(panel);
+                    // Update your extension state based on the received fileType
+                    const fileType = message.fileType;
+                    const fileTypes = configManager.fileTypes;
+                    const index = fileTypes.indexOf(fileType);
+                    if (index > -1) {
+                        fileTypes.splice(index, 1);
+                    } else {
+                        fileTypes.push(fileType);
+                    }
+                    configManager.fileTypes = fileTypes;
+        
+                    // Then, send an updated fileType list back to the webview
+                    if (panel !== null) {
+                        panel.webview.postMessage({ command: 'setFileTypes', fileTypes: fileTypes });
+                    }
                     break;
             }
         }, undefined, context.subscriptions);
     });
     context.subscriptions.push(disposable);
+
+    vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration('syntax-extractor.fileTypes')) {
+            if (panel !== null) {
+                sendFileTypesToWebview(panel);
+            }
+        }
+    });
     
     let extractFileFolderTreeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree);
     context.subscriptions.push(extractFileFolderTreeDisposable);
@@ -55,52 +95,12 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(extractAndCopyTextDisposable);
 }
 function sendFileTypesToWebview(panel: vscode.WebviewPanel) {
-    fs.readFile(path.join(__dirname, 'config', 'fileTypesToRead.json'), 'utf8', (err, data) => {
-        if (err) {
-            console.error('Failed to read file types:', err);
-            return;
-        }
-        const config = JSON.parse(data);
-        panel.webview.postMessage({
-            command: 'setFileTypes',
-            fileTypes: config.textExtensions, 
-        });
+    const fileTypes = configManager.fileTypes;
+    panel.webview.postMessage({
+        command: 'setFileTypes',
+        fileTypes: fileTypes,
     });
 }
-// Adjusted to return a boolean indicating success
-async function toggleFileTypeOperation(fileType: string): Promise<boolean> {
-    const fileTypesPath = path.join(__dirname, 'config', 'fileTypesToRead.json');
-    fileType = fileType.toLowerCase(); // Normalize fileType for consistent comparison
-
-    try {
-        const data = await fs.promises.readFile(fileTypesPath, 'utf8');
-        const config = JSON.parse(data);
-        const index = config.textExtensions.indexOf(fileType);
-
-        if (index > -1) {
-            config.textExtensions.splice(index, 1);
-        } else {
-            config.textExtensions.push(fileType);
-        }
-
-        await fs.promises.writeFile(fileTypesPath, JSON.stringify(config, null, 4), 'utf8');
-        return true; // Operation succeeded
-    } catch (err) {
-        console.error(`Failed to toggle file type ${fileType}:`, err);
-        return false; // Operation failed
-    }
-}
-
-// Modify how operations are added to the queue
-function toggleFileType(panel: vscode.WebviewPanel, fileType: string) {
-    fileOperationQueue.addToQueue(() => toggleFileTypeOperation(fileType).then(success => {
-        if (success) {
-            // If the toggle was successful, then refresh the webview
-            sendFileTypesToWebview(panel);
-        }
-    }));
-}
-
 function setupClipboardPolling(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
     let isDisposed = false;
     panel.onDidDispose(() => {

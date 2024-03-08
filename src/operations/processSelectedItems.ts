@@ -1,7 +1,8 @@
 import { fs, path, vscode } from '..';
-import fileTypesToRead from '../config/fileTypesToRead.json';
+import { ConfigManager } from '../config/ConfigManager';
 
-// processSelectedItems.ts
+// Instantiate ConfigManager
+const configManager = new ConfigManager();
 
 export function processSelectedItems(
     allSelections: vscode.Uri[],
@@ -12,7 +13,8 @@ export function processSelectedItems(
 
     function walkAndProcess(itemPath: string) {
         try {
-            if (fileTypesToRead.excludedPaths.includes(itemPath)) {
+            // Use ConfigManager to get excludedPaths
+            if (configManager.excludedPaths.includes(itemPath)) {
                 console.log(`Skipping excluded path: ${itemPath}`);
                 return;
             }
@@ -27,9 +29,10 @@ export function processSelectedItems(
                         const filePath = path.join(itemPath, file);
                         walkAndProcess(filePath);
                     });
-                } else {
+                }else {
                     const extension = path.extname(itemPath);
-                    if (fileTypesToRead.textExtensions.includes(extension)) {
+                    // Use ConfigManager to get fileTypes
+                    if (configManager.fileTypes.includes(extension)) {
                         fileCallback(itemPath);
                     } else {
                         console.log(`Skipping non-text file: ${itemPath}`);

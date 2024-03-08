@@ -18,6 +18,31 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Syntax Extractor",
+        "properties": {
+            "syntax-extractor.compressionLevel": {
+                "type": "string",
+                "default": "medium",
+                "description": "The compression level."
+            },
+            "syntax-extractor.inputTextBoxHeight": {
+                "type": "string",
+                "default": "100px",
+                "description": "The height of the input text box."
+            },
+            "syntax-extractor.fileTypes": {
+                "type": "array",
+                "default": [".txt", ".js", ".ts", ".html"],
+                "description": "The file types to read."
+            },
+            "syntax-extractor.excludedPaths": {
+                "type": "array",
+                "default": ["\\.git", "\\node_modules", "\\.eslintrc.json", "\\.gitignore", "\\.vscodeignore", "\\CHANGELOG.md", "\\package-lock.json", "\\README.md"],
+                "description": "The paths to exclude."
+            }
+        }
+    },
     "commands": [
       {
         "command": "syntaxExtractor.openGui",
@@ -78,7 +103,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.2",
-    "@types/node": "^20.8.7",
+    "@types/node": "^20.11.25",
     "@types/react": "^18.2.36",
     "@types/react-dom": "^18.2.14",
     "@types/vscode": "^1.83.0",
@@ -86,6 +111,7 @@
     "@typescript-eslint/parser": "^6.7.3",
     "@vscode/test-electron": "^2.3.4",
     "copy-webpack-plugin": "^11.0.0",
+    "cross-env": "^7.0.3",
     "css-loader": "^6.8.1",
     "eslint": "^8.50.0",
     "glob": "^10.3.3",

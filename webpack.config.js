@@ -72,8 +72,6 @@ const webviewConfig = {
         new copyPlugin({
             patterns: [
                 { from: 'src/resources', to: 'resources' },
-                { from: 'src/config/fileTypesToRead.json', to: 'config' },
-                { from: 'src/config/config.json', to: 'config' },
             ],
         }),
     ],

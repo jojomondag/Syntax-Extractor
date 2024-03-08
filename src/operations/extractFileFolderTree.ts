@@ -2,11 +2,13 @@
 import { path, vscode } from '..';
 import { copyToClipboard } from '../commands';
 import { processSelectedItems } from './processSelectedItems';
-import { configManager } from '../config/ConfigManager';
+import { ConfigManager } from '../config/ConfigManager';
 import { getAdjustedCommonDir } from '.';
 
 export function extractFileFolderTree(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
     console.log("extractFileFolderTree: Function called");
+
+    const configManager = new ConfigManager();
 
     try {
         // Directly access the compressionLevel from configManager
