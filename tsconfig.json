@@ -1,16 +1,16 @@
 {
-  "compilerOptions": {
-    "resolveJsonModule": true,
-    "target": "ES6",
-    "module": "commonjs",
-    "outDir": "out",
-    "rootDir": "src",
-    "sourceMap": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts"]
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "ES2020",
+		"outDir": "out",
+		"lib": [
+			"ES2020",
+			"dom"
+		],
+		"sourceMap": true,
+		"rootDir": "src",
+		"strict": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true
+	}
 }

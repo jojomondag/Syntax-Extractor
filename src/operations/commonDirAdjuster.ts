@@ -1,4 +1,5 @@
-import { path, vscode } from '..';
+import * as path from 'path';
+import * as vscode from 'vscode';
 
 export function getAdjustedCommonDir(allSelections: vscode.Uri[], commonDir: string): string {
     let nextDirLevel = "";

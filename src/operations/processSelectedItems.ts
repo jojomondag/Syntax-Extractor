@@ -1,8 +1,9 @@
-import { fs, path, vscode } from '..';
+import * as path from 'path';
+import { fs, vscode } from '..';
 import { ConfigManager } from '../config/ConfigManager';
 
-// Instantiate ConfigManager
-const configManager = new ConfigManager();
+// Get the instance of ConfigManager
+const configManager = ConfigManager.getInstance();
 
 export function processSelectedItems(
     allSelections: vscode.Uri[],
@@ -13,29 +14,25 @@ export function processSelectedItems(
 
     function walkAndProcess(itemPath: string) {
         try {
-            // Use ConfigManager to get excludedPaths
-            if (configManager.excludedPaths.includes(itemPath)) {
-                console.log(`Skipping excluded path: ${itemPath}`);
-                return;
-            }
-
             const stat = fs.statSync(itemPath);
 
             if (!processedFilesAndDirs.has(itemPath)) {
                 if (stat && stat.isDirectory()) {
+                    console.log(`Processing directory: ${itemPath}`);
                     dirCallback && dirCallback(itemPath);
                     const list = fs.readdirSync(itemPath);
                     list.forEach(file => {
                         const filePath = path.join(itemPath, file);
                         walkAndProcess(filePath);
                     });
-                }else {
+                } else {
                     const extension = path.extname(itemPath);
-                    // Use ConfigManager to get fileTypes
-                    if (configManager.fileTypes.includes(extension)) {
+                    console.log(`Processing file: ${itemPath}, extension: ${extension}`);
+                    if (configManager.getFileTypes().includes(extension)) {
+                        console.log(`File ${itemPath} matches the file types in the configuration`);
                         fileCallback(itemPath);
                     } else {
-                        console.log(`Skipping non-text file: ${itemPath}`);
+                        console.log(`File ${itemPath} does not match the file types in the configuration`);
                     }
                 }
                 processedFilesAndDirs.add(itemPath);
@@ -48,6 +45,7 @@ export function processSelectedItems(
 
     allSelections.forEach(itemUri => {
         const itemPath = itemUri.fsPath;
+        console.log(`Starting to process: ${itemPath}`);
         walkAndProcess(itemPath);
     });
 }

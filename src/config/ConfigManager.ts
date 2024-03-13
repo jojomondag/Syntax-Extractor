@@ -1,69 +1,52 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 
+//Configmanager uses the singelton pattern to ensure that only one instance of the class is created.
 export class ConfigManager {
-    private config: vscode.WorkspaceConfiguration;
+    private static instance: ConfigManager;
+    private configuration: vscode.WorkspaceConfiguration;
 
-    constructor() {
-        this.config = vscode.workspace.getConfiguration('syntax-extractor');
+    private constructor() {
+        this.configuration = vscode.workspace.getConfiguration('syntaxExtractor');
     }
 
-    get compressionLevel(): string {
-        return this.config.get('compressionLevel') || 'medium';
-    }
-
-    set compressionLevel(level: string) {
-        if(['hard', 'medium', 'light'].includes(level)) {
-            this.config.update('compressionLevel', level, vscode.ConfigurationTarget.Workspace);
-        } else {
-            throw new Error("Invalid compression level value");
+    public static getInstance(): ConfigManager {
+        if (!ConfigManager.instance) {
+            ConfigManager.instance = new ConfigManager();
         }
+        return ConfigManager.instance;
     }
 
-    get fileTypes(): string[] {
-        return this.config.get('fileTypes') || [];
+    getFileTypes(): string[] {
+        return this.configuration.get('fileTypes', []);
     }
 
-    set fileTypes(types: string[]) {
-        this.config.update('fileTypes', types, vscode.ConfigurationTarget.Workspace);
-    }    
-
-    get excludedPaths(): string[] {
-        return this.config.get('excludedPaths') || ['\\.git', '\\node_modules', '\\.eslintrc.json', '\\.gitignore', '\\.vscodeignore', '\\CHANGELOG.md', '\\package-lock.json', '\\README.md'];
+    setFileTypes(fileTypes: string[]): Thenable<void> {
+        return this.configuration.update('fileTypes', fileTypes, vscode.ConfigurationTarget.Workspace);
     }
 
-    set excludedPaths(paths: string[]) {
-        this.config.update('excludedPaths', paths, vscode.ConfigurationTarget.Workspace);
+    getCompressionLevel(): number {
+        // Refresh the configuration reference to ensure it's current
+        this.configuration = vscode.workspace.getConfiguration('syntaxExtractor');
+        return this.configuration.get('compressionLevel', 1);
     }
 
-    get inputTextBoxHeight(): number {
-        return this.config.get('inputTextBoxHeight') || 0;
+    setCompressionLevel(level: number): Thenable<void> {
+        console.log(`Attempting to set compression level to: ${level}`);
+        return this.configuration.update('compressionLevel', level, vscode.ConfigurationTarget.Workspace).then(() => {
+            console.log(`Compression level set to: ${level}`);
+            // Immediately after update, log the directly fetched value
+            const directFetchTest = vscode.workspace.getConfiguration('syntaxExtractor').get('compressionLevel');
+            console.log(`Direct fetch after set: ${directFetchTest}`);
+        });
     }
 
-    set inputTextBoxHeight(height: number) {
-        this.config.update('inputTextBoxHeight', height, vscode.ConfigurationTarget.Workspace);
+    setClipboardDataBoxHeight(height: number): Thenable<void> {
+        return this.configuration.update('clipboardDataBoxHeight', height, vscode.ConfigurationTarget.Workspace);
     }
 
-    public addFileType(fileType: string): void {
-        const currentFileTypes = this.fileTypes; // Use the getter to ensure you're working with the latest list
-        if (!currentFileTypes.includes(fileType)) {
-            currentFileTypes.push(fileType);
-            // Use the setter to ensure the update is applied with the correct scope
-            this.fileTypes = currentFileTypes;
-        }
-    }
-
-    public removeFileType(fileType: string): void {
-        const currentFileTypes = this.fileTypes; // Use the getter to ensure you're working with the latest list
-        const index = currentFileTypes.indexOf(fileType);
-        if (index > -1) {
-            currentFileTypes.splice(index, 1);
-            // Use the setter to ensure the update is applied with the correct scope
-            this.fileTypes = currentFileTypes;
-        }
-    }
-
-    public async updateFileTypes(types: string[]): Promise<void> {
-        await this.config.update('fileTypes', types, vscode.ConfigurationTarget.Workspace);
+    getClipboardDataBoxHeight(): number {
+        // Refresh the configuration reference to ensure it's current
+        this.configuration = vscode.workspace.getConfiguration('syntaxExtractor');
+        return this.configuration.get<number>('clipboardDataBoxHeight', 100); // Default height: 100px
     }
 }

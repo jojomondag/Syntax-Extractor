@@ -1,94 +1,159 @@
-import './webview.css';
+    declare function acquireVsCodeApi(): any;
+    const vscode = acquireVsCodeApi();
 
-declare const acquireVsCodeApi: any;
-const vscode = acquireVsCodeApi();
-
-// Utility function to send messages to VS Code
-function postVsCodeMessage(command: string, data: any = {}) {
-    vscode.postMessage({ command, ...data });
-}
-
-function on(element: Element | Document, event: string, selector: string, handler: (event: Event) => void) {
-    element.addEventListener(event, (e) => {
-        if (!selector || (e.target as Element).matches(selector)) {
-            handler(e);
+    // Listen for messages from the extension
+    window.addEventListener('message', event => {
+        const message = event.data; // The JSON data our extension sent
+        switch (message.command) {
+            case 'initConfig':
+            case 'configUpdated':
+                // Use message.fileTypes and message.compressionLevel to update UI
+                updateUI(message.fileTypes, message.compressionLevel, message.clipboardDataBoxHeight);
+                break;
+            case 'updateClipboardDataBox':
+                const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+                if (clipboardDataBox) {
+                    clipboardDataBox.value = message.content;
+                    // Immediately after updating the textarea, request token and char counts
+                    vscode.postMessage({
+                        command: 'requestCounts',
+                        text: message.content // Send the updated content for counting
+                    });
+                }
+                break;
+            case 'setTokenCount':
+                    const tokenCountElement = document.getElementById('tokenCount') as HTMLInputElement;
+                    if (tokenCountElement) {
+                        tokenCountElement.value = message.count.toString();
+                    }
+                break;
+            case 'setCharCount':
+                    const charCountElement = document.getElementById('charCount') as HTMLInputElement;
+                    if (charCountElement) {
+                        charCountElement.value = message.count.toString();
+                    }
+                break;
         }
     });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    setupCompressionButtons();
-    setupOpenWebpageButton();
-    setupTextInput();
-    setupWindowMessageListener();
-    setupFileTypeInput();
-});
-
-function setupCompressionButtons() {
-    on(document, 'click', '.compression-button', (event) => {
-        const target = event.target as HTMLElement;
-        const compressionLevel = target.dataset.level;
-        resetButtonColors();
-        target.classList.add('selected');
-        postVsCodeMessage('setCompressionLevel', { level: compressionLevel });
+    // Initialize button event listeners after the DOM has loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        setClipboardDataBoxHeight();
+        setupTextInput();
+        setupFileTypeInputListener();
+    
+        document.getElementById('openWebpageButton')?.addEventListener('click', () => openWebpageButton());
+        document.getElementById('compressionLevelHard')?.addEventListener('click', () => updateCompressionLevel(3));
+        document.getElementById('compressionLevelMedium')?.addEventListener('click', () => updateCompressionLevel(2));
+        document.getElementById('compressionLevelLight')?.addEventListener('click', () => updateCompressionLevel(1));
     });
-}
 
-function resetButtonColors() {
-    document.querySelectorAll('.compression-button').forEach(button => button.classList.remove('selected'));
-}
+    //Function that updatesFiletypes
+    function setupFileTypeInputListener() {
+        const fileTypeInput = document.getElementById('fileTypeInput') as HTMLInputElement;
+        if (!fileTypeInput) return;
+    
+        fileTypeInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                const inputElement = event.target as HTMLInputElement;
+                const fileType = inputElement.value.trim();
+    
+                if (fileType) {
+                    vscode.postMessage({
+                        command: 'updateFileTypes',
+                        fileType: fileType
+                    });
+                    inputElement.value = ''; // Clear the input after sending
+                }
+            }
+        });
+    }
 
-function setupOpenWebpageButton() {
-    on(document, 'click', '#openWebpageButton', () => postVsCodeMessage('openWebpage'));
-}
+    function setupTextInput() {
+        const textarea = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+        if (!textarea) return;
+    
+        textarea.addEventListener('input', () => {
+            vscode.postMessage({
+                command: 'countTokens',
+                text: textarea.value
+            });
+            vscode.postMessage({
+                command: 'countChars',
+                text: textarea.value
+            });
+        });
+    }
 
-function setupTextInput() {
-    const textarea = document.getElementById('textInput') as HTMLTextAreaElement;
-    if (textarea) {
-        on(textarea, 'input', '', () => {
-            postVsCodeMessage('countTokens', { text: textarea.value });
-            postVsCodeMessage('countChars', { text: textarea.value });
+    //Function for openWebpageButton
+    function openWebpageButton() {
+        vscode.postMessage({
+            command: 'openWebpage'
+        });
+    }
+
+    // Sets the height of the ClipboardDataBox
+    function setClipboardDataBoxHeight() {
+        //This is the code that saves the height after resizing the clipboardDataBox
+        const clipboardDataBox = document.getElementById('clipboardDataBox');
+
+        document.addEventListener('mouseup', () => {
+
+            if (clipboardDataBox) {
+                const height = clipboardDataBox.offsetHeight;
+                vscode.postMessage({
+                    command: 'setClipboardDataBoxHeight',
+                    height: height
+                });
+            }
+        });
+    }
+
+    // Sends the chosen compression level back to the extension
+    function updateCompressionLevel(level: number) {
+        // Log the level being sent
+        console.log(`Sending compression level: ${level}`);
+
+        vscode.postMessage({
+            command: 'setCompressionLevel',
+            level: level
+        });
+    }
+
+    // Updates the UI based on the current configuration
+    function updateUI(fileTypes: string[], compressionLevel: number, clipboardDataBoxHeight?: number) {
+        // Log the received configuration
+        console.log(`Received fileTypes: ${fileTypes}, Compression Level: ${compressionLevel}`);
+
+        // Clear previous selections
+        document.querySelectorAll('.compression-button').forEach(button => {
+            button.classList.remove('selected');
         });
 
-        new ResizeObserver(() => postVsCodeMessage('updateInputBoxHeight', { height: window.getComputedStyle(textarea).height })).observe(textarea);
-    }
-}
-
-function setupWindowMessageListener() {
-    window.addEventListener('message', ({ data }) => {
-        const handlers: { [key: string]: () => void } = {
-            setClipboardContent: () => (document.getElementById('textInput') as HTMLTextAreaElement).value = data.content,
-            setTokenCount: () => (document.getElementById('tokenCount') as HTMLInputElement).value = data.count.toString(),
-            setCharCount: () => (document.getElementById('charCount') as HTMLInputElement).value = data.count.toString(),
-            setFileTypes: () => updateFileTypeList(data.fileTypes),
-        };
-
-        if (handlers[data.command]) {
-            handlers[data.command]();
+        // Mark the current compression level as selected
+        const levelMap: { [key: number]: string } = {1: 'compressionLevelLight', 2: 'compressionLevelMedium', 3: 'compressionLevelHard'};
+        const selectedButtonId = levelMap[compressionLevel];
+        const selectedButton = document.getElementById(selectedButtonId);
+        if (selectedButton) {
+            selectedButton.classList.add('selected');
         }
-    });
-}
 
-function updateFileTypeList(fileTypes: string[]) {
-    const container = document.getElementById('file-types-container');
-    if (container) {
-        container.innerHTML = fileTypes.map(fileType => `<li>${fileType}</li>`).join('');
-    }
-}
-
-function setupFileTypeInput() {
-    const fileTypeInput = document.getElementById('fileTypeInput') as HTMLInputElement;
-    fileTypeInput?.addEventListener('keypress', (event: KeyboardEvent) => {
-        if (event.key === 'Enter') {
-            const fileType = fileTypeInput.value.trim();
-            if (fileType) {
-                vscode.postMessage({
-                    command: 'toggleFileType',
-                    fileType: fileType
-                });
-                fileTypeInput.value = '';
+        //Change size of the clipboardDataBox
+        // Apply clipboardDataBoxHeight
+        if (clipboardDataBoxHeight !== undefined) {
+            const clipboardDataBox = document.getElementById('clipboardDataBox');
+            if (clipboardDataBox) {
+                clipboardDataBox.style.height = `${clipboardDataBoxHeight}px`;
             }
-            event.preventDefault();
         }
-    });
-}
+
+        // Update file types list
+        const fileTypeContainer = document.getElementById('file-types-container');
+        if (fileTypeContainer) {
+            fileTypeContainer.innerHTML = '';
+            fileTypes.forEach(fileType => {
+                const listItem = document.createElement('li');
+                listItem.textContent = fileType;
+                fileTypeContainer.appendChild(listItem);
+            });
+        }
+    }

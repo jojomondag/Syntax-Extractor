@@ -1,52 +1,57 @@
 {
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
-  "description": "Hello there! 🙌 Meet the Syntax Extractor, my pet project. Crafted from navigating messy code and a desire for better AI communication. It's the breather for code enthusiasts like you.",
-  "version": "0.1.9",
-  "publisher": "JosefNobach",
-  "icon": "dist/resources/SyntaxExtractor256x256.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jojomondag/syntaxExtractor.git"
-  },
+  "description": "Syntax Extractor, helps you Gather your Code",
+  "version": "0.2.1",
+  "publisher": "Josef Nobach",
+  "icon": "out/resources/SyntaxExtractor256x256.png",
   "engines": {
-    "vscode": "^1.83.0"
+    "vscode": "^1.87.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
-  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onCommand:syntaxExtractorSidebar.buttonCommand",
+    "onCommand:syntaxExtractorSidebar.createWebview",
+    "onCommand:syntaxExtractor.extractAndCopyText",
+    "onCommand:syntaxExtractor.extractFileFolderTree"
+  ],
+  "main": "./out/extension.js",
   "contributes": {
     "configuration": {
-      "title": "Syntax Extractor",
-        "properties": {
-            "syntax-extractor.compressionLevel": {
-                "type": "string",
-                "default": "medium",
-                "description": "The compression level."
-            },
-            "syntax-extractor.inputTextBoxHeight": {
-                "type": "string",
-                "default": "100px",
-                "description": "The height of the input text box."
-            },
-            "syntax-extractor.fileTypes": {
-                "type": "array",
-                "default": [".txt", ".js", ".ts", ".html"],
-                "description": "The file types to read."
-            },
-            "syntax-extractor.excludedPaths": {
-                "type": "array",
-                "default": ["\\.git", "\\node_modules", "\\.eslintrc.json", "\\.gitignore", "\\.vscodeignore", "\\CHANGELOG.md", "\\package-lock.json", "\\README.md"],
-                "description": "The paths to exclude."
-            }
+      "title": "syntaxExtractor",
+      "properties": {
+        "syntaxExtractor.fileTypes": {
+          "type": "array",
+          "default": [
+            ".cs",
+            ".js",
+            ".html",
+            ".txt"
+        ],
+          "description": "File types to be handled by the extension."
+        },
+        "syntaxExtractor.compressionLevel": {
+          "type": "number",
+          "default": 2,
+          "description": "Compression level for the extension."
+        },
+        "syntaxExtractor.clipboardDataBoxHeight": {
+          "type": "number",
+          "default": 100,
+          "description": "Height of the clipboard data box in pixels."
         }
+      }
     },
     "commands": [
       {
-        "command": "syntaxExtractor.openGui",
-        "title": "Syntax Extractor Settings"
+        "command": "syntaxExtractorSidebar.buttonCommand",
+        "title": "Button Command"
+      },
+      {
+        "command": "syntaxExtractorSidebar.createWebview",
+        "title": "Open Webpage"
       },
       {
         "command": "syntaxExtractor.extractAndCopyText",
@@ -74,56 +79,55 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "syntaxExtractorButton",
-          "title": "SE",
-          "icon": "dist/resources/SyntaxExtractor256x256.png"
+          "id": "syntaxExtractorSidebar",
+          "title": "Syntax Extractor",
+          "icon": "media/icon.png"
         }
       ]
     },
     "views": {
-      "syntaxExtractorButton": [
+      "syntaxExtractorSidebar": [
         {
-          "id": "syntaxExtractorView",
-          "name": "Syntax Extractor"
+          "id": "emptyView",
+          "name": "Empty View"
+        },
+        {
+          "id": "syntaxExtractorSidebarButton",
+          "name": "Open Webpage",
+          "when": "workspaceHasCode",
+          "command": "syntaxExtractorSidebarButton"
+        }
+      ],
+      "explorer": [
+        {
+          "id": "buttonView",
+          "name": "Button View",
+          "when": "workspaceHasCode"
         }
       ]
     }
   },
   "scripts": {
-    "webpack": "webpack --config webpack.config.js",
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "vscode:prepublish": "npm run compile",
+    "clean": "rimraf out",
+    "compile": "tsc -p ./ && npm run copy-assets",
+    "copy-assets": "copyfiles src/webview/*.{html,css} src/resources/SyntaxExtractor256x256.png out/ -u 1",
+    "rebuild": "npm run clean && npm run compile",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.2",
-    "@types/node": "^20.11.25",
-    "@types/react": "^18.2.36",
-    "@types/react-dom": "^18.2.14",
-    "@types/vscode": "^1.83.0",
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "@typescript-eslint/parser": "^6.7.3",
-    "@vscode/test-electron": "^2.3.4",
-    "copy-webpack-plugin": "^11.0.0",
-    "cross-env": "^7.0.3",
-    "css-loader": "^6.8.1",
-    "eslint": "^8.50.0",
-    "glob": "^10.3.3",
-    "html-webpack-plugin": "^5.5.3",
-    "mocha": "^10.2.0",
-    "style-loader": "^3.3.3",
-    "ts-loader": "^9.4.4",
-    "typescript": "^5.2.2",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
+    "@types/vscode": "^1.87.0",
+    "copyfiles": "^2.4.1",
+    "css-loader": "^6.10.0",
+    "eslint": "^7.10.0",
+    "rimraf": "^5.0.5",
+    "style-loader": "^3.3.4",
+    "ts-loader": "^9.5.1",
+    "typescript": "^4.0.3"
   },
   "dependencies": {
-    "tiktoken": "^1.0.10"
+    "tiktoken": "^1.0.13"
   }
 }

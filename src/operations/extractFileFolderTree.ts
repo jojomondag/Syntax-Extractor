@@ -1,5 +1,6 @@
 // File: extractFileFolderTree.ts
-import { path, vscode } from '..';
+import * as path from 'path';
+import { vscode } from '..';
 import { copyToClipboard } from '../commands';
 import { processSelectedItems } from './processSelectedItems';
 import { ConfigManager } from '../config/ConfigManager';
@@ -8,11 +9,11 @@ import { getAdjustedCommonDir } from '.';
 export function extractFileFolderTree(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
     console.log("extractFileFolderTree: Function called");
 
-    const configManager = new ConfigManager();
+    const configManager = ConfigManager.getInstance();
 
     try {
         // Directly access the compressionLevel from configManager
-        const compressionLevel = configManager.compressionLevel;
+        const compressionLevel = configManager.getCompressionLevel();
         const commonDir = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
         console.log(`Common Directory: ${commonDir}`);
@@ -24,13 +25,13 @@ export function extractFileFolderTree(contextSelection: vscode.Uri, allSelection
         let pathsString = "";
 
         switch (compressionLevel) {
-            case 'hard':
+            case 3:
                 pathsString = generatePathStringCompressionHard(allSelections, commonDir);
                 break;
-            case 'medium':
+            case 2:
                 pathsString = generatePathStringCompressionMedium(allSelections, commonDir);
                 break;
-            case 'light':
+            case 1:
                 pathsString = generatePathStringCompressionLight(allSelections, commonDir);
                 break;
             default:

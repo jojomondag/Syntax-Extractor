@@ -7,6 +7,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 export function getTokenCount(text: string): number {
+    console.log("getting token count...");
     try {
         const encoding = new Tiktoken(
             cl100k_base.bpe_ranks,
