@@ -3,8 +3,12 @@
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
   "version": "0.2.1",
-  "publisher": "Josef Nobach",
+  "publisher": "JosefNobach",
   "icon": "out/resources/SyntaxExtractor256x256.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jojomondag/syntaxExtractor.git"
+  },
   "engines": {
     "vscode": "^1.87.0"
   },
