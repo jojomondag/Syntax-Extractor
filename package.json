@@ -118,9 +118,8 @@
     "copy-assets": "copyfiles src/webview/*.{html,css} src/resources/SyntaxExtractor256x256.png out/ -u 1",
     "rebuild": "npm run clean && npm run compile",
     "watch": "tsc -watch -p ./",
-    "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "npm run compile && node ./node_modules/vscode/bin/test"
-  },
+  },  
   "devDependencies": {
     "@types/vscode": "^1.87.0",
     "copyfiles": "^2.4.1",
