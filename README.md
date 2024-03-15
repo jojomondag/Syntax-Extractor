@@ -4,17 +4,17 @@
   <img src="https://raw.githubusercontent.com/jojomondag/MyIconsForMyProjects/e4c9eb892cca0e9a9f3a9d1792cc890ac051d10d/SyntaxExtractor256x256.png" width="200" height="200">
 </p>
 
-Hello there! 🙌 Thanks for dropping by. I'm thrilled to introduce to you my pet project, the **Syntax Extractor**. Born out of countless hours navigating through messy code and folders, and the sheer need to communicate effectively with language models, this tool might just be the breather you've been looking for.
+**Syntax Extractor**. Helps you Gather your Code Quickly and thus helps you communicate your code effectively with language models/LLM's.
 
 ## 🌟 Features
 
 1. **Deep Dive Extraction** - Extract all text from marked folders, subfolders, and files.
 
-2. **Syntax Tree Transformation** - It's not just about pulling out the code. Watch as entire folders and files transform into a beautiful syntax tree text representation. Visual learners, rejoice!
+2. **Syntax Tree Transformation** - Watch as entire folders and files transform into a beautiful syntax tree text representation!
    
-3. **Clipboard Convenience** - Say goodbye to endless copy-pasting. With a click, your extracted syntax is ready to go wherever you want.
+3. **Clipboard Convenience** - Copy-pasting. With a click, your extracted syntax is ready to go wherever you want.
    
-4. **Seamless Language Model Communication** - Are you into language models? We've got you. My tool enhances the communication speed between your code and the AI, making conversations fluid.
+4. **Seamless Language Model Communication** - Are you into language models? My tool enhances the communication speed between your code and the AI, making conversations fluid.
    
 <p align="center" style="font-size: 24px;">
   &rarr; <a href="https://youtube.com/shorts/CRpBg0mb8qY?si=TqlSQ7E2LlUQREYb">Video link</a> &larr;

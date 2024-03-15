@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "publisher": "JosefNobach",
   "icon": "out/resources/SyntaxExtractor256x256.png",
   "repository": {
@@ -16,10 +16,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:syntaxExtractorSidebar.buttonCommand",
-    "onCommand:syntaxExtractorSidebar.createWebview",
-    "onCommand:syntaxExtractor.extractAndCopyText",
-    "onCommand:syntaxExtractor.extractFileFolderTree"
   ],
   "main": "./out/extension.js",
   "contributes": {

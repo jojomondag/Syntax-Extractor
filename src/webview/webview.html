@@ -8,29 +8,36 @@
 </head>
 <body>
     <main class="main-container">
-        <textarea class="clipboardContentBox" id="clipboardDataBox" placeholder="Paste clipboard data here"></textarea>
-        <section class="compression-section">
-            <label class="label-style">Compression</label>
+        <!-- Text Input Area -->
+        <textarea id="clipboardDataBox" class="textarea clipboard-content" placeholder="Paste clipboard data here"></textarea>
+        
+        <!-- Horizontal Section for Compression Options, Counters, and Open Webpage Button -->
+        <section class="horizontal-section">
+
             <div id="compression-buttons">
+                <label class="label" for="compression-button">Compression</label>
                 <button class="compression-button" id="compressionLevelHard">Hard</button>
                 <button class="compression-button" id="compressionLevelMedium">Medium</button>
                 <button class="compression-button" id="compressionLevelLight">Light</button>
             </div>
-        </section>
-        <section class="counters">
-            <div class="counter">
-                <label for="tokenCount" class="label-style">Tokens</label>
-                <input type="text" id="tokenCount" readonly value="507">
+            
+            <div class="counter token-counter">
+                <label class="label" for="tokenCount">Tokens</label>
+                <input class="input token-count" type="text" id="tokenCount" readonly value="666">
             </div>
-            <div class="counter">
-                <label for="charCount" class="label-style">Chars</label>
-                <input type="text" id="charCount" readonly value="2034">
+            
+            <div class="counter char-counter">
+                <label class="label" for="charCount">Chars</label>
+                <input class="input char-count" type="text" id="charCount" readonly value="666">
             </div>
+            
+            <button id="openWebpageButton" class="button webpage-button">Open Webpage</button>
         </section>
-        <button id="openWebpageButton">Open Webpage</button>
+        
+        <!-- JSON Types Container -->
         <div class="json-types-container">
-            <ul id="file-types-container"></ul>
-            <input type="text" id="fileTypeInput" placeholder="Enter file extension to Add or Remove. Press Enter to Accept">
+            <ul id="file-types-container" class="json-types-list"></ul>
+            <input type="text" id="fileTypeInput" class="input filetype-input" placeholder="Enter file extension to Add or Remove. Press Enter to Accept">
         </div>
     </main>
     <script src="webview.js"></script>

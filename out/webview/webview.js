@@ -49,6 +49,15 @@ function setupFileTypeInputListener() {
     const fileTypeInput = document.getElementById('fileTypeInput');
     if (!fileTypeInput)
         return;
+    // Add event listener for 'focus' event
+    fileTypeInput.addEventListener('focus', () => {
+        fileTypeInput.placeholder = ''; // Clear the placeholder on focus
+    });
+    // Add event listener for 'blur' event
+    fileTypeInput.addEventListener('blur', () => {
+        fileTypeInput.placeholder = 'Enter file extension to Add or Remove. Press Enter to Accept'; // Restore the placeholder on blur
+    });
+    // Existing event listener for 'keydown'
     fileTypeInput.addEventListener('keydown', event => {
         if (event.key === 'Enter') {
             const inputElement = event.target;

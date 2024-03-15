@@ -14,17 +14,16 @@ html, body {
 
 /* Full-width main container styles */
 .main-container {
-    padding: 5px 10px 0 10px; /* Top, Right, Bottom, Left */
+    padding: 5px 10px;
     display: flex;
     flex-direction: column;
-    align-items: stretch; /* Align children to stretch across the main axis */
-    width: calc(100vw - 20px); /* Subtract the total horizontal padding from the viewport width */
-    max-width: 100%; /* Prevent the container from extending beyond the viewport width */
-    box-sizing: border-box; /* Include padding in the width calculation */
+    align-items: stretch;
+    width: calc(100vw - 20px);
+    max-width: 100%;
 }
 
-/* Text input area styles */
-.clipboardContentBox {
+/* Textarea styles */
+.textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid #e7e7e7;
@@ -37,7 +36,7 @@ html, body {
 }
 
 /* Button general styles */
-button {
+.button {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
@@ -45,115 +44,164 @@ button {
     transition: background-color 0.3s ease;
 }
 
-/* Compression buttons styles */
 .compression-button {
     background-color: #e7e7e7;
-    color: #000; /* Changed to black */
+    color: #000; /* Ensured text is black for better visibility */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .compression-button:hover {
-    background-color: #d4d4d4;
-    color: #000; /* Ensured hover state also has black text */
+    background-color: #d4d4d4; /* Darker shade on hover */
+    color: #000; /* Text color remains black */
 }
 
 .compression-button.selected {
-    background-color: #4CAF50;
-    color: #000; /* Changed to black */
+    background-color: #4CAF50; /* Green background for selected button */
+    color: #000; /* Text color remains black */
 }
 
-/* Open Webpage button styles */
-#openWebpageButton {
+.webpage-button {
     background-color: #007BFF;
-    color: #000; /* Changed to black */
 }
 
-#openWebpageButton:hover {
+.webpage-button:hover {
     background-color: #0056b3;
-    color: #000; /* Ensured hover state also has black text */
 }
 
-/* Mid-section styles */
-.mid-section {
+/* Layout for horizontal section */
+.horizontal-section {
     display: flex;
-    justify-content: space-around; /* Distribute space around items */
-    align-items: center; /* Align items vertically */
-    width: 100%; /* Full width of the main container */
-    margin-bottom: 20px; /* Space below mid-section */
+    justify-content: center; /* Aligns children to the center of the container */
+    align-items: center;
+    flex-wrap: wrap; /* Allows items to wrap if necessary */
+    margin-bottom: 20px;
 }
 
-/* Compression section styles */
-.compression-section {
-    display: flex;
-    justify-content: center; /* Center buttons horizontally */
-    align-items: center; /* Center buttons vertically */
-    flex-wrap: wrap; /* Allow wrapping for smaller screens */
-}
-
-/* Counter styles */
-.counters {
-    display: flex;
-    justify-content: space-between; /* Space out the counters */
-}
-
+/* Adjustments for inline counters for a more compact display */
 .counter {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Keep label and input inline */
     align-items: center;
-    margin: 0 20px; /* Space between counters */
+    margin: 0 5px; /* Reduced margin to bring counters closer */
+    flex-basis: auto; /* Adjust this based on your layout or remove if not needed */
 }
 
-.counter input {
-    width: 60px; /* Fixed width for token and char count boxes */
+.counter .label {
+    margin-right: 5px; /* Space between label and input */
+}
+
+.input {
+    width: 120px; /* Half-width as previously adjusted */
+    padding: 10px 20px; /* Same padding as buttons for consistency */
+    border: none; /* Remove border if you want the flat button style */
+    border-radius: 5px; /* Rounded corners like buttons */
+    background-color: #e7e7e7; /* Same background color as buttons */
     text-align: center;
-    cursor: not-allowed; /* Indicates the field is read-only */
-    color: #000; /* Set text color to black */
+    cursor: pointer; /* Optional: if you want the cursor to be a pointer */
+    color: #000; /* Text color to match buttons */
+    transition: background-color 0.3s ease; /* Transition for hover effect */
+    margin: 0 5px; /* Adjust margin for compact alignment */
+    cursor: not-allowed; /* Keep it not-allowed if the input shouldn't be editable */
 }
 
-/* JSON types container styles */
+.input:hover {
+    background-color: #d4d4d4; /* Same hover effect as buttons */
+}
+
+.button, .input {
+    margin-right: 5px; /* Reduce spacing on the right for a tighter layout */
+}
+
+/* JSON types container and list styles */
 .json-types-container {
-    width: 100%; /* Full width of the main container */
+    display: flex; /* Use flexbox for centering */
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center children horizontally */
+    justify-content: center; /* Center children vertically, if there is free space */
+    width: 100%; /* Full width */
     margin-bottom: 20px; /* Space below the container */
 }
 
-/* JSON file type input styles */
-#fileTypeInput {
-    width: 100%; /* Full width to match the container */
-    padding: 8px 10px;
-    margin-top: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-    margin-bottom: 10px; /* Space below the input */
-}
 
-/* JSON file types list styles */
-#file-types-container {
+.json-types-list {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    list-style-type: none; /* Remove default list bullets */
+    list-style-type: none;
     padding: 0;
-    width: 100%; /* Full width to match the container */
+    width: 100%;
 }
 
-#file-types-container li {
+.json-types-list li {
     padding: 5px 10px;
     border-radius: 4px;
-    background-color: #f0f0f0; /* Light grey background */
-    color: #000; /* Changed to black */
+    background-color: #f0f0f0;
+    color: #000;
 }
-/* Ensure that all containers within main-container also span full width */
-.control-container, .mid-section, .json-types-container {
-    width: 100%;
-    box-sizing: border-box; /* Include padding and border in the width calculation */
+
+.compression-options:before {
+    content: "Compression";
+    margin-right: 10px;
 }
-.section-container {
-    border: 1px solid #e7e7e7; /* This matches the .compression-button border color */
-    border-radius: 5px; /* This matches the .compression-button border-radius */
-    padding: 10px; /* Optional: if you want padding inside the border */
-    background-color: #f7f7f7; /* This matches the .compression-button background color when not selected */
-    margin: 5px 0; /* Consistent with other elements */
-    display: flex; /* To align the counters inline */
-    justify-content: center; /* To center the counters horizontally */
-    align-items: center; /* To center the counters vertically */
+
+.filetype-input {
+    width: 420px;
+    padding: 8px 10px;
+    margin: 10px 0; /* Adjust the margin if needed */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    cursor: text;
+}
+
+/* Ensure buttons and input fields do not wrap individually */
+.button, .input {
+    white-space: nowrap;
+}
+
+/* Responsive adjustments for narrower screens */
+@media (max-width: 768px) {
+    .horizontal-section {
+        flex-direction: column; /* Stack elements vertically */
+        align-items: stretch; /* Stretch children to match the parent's width */
+    }
+
+    .horizontal-section > * {
+        margin-bottom: 10px; /* Add some space between vertically stacked elements */
+    }
+
+    .json-types-container, .json-types-list {
+        padding: 0 10px; /* Add padding on the sides for better readability */
+    }
+
+    .main-container {
+        width: 100%; /* Adjust container width to ensure it uses full available width */
+        padding: 5px; /* Reduce padding to save space */
+    }
+
+    .button, .input, .compression-button {
+        width: 100%; /* Ensure buttons and inputs use full width to avoid overflow */
+    }
+
+    .filetype-input {
+        width: calc(100% - 20px); /* Adjust width to account for padding */
+    }
+}
+
+/* Further adjustments for even narrower screens */
+@media (max-width: 480px) {
+    .button, .input, .compression-button, .textarea {
+        padding: 8px 10px; /* Further reduce padding for smaller elements */
+    }
+
+    .filetype-input {
+        font-size: 12px; /* Reduce font size to ensure text fits well */
+    }
 }
