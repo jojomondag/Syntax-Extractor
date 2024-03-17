@@ -35,7 +35,7 @@
 
 ## 💌 Feedback and Suggestions
 
-This project is close to my heart, and I've poured hours into it. But it's not perfect (yet!). I would genuinely appreciate your feedback or any cool ideas to make it better. Feel free to open an issue, send a pull request, or even shoot me a direct message.
+I would genuinely appreciate your feedback or any cool ideas to make it better. Feel free to open an issue, send a pull request, or even shoot me a direct message.
 
 ## 🌈 Future of Syntax Extractor
 As the journey of Syntax Extractor continues, there’s a fascinating future awaiting. One of the primary focus is to enhance code interaction by identifying recurring patterns and codewords within the codebase. This initiative is driven by the ideology of compact representation and maintaining context with lesser text. Here are some of the envisioned advancements:
