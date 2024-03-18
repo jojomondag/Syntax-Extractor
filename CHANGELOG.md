@@ -44,3 +44,5 @@ Changes to "syntaxExtractor" extension.
 - 2024-03-14 - syntax-extractor-0.2.3.vsix: Major Overhaul rewrote everything now it works perfectly.
 
 - 2024-03-17 - syntax-extractor-0.2.4.vsix: Changed the extention so we cant open it many times, and that the webview retains its state.
+
+- 2024-04-18 - syntax-extractor-0.2.4.vsix: Changed the close behavior so we can reactivate the extenion webview

@@ -8,11 +8,13 @@
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
     "typescript.tsc.autoDetect": "off",
-    "syntaxExtractor.clipboardDataBoxHeight": 306,
+    "syntaxExtractor.clipboardDataBoxHeight": 282,
     "syntaxExtractor.fileTypes": [
         ".html",
         ".json",
-        ".css"
+        ".css",
+        ".ts",
+        ".linda"
     ],
     "syntaxExtractor.compressionLevel": 1
 }

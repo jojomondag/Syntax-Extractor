@@ -40,7 +40,15 @@
                     localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'out', 'webview')]
                 }
             );
-    
+
+            // Listen for when the panel is disposed
+            // This will be called when the user closes the panel
+            console.log('Setting up onDidDispose event');
+            globalPanel.onDidDispose(() => {
+                console.log('Webview was closed');
+                globalPanel = undefined;
+            }, null, context.subscriptions);
+        
             // Initialize webview content
             (async () => {
                 if (globalPanel) {
