@@ -211,12 +211,7 @@ function setupWebviewPanelActions(panel, context) {
             clipBoardPolling(panel); // Continue clipboard polling if needed
         }
     });
-    // Setup to listen for messages from the webview and respond accordingly
-    panel.webview.onDidReceiveMessage(async (message) => {
-        await handleReceivedMessage(message, panel, context);
-    }, undefined, context.subscriptions);
     // Initial send of configuration to ensure webview is up-to-date
     sendConfigToWebview();
-    // Additional setup or event listeners as necessary
 }
 //# sourceMappingURL=extension.js.map
