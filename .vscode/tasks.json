@@ -1,5 +1,3 @@
-// See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
 {
 	"version": "2.0.0",
 	"tasks": [
@@ -14,7 +12,22 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			},
+			}
 		},
+		{
+			"label": "copy-assets",
+			"type": "shell",
+			"command": "npm run copy-assets",
+			"problemMatcher": []
+		},
+		{
+			"label": "build-and-copy-assets",
+			"type": "shell",
+			"dependsOn": ["copy-assets", "watch"],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
 	]
 }
