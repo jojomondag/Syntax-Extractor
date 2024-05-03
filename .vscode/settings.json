@@ -13,8 +13,7 @@
         ".html",
         ".json",
         ".css",
-        ".ts",
-        ".linda"
+        ".ts"
     ],
     "syntaxExtractor.compressionLevel": 1
 }

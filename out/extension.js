@@ -46,53 +46,47 @@ function activate(context) {
     });
 }
 exports.activate = activate;
-// In the old code version, this global reference ensures only one webview instance is managed and reused.
 let globalPanel;
-// Opens a webview for displaying web content and then switches to the Explorer sidebar.
 function openWebviewAndExplorerSidebar(context) {
     if (globalPanel) {
+        // Reveal the existing webview panel
         globalPanel.reveal(vscode.ViewColumn.One);
     }
     else {
+        // Create a new webview if it does not already exist
         globalPanel = vscode.window.createWebviewPanel('webPageView', 'SynExt', vscode.ViewColumn.One, {
             enableScripts: true,
             localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'out', 'webview')]
         });
-        // Listen for when the panel is disposed
-        // This will be called when the user closes the panel
-        console.log('Setting up onDidDispose event');
+        // Event to handle the disposal of the webview
         globalPanel.onDidDispose(() => {
             console.log('Webview was closed');
-            globalPanel = undefined;
+            globalPanel = undefined; // Clear the reference to the disposed webview
         }, null, context.subscriptions);
-        // Initialize webview content
+        // Load the content into the webview
         (async () => {
-            if (globalPanel) {
-                globalPanel.webview.html = await composeWebViewContent(globalPanel.webview, context.extensionUri);
-            }
+            globalPanel.webview.html = await composeWebViewContent(globalPanel.webview, context.extensionUri);
         })();
-    }
-    if (globalPanel) {
-        // Apply the setupWebviewPanelActions function to manage state and listen for messages
+        // Setup actions associated with the webview
         setupWebviewPanelActions(globalPanel, context);
+        // Setup clipboard polling
         clipBoardPolling(globalPanel);
-        // Use the handleReceivedMessage function
+        // Listen to messages from the webview and handle them
         globalPanel.webview.onDidReceiveMessage(message => {
             if (globalPanel) { // Additional check for safety
                 handleReceivedMessage(message, globalPanel, context);
             }
         }, undefined, context.subscriptions);
-        // Optionally send initial configuration to webview
+        // Send initial configuration to the webview
         globalPanel.webview.postMessage({
             command: 'initConfig',
             fileTypes: ConfigManager_1.ConfigManager.getInstance().getFileTypes(),
             compressionLevel: ConfigManager_1.ConfigManager.getInstance().getCompressionLevel(),
             clipboardDataBoxHeight: ConfigManager_1.ConfigManager.getInstance().getClipboardDataBoxHeight()
         });
-        // Adjust view as necessary
-        vscode.commands.executeCommand('workbench.action.closeSidebar');
-        vscode.commands.executeCommand('workbench.view.explorer');
     }
+    // This command ensures that the Explorer view is always shown when the button is pressed
+    vscode.commands.executeCommand('workbench.view.explorer');
 }
 // Modified handleReceivedMessage to correctly handle async operations
 async function handleReceivedMessage(message, panel, context) {
