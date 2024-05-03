@@ -44,10 +44,19 @@ html, body {
     transition: background-color 0.3s ease;
 }
 
+#compression-buttons {
+    display: flex;
+    flex-wrap: nowrap; /* Ensure the buttons do not wrap */
+    justify-content: center; /* This centers the buttons in the div, you can adjust as needed */
+    align-items: center; /* Aligns items vertically in the center */
+}
+
 .compression-button {
+    margin-right: 10px;
+    padding: 10px 20px; /* Vertical and horizontal padding */
+    border-radius: 5px; /* Rounded corners */
     background-color: #e7e7e7;
-    color: #000; /* Ensured text is black for better visibility */
-    padding: 10px 20px;
+    color: #000;
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -55,13 +64,12 @@ html, body {
 }
 
 .compression-button:hover {
-    background-color: #d4d4d4; /* Darker shade on hover */
-    color: #000; /* Text color remains black */
+    background-color: #d4d4d4;
 }
 
 .compression-button.selected {
-    background-color: #4CAF50; /* Green background for selected button */
-    color: #000; /* Text color remains black */
+    background-color: #4CAF50;
+    color: #000;
 }
 
 .webpage-button {
@@ -75,57 +83,56 @@ html, body {
 /* Layout for horizontal section */
 .horizontal-section {
     display: flex;
-    justify-content: center; /* Aligns children to the center of the container */
+    justify-content: center;
     align-items: center;
-    flex-wrap: wrap; /* Allows items to wrap if necessary */
+    flex-wrap: nowrap; /* Prevent wrapping */
     margin-bottom: 20px;
 }
 
 /* Adjustments for inline counters for a more compact display */
 .counter {
     display: flex;
-    flex-direction: row; /* Keep label and input inline */
+    flex-direction: row;
     align-items: center;
-    margin: 0 5px; /* Reduced margin to bring counters closer */
-    flex-basis: auto; /* Adjust this based on your layout or remove if not needed */
+    margin: 0 5px;
+    flex-basis: auto;
 }
 
 .counter .label {
-    margin-right: 5px; /* Space between label and input */
+    margin-right: 5px;
 }
 
 .input {
-    width: 120px; /* Half-width as previously adjusted */
-    padding: 10px 20px; /* Same padding as buttons for consistency */
-    border: none; /* Remove border if you want the flat button style */
-    border-radius: 5px; /* Rounded corners like buttons */
-    background-color: #e7e7e7; /* Same background color as buttons */
+    width: 120px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #e7e7e7;
     text-align: center;
-    cursor: pointer; /* Optional: if you want the cursor to be a pointer */
-    color: #000; /* Text color to match buttons */
-    transition: background-color 0.3s ease; /* Transition for hover effect */
-    margin: 0 5px; /* Adjust margin for compact alignment */
-    cursor: not-allowed; /* Keep it not-allowed if the input shouldn't be editable */
+    cursor: not-allowed;
+    color: #000;
+    transition: background-color 0.3s ease;
+    margin: 0 5px;
 }
 
 .input:hover {
-    background-color: #d4d4d4; /* Same hover effect as buttons */
+    background-color: #d4d4d4;
 }
 
 .button, .input {
-    margin-right: 5px; /* Reduce spacing on the right for a tighter layout */
+    margin-right: 5px;
+    white-space: nowrap; /* Prevent individual elements from wrapping */
 }
 
 /* JSON types container and list styles */
 .json-types-container {
-    display: flex; /* Use flexbox for centering */
-    flex-direction: column; /* Stack children vertically */
-    align-items: center; /* Center children horizontally */
-    justify-content: center; /* Center children vertically, if there is free space */
-    width: 100%; /* Full width */
-    margin-bottom: 20px; /* Space below the container */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
 }
-
 
 .json-types-list {
     display: flex;
@@ -151,7 +158,7 @@ html, body {
 .filetype-input {
     width: 420px;
     padding: 8px 10px;
-    margin: 10px 0; /* Adjust the margin if needed */
+    margin: 10px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
@@ -161,16 +168,12 @@ html, body {
     cursor: text;
 }
 
-/* Ensure buttons and input fields do not wrap individually */
-.button, .input {
-    white-space: nowrap;
-}
-
 /* Responsive adjustments for narrower screens */
-@media (max-width: 768px) {
+
+@media (max-width: 890px) {
     .horizontal-section {
         flex-direction: column; /* Stack elements vertically */
-        align-items: stretch; /* Stretch children to match the parent's width */
+        align-items: stretch;
     }
 
     .horizontal-section > * {
@@ -196,7 +199,7 @@ html, body {
 }
 
 /* Further adjustments for even narrower screens */
-@media (max-width: 480px) {
+@media (max-width: 500px) {
     .button, .input, .compression-button, .textarea {
         padding: 8px 10px; /* Further reduce padding for smaller elements */
     }

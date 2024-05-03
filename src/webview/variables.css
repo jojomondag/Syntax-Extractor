@@ -1,0 +1,54 @@
+:root {
+    /* Common dimensions and colors */
+    --border-radius: 5px;
+    --background-light: #f7f7f7;
+    --background-medium: #e7e7e7;
+    --background-dark: #d4d4d4;
+    --background-active: #4CAF50;
+    --background-button: #007BFF;
+    --background-button-hover: #0056b3;
+    --border-color: #ccc;
+    --transition-speed: 0.3s ease;
+}
+
+/* CSS reset for margin and padding */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Base styles for full viewport height, width, and overflow control */
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* Common interactive element styles */
+.interactive-element {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+}
+
+.interactive-element:hover {
+    background-color: var(--background-dark);
+}
+
+/* Common layouts */
+.flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-container.column {
+    flex-direction: column;
+}
+
+.flex-container.wrap {
+    flex-wrap: wrap;
+}

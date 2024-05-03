@@ -10,6 +10,8 @@
     "typescript.tsc.autoDetect": "off",
     "syntaxExtractor.clipboardDataBoxHeight": 282,
     "syntaxExtractor.fileTypes": [
+        ".css",
+        ".html"
     ],
     "syntaxExtractor.compressionLevel": 1
 }
