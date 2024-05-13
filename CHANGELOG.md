@@ -50,3 +50,5 @@ Changes to "syntaxExtractor" extension.
 - 2024-05-03 - syntax-extractor-0.2.7.vsix: only 1 registration now.
 
 - 2024-05-13 - Detect filetypes at activation and creation of settings.json. Dont read non utf filetypes.
+
+- 2024-05-13 - We can refresh filetypes and filetypes are registerad at activation.
