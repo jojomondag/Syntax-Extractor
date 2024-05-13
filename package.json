@@ -23,8 +23,7 @@
       "properties": {
         "syntaxExtractor.fileTypes": {
           "type": "array",
-          "default": [
-          ],
+          "default": [],
           "description": "File types to be handled by the extension."
         },
         "syntaxExtractor.compressionLevel": {

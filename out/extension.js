@@ -25,57 +25,56 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = void 0;
 const vscode = __importStar(require("vscode"));
-const operations_1 = require("./operations");
+const initializeFileTypes_1 = require("./operations/initializeFileTypes");
 const ConfigManager_1 = require("./config/ConfigManager");
+const operations_1 = require("./operations");
 const openWebpage_1 = require("./commands/openWebpage");
-// Defin    es a data provider for a tree view, implementing the necessary interfaces for VS Code to render and manage tree items.
+// Defines a data provider for a tree view, implementing the necessary interfaces for VS Code to render and manage tree items.
 class MyDataProvider {
     getTreeItem(element) { return element; }
     getChildren() { return Promise.resolve([]); }
 }
-// Activates the extension, setting up the tree view and command registration.
-function activate(context) {
+async function activate(context) {
     const treeView = vscode.window.createTreeView('emptyView', { treeDataProvider: new MyDataProvider() });
     context.subscriptions.push(vscode.commands.registerCommand('extension.createWebview', () => openWebviewAndExplorerSidebar(context)));
     context.subscriptions.push(vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', operations_1.extractFileFolderTree));
     context.subscriptions.push(vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', operations_1.extractAndCopyText));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes));
     treeView.onDidChangeVisibility(({ visible }) => {
         if (visible) {
             openWebviewAndExplorerSidebar(context);
         }
     });
-    // Ensure settings.json exists or initialize configuration
-    initializeFileTypeConfiguration();
+    // Check if settings.json exists before initializing file types
+    const exists = await settingsFileExists();
+    if (!exists) {
+        console.log('settings.json not found. Initializing file types.');
+        await (0, initializeFileTypes_1.initializeFileTypeConfiguration)();
+    }
+    else {
+        console.log('settings.json already exists. Skipping initialization.');
+    }
 }
 exports.activate = activate;
-async function initializeFileTypeConfiguration() {
-    if (!vscode.workspace.workspaceFolders) {
+let globalPanel;
+// Function to check if settings.json exists
+async function settingsFileExists() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
         console.log('No workspace is opened.');
-        return;
+        return false;
     }
-    const settingsUri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, '.vscode', 'settings.json');
+    const settingsUri = vscode.Uri.joinPath(workspaceFolders[0].uri, '.vscode', 'settings.json');
     try {
         // Try to read the settings.json to check if it exists
         await vscode.workspace.fs.readFile(settingsUri);
-        console.log('settings.json exists. No need to initialize file types.');
+        return true;
     }
     catch (error) {
-        // If the file does not exist, enumerate file types in the workspace
-        console.log('settings.json not found. Initializing file types based on current project.');
-        const fileTypes = await detectWorkspaceFileTypes();
-        const configManager = ConfigManager_1.ConfigManager.getInstance();
-        await configManager.setFileTypes(fileTypes);
+        // If the file does not exist
+        return false;
     }
 }
-async function detectWorkspaceFileTypes() {
-    const files = await vscode.workspace.findFiles('**/*', '**/node_modules/**', 1000); // Adjust the pattern and exclude as necessary
-    const fileTypes = files.map(file => {
-        const parts = file.path.split('.');
-        return parts.length > 1 ? `.${parts.pop()}` : ''; // Add leading dot only if there's an extension
-    }).filter((value, index, self) => value && self.indexOf(value) === index); // Remove duplicates and empty values
-    return fileTypes;
-}
-let globalPanel;
 function openWebviewAndExplorerSidebar(context) {
     if (globalPanel) {
         // Reveal the existing webview panel
@@ -117,9 +116,17 @@ function openWebviewAndExplorerSidebar(context) {
     // This command ensures that the Explorer view is always shown when the button is pressed
     vscode.commands.executeCommand('workbench.view.explorer');
 }
+async function refreshFileTypes() {
+    console.log("Reinitializing file types...");
+    await (0, initializeFileTypes_1.initializeFileTypeConfiguration)();
+}
 // Modified handleReceivedMessage to correctly handle async operations
 async function handleReceivedMessage(message, panel, context) {
     switch (message.command) {
+        case 'refreshFileTypes':
+            await refreshFileTypes(); // Ensure this function is accessible here
+            panel.webview.postMessage({ command: 'refreshComplete' });
+            break;
         case 'setCompressionLevel':
             await ConfigManager_1.ConfigManager.getInstance().setCompressionLevel(message.level);
             break;

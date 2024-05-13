@@ -20,4 +20,5 @@ __exportStar(require("./extractFileFolderTree"), exports);
 __exportStar(require("./processSelectedItems"), exports);
 __exportStar(require("./tokenUtils"), exports);
 __exportStar(require("./commonDirAdjuster"), exports);
+__exportStar(require("./initializeFileTypes"), exports);
 //# sourceMappingURL=index.js.map

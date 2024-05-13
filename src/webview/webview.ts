@@ -64,18 +64,23 @@ function setupFileTypeInputListener() {
     });
 
     // Existing event listener for 'keydown'
+
     fileTypeInput.addEventListener('keydown', event => {
         if (event.key === 'Enter') {
             const inputElement = event.target as HTMLInputElement;
             const fileType = inputElement.value.trim();
-
-            if (fileType) {
+    
+            if (fileType.toLowerCase() === 'refresh') {
+                vscode.postMessage({
+                    command: 'refreshFileTypes'
+                });
+            } else if (fileType) {
                 vscode.postMessage({
                     command: 'updateFileTypes',
                     fileType: fileType
                 });
-                inputElement.value = ''; // Clear the input after sending
             }
+            inputElement.value = '';
         }
     });
 }
