@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.2.7",
+  "version": "0.2.9",
   "publisher": "JosefNobach",
   "icon": "out/resources/SyntaxExtractor256x256.png",
   "repository": {
@@ -24,10 +24,6 @@
         "syntaxExtractor.fileTypes": {
           "type": "array",
           "default": [
-            ".cs",
-            ".js",
-            ".html",
-            ".txt"
           ],
           "description": "File types to be handled by the extension."
         },

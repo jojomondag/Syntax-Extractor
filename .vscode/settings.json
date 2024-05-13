@@ -1,10 +1,17 @@
 {
-    "syntaxExtractor.clipboardDataBoxHeight": 100,
     "syntaxExtractor.fileTypes": [
-        ".cs",
+        ".vsix",
+        ".md",
+        ".vscodeignore",
+        ".ts",
         ".js",
+        ".map",
+        ".png",
         ".html",
-        ".txt",
-        ".ts"
-    ]
+        ".css",
+        ".json",
+        ".gitignore"
+    ],
+    "syntaxExtractor.clipboardDataBoxHeight": 230,
+    "syntaxExtractor.compressionLevel": 1
 }
