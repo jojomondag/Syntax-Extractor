@@ -44,8 +44,37 @@ function activate(context) {
             openWebviewAndExplorerSidebar(context);
         }
     });
+    // Ensure settings.json exists or initialize configuration
+    initializeFileTypeConfiguration();
 }
 exports.activate = activate;
+async function initializeFileTypeConfiguration() {
+    if (!vscode.workspace.workspaceFolders) {
+        console.log('No workspace is opened.');
+        return;
+    }
+    const settingsUri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, '.vscode', 'settings.json');
+    try {
+        // Try to read the settings.json to check if it exists
+        await vscode.workspace.fs.readFile(settingsUri);
+        console.log('settings.json exists. No need to initialize file types.');
+    }
+    catch (error) {
+        // If the file does not exist, enumerate file types in the workspace
+        console.log('settings.json not found. Initializing file types based on current project.');
+        const fileTypes = await detectWorkspaceFileTypes();
+        const configManager = ConfigManager_1.ConfigManager.getInstance();
+        await configManager.setFileTypes(fileTypes);
+    }
+}
+async function detectWorkspaceFileTypes() {
+    const files = await vscode.workspace.findFiles('**/*', '**/node_modules/**', 1000); // Adjust the pattern and exclude as necessary
+    const fileTypes = files.map(file => {
+        const parts = file.path.split('.');
+        return parts.length > 1 ? `.${parts.pop()}` : ''; // Add leading dot only if there's an extension
+    }).filter((value, index, self) => value && self.indexOf(value) === index); // Remove duplicates and empty values
+    return fileTypes;
+}
 let globalPanel;
 function openWebviewAndExplorerSidebar(context) {
     if (globalPanel) {
