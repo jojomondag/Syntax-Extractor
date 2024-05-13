@@ -15,8 +15,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -29,7 +28,7 @@
             ".js",
             ".html",
             ".txt"
-        ],
+          ],
           "description": "File types to be handled by the extension."
         },
         "syntaxExtractor.compressionLevel": {
@@ -115,7 +114,7 @@
     "rebuild": "npm run clean && npm run compile",
     "watch": "tsc -watch -p ./",
     "test": "npm run compile && node ./node_modules/vscode/bin/test"
-  },  
+  },
   "devDependencies": {
     "@types/vscode": "^1.87.0",
     "copyfiles": "^2.4.1",
@@ -127,6 +126,7 @@
     "typescript": "^4.0.3"
   },
   "dependencies": {
+    "chardet": "^2.0.0",
     "tiktoken": "^1.0.13"
   }
 }

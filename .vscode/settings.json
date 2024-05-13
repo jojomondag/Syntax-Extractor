@@ -1,0 +1,10 @@
+{
+    "syntaxExtractor.clipboardDataBoxHeight": 100,
+    "syntaxExtractor.fileTypes": [
+        ".cs",
+        ".js",
+        ".html",
+        ".txt",
+        ".ts"
+    ]
+}
