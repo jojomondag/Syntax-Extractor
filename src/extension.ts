@@ -3,7 +3,7 @@ import { extractAndCopyText, extractFileFolderTree, getTokenCount } from './oper
 import { ConfigManager } from './config/ConfigManager';
 import { handleOpenWebpage } from './commands/openWebpage';
 
-// Defines a data provider for a tree view, implementing the necessary interfaces for VS Code to render and manage tree items.
+// Defin    es a data provider for a tree view, implementing the necessary interfaces for VS Code to render and manage tree items.
 class MyDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element; }
     getChildren(): Thenable<vscode.TreeItem[]> { return Promise.resolve([]); }

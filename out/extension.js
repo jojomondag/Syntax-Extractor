@@ -28,7 +28,7 @@ const vscode = __importStar(require("vscode"));
 const operations_1 = require("./operations");
 const ConfigManager_1 = require("./config/ConfigManager");
 const openWebpage_1 = require("./commands/openWebpage");
-// Defines a data provider for a tree view, implementing the necessary interfaces for VS Code to render and manage tree items.
+// Defin    es a data provider for a tree view, implementing the necessary interfaces for VS Code to render and manage tree items.
 class MyDataProvider {
     getTreeItem(element) { return element; }
     getChildren() { return Promise.resolve([]); }
