@@ -29,6 +29,7 @@ html, body {
     border: 1px solid #e7e7e7;
     border-radius: 5px;
     margin: 5px 0;
+    margin-bottom: 0;
     background-color: #f7f7f7;
     resize: vertical;
     min-height: 30px;
@@ -90,7 +91,7 @@ html, body {
     justify-content: center;
     align-items: center;
     flex-wrap: nowrap; /* Prevent wrapping */
-    margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 /* Adjustments for inline counters for a more compact display */
@@ -135,7 +136,7 @@ html, body {
     align-items: center;
     justify-content: center;
     width: 100%;
-    margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 .json-types-list {
@@ -163,6 +164,7 @@ html, body {
     width: 420px;
     padding: 8px 10px;
     margin: 10px 0;
+    margin-top: 0px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
@@ -189,8 +191,9 @@ html, body {
     }
 
     .main-container {
-        width: 100%; /* Adjust container width to ensure it uses full available width */
-        padding: 5px; /* Reduce padding to save space */
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* This ensures the main-container takes full height of its parent */
     }
 
     .button, .input, .compression-button {
