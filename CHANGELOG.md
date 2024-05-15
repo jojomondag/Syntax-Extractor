@@ -52,3 +52,5 @@ Changes to "syntaxExtractor" extension.
 - 2024-05-13 - Detect filetypes at activation and creation of settings.json. Dont read non utf filetypes.
 
 - 2024-05-13 - We can refresh filetypes and filetypes are registerad at activation.
+
+- 2024-05-14 - Small Ui tweaks.
