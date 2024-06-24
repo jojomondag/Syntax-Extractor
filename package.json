@@ -26,6 +26,11 @@
           "default": [],
           "description": "File types to be handled by the extension."
         },
+        "syntaxExtractor.fileTypesToIgnore": {
+          "type": "array",
+          "default": [],
+          "description": "File types to be ignored by the extension."
+        },
         "syntaxExtractor.compressionLevel": {
           "type": "number",
           "default": 2,

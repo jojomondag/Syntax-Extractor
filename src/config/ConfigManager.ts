@@ -1,12 +1,22 @@
 import * as vscode from 'vscode';
 
-//Configmanager uses the singelton pattern to ensure that only one instance of the class is created.
+export enum ConfigKey {
+    FileTypes = 'fileTypes',
+    FileTypesToIgnore = 'fileTypesToIgnore',
+    CompressionLevel = 'compressionLevel',
+    ClipboardDataBoxHeight = 'clipboardDataBoxHeight'
+}
+
+type ConfigValue = string[] | number;
+
 export class ConfigManager {
     private static instance: ConfigManager;
     private configuration: vscode.WorkspaceConfiguration;
+    private listeners: Map<ConfigKey, ((value: ConfigValue) => void)[]> = new Map();
 
     private constructor() {
         this.configuration = vscode.workspace.getConfiguration('syntaxExtractor');
+        vscode.workspace.onDidChangeConfiguration(this.onConfigChange.bind(this));
     }
 
     public static getInstance(): ConfigManager {
@@ -16,37 +26,109 @@ export class ConfigManager {
         return ConfigManager.instance;
     }
 
-    getFileTypes(): string[] {
-        return this.configuration.get('fileTypes', []);
-    }
-
-    setFileTypes(fileTypes: string[]): Thenable<void> {
-        return this.configuration.update('fileTypes', fileTypes, vscode.ConfigurationTarget.Workspace);
-    }
-
-    getCompressionLevel(): number {
-        // Refresh the configuration reference to ensure it's current
+    private refreshConfiguration() {
         this.configuration = vscode.workspace.getConfiguration('syntaxExtractor');
-        return this.configuration.get('compressionLevel', 1);
     }
 
-    setCompressionLevel(level: number): Thenable<void> {
-        console.log(`Attempting to set compression level to: ${level}`);
-        return this.configuration.update('compressionLevel', level, vscode.ConfigurationTarget.Workspace).then(() => {
-            console.log(`Compression level set to: ${level}`);
-            // Immediately after update, log the directly fetched value
-            const directFetchTest = vscode.workspace.getConfiguration('syntaxExtractor').get('compressionLevel');
-            console.log(`Direct fetch after set: ${directFetchTest}`);
-        });
+    private get<T extends ConfigValue>(key: ConfigKey, defaultValue: T): T {
+        this.refreshConfiguration();
+        return this.configuration.get<T>(key, defaultValue);
     }
 
-    setClipboardDataBoxHeight(height: number): Thenable<void> {
-        return this.configuration.update('clipboardDataBoxHeight', height, vscode.ConfigurationTarget.Workspace);
+    private async set<T extends ConfigValue>(key: ConfigKey, value: T): Promise<void> {
+        await this.configuration.update(key, value, vscode.ConfigurationTarget.Workspace);
+        this.refreshConfiguration();
+        this.notifyListeners(key, value);
     }
 
-    getClipboardDataBoxHeight(): number {
-        // Refresh the configuration reference to ensure it's current
-        this.configuration = vscode.workspace.getConfiguration('syntaxExtractor');
-        return this.configuration.get<number>('clipboardDataBoxHeight', 100); // Default height: 100px
+    public getValue<T extends ConfigValue>(key: ConfigKey): T {
+        switch (key) {
+            case ConfigKey.FileTypes:
+            case ConfigKey.FileTypesToIgnore:
+                return this.get<string[]>(key, []) as T;
+            case ConfigKey.CompressionLevel:
+                return this.get<number>(key, 1) as T;
+            case ConfigKey.ClipboardDataBoxHeight:
+                return this.get<number>(key, 100) as T;
+            default:
+                throw new Error(`Unknown configuration key: ${key}`);
+        }
+    }
+
+    public async setValue<T extends ConfigValue>(key: ConfigKey, value: T): Promise<void> {
+        this.validateValue(key, value);
+        await this.set(key, value);
+    }
+
+    private validateValue(key: ConfigKey, value: ConfigValue): void {
+        switch (key) {
+            case ConfigKey.FileTypes:
+            case ConfigKey.FileTypesToIgnore:
+                if (!Array.isArray(value) || !value.every(item => typeof item === 'string')) {
+                    throw new Error(`Invalid value for ${key}. Expected array of strings.`);
+                }
+                break;
+            case ConfigKey.CompressionLevel:
+                if (typeof value !== 'number' || value < 1 || value > 3) {
+                    throw new Error(`Invalid value for ${key}. Expected number between 1 and 3.`);
+                }
+                break;
+            case ConfigKey.ClipboardDataBoxHeight:
+                if (typeof value !== 'number' || value <= 0) {
+                    throw new Error(`Invalid value for ${key}. Expected positive number.`);
+                }
+                break;
+        }
+    }
+
+    public getAllConfig(): { [key in ConfigKey]: ConfigValue } {
+        return {
+            [ConfigKey.FileTypes]: this.getValue(ConfigKey.FileTypes),
+            [ConfigKey.FileTypesToIgnore]: this.getValue(ConfigKey.FileTypesToIgnore),
+            [ConfigKey.CompressionLevel]: this.getValue(ConfigKey.CompressionLevel),
+            [ConfigKey.ClipboardDataBoxHeight]: this.getValue(ConfigKey.ClipboardDataBoxHeight)
+        };
+    }
+
+    public async setAllConfig(config: Partial<{ [key in ConfigKey]: ConfigValue }>): Promise<void> {
+        for (const [key, value] of Object.entries(config)) {
+            await this.setValue(key as ConfigKey, value);
+        }
+    }
+
+    public addListener(key: ConfigKey, listener: (value: ConfigValue) => void): void {
+        if (!this.listeners.has(key)) {
+            this.listeners.set(key, []);
+        }
+        this.listeners.get(key)!.push(listener);
+    }
+
+    public removeListener(key: ConfigKey, listener: (value: ConfigValue) => void): void {
+        const keyListeners = this.listeners.get(key);
+        if (keyListeners) {
+            const index = keyListeners.indexOf(listener);
+            if (index > -1) {
+                keyListeners.splice(index, 1);
+            }
+        }
+    }
+
+    private notifyListeners(key: ConfigKey, value: ConfigValue): void {
+        const keyListeners = this.listeners.get(key);
+        if (keyListeners) {
+            keyListeners.forEach(listener => listener(value));
+        }
+    }
+
+    private onConfigChange(event: vscode.ConfigurationChangeEvent): void {
+        if (event.affectsConfiguration('syntaxExtractor')) {
+            this.refreshConfiguration();
+            for (const key of Object.values(ConfigKey)) {
+                if (event.affectsConfiguration(`syntaxExtractor.${key}`)) {
+                    const value = this.getValue(key);
+                    this.notifyListeners(key, value);
+                }
+            }
+        }
     }
 }

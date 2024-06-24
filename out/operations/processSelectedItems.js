@@ -24,43 +24,64 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processSelectedItems = void 0;
-const path = __importStar(require("path"));
-const __1 = require("..");
 const ConfigManager_1 = require("../config/ConfigManager");
-// Get the instance of ConfigManager
+const vscode = __importStar(require("vscode"));
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 const configManager = ConfigManager_1.ConfigManager.getInstance();
 function processSelectedItems(allSelections, fileCallback, dirCallback) {
     const processedFilesAndDirs = new Set();
+    const ignoredItems = configManager.getValue(ConfigManager_1.ConfigKey.FileTypesToIgnore);
+    const fileTypes = configManager.getValue(ConfigManager_1.ConfigKey.FileTypes);
+    function isIgnored(itemPath) {
+        const normalizedPath = path.normalize(itemPath);
+        // Check if any parent folder is in the ignore list
+        let currentPath = normalizedPath;
+        while (currentPath !== path.dirname(currentPath)) {
+            if (ignoredItems.includes(path.basename(currentPath))) {
+                return true;
+            }
+            currentPath = path.dirname(currentPath);
+        }
+        // If it's a file, check its extension
+        const extension = path.extname(normalizedPath);
+        return ignoredItems.includes(extension);
+    }
     function walkAndProcess(itemPath) {
         try {
-            const stat = __1.fs.statSync(itemPath);
-            if (!processedFilesAndDirs.has(itemPath)) {
-                if (stat && stat.isDirectory()) {
-                    console.log(`Processing directory: ${itemPath}`);
+            if (processedFilesAndDirs.has(itemPath))
+                return;
+            processedFilesAndDirs.add(itemPath);
+            const stat = fs.statSync(itemPath);
+            if (stat.isDirectory()) {
+                console.log(`Processing directory: ${itemPath}`);
+                if (!isIgnored(itemPath)) {
                     dirCallback && dirCallback(itemPath);
-                    const list = __1.fs.readdirSync(itemPath);
+                    const list = fs.readdirSync(itemPath);
                     list.forEach(file => {
                         const filePath = path.join(itemPath, file);
                         walkAndProcess(filePath);
                     });
                 }
                 else {
-                    const extension = path.extname(itemPath);
-                    console.log(`Processing file: ${itemPath}, extension: ${extension}`);
-                    if (configManager.getFileTypes().includes(extension)) {
-                        console.log(`File ${itemPath} matches the file types in the configuration`);
-                        fileCallback(itemPath);
-                    }
-                    else {
-                        console.log(`File ${itemPath} does not match the file types in the configuration`);
-                    }
+                    console.log(`Directory ${itemPath} is ignored`);
                 }
-                processedFilesAndDirs.add(itemPath);
+            }
+            else {
+                const extension = path.extname(itemPath);
+                console.log(`Processing file: ${itemPath}, extension: ${extension}`);
+                if (!isIgnored(itemPath) && fileTypes.includes(extension)) {
+                    console.log(`File ${itemPath} matches the file types in the configuration and is not ignored`);
+                    fileCallback(itemPath);
+                }
+                else {
+                    console.log(`File ${itemPath} does not match the file types in the configuration or is ignored`);
+                }
             }
         }
         catch (error) {
             console.error(`Error processing ${itemPath}:`, error);
-            __1.vscode.window.showErrorMessage(`Error processing file or directory: ${itemPath}`);
+            vscode.window.showErrorMessage(`Error processing file or directory: ${itemPath}`);
         }
     }
     allSelections.forEach(itemUri => {

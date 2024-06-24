@@ -1,8 +1,8 @@
+import { ConfigManager, ConfigKey } from '../config/ConfigManager';
+import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
-import { fs, vscode } from '..';
-import { ConfigManager } from '../config/ConfigManager';
 
-// Get the instance of ConfigManager
 const configManager = ConfigManager.getInstance();
 
 export function processSelectedItems(
@@ -11,14 +11,35 @@ export function processSelectedItems(
     dirCallback?: (dirPath: string) => void
 ) {
     const processedFilesAndDirs = new Set<string>();
+    const ignoredItems = configManager.getValue(ConfigKey.FileTypesToIgnore) as string[];
+    const fileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
+
+    function isIgnored(itemPath: string): boolean {
+        const normalizedPath = path.normalize(itemPath);
+        // Check if any parent folder is in the ignore list
+        let currentPath = normalizedPath;
+        while (currentPath !== path.dirname(currentPath)) {
+            if (ignoredItems.includes(path.basename(currentPath))) {
+                return true;
+            }
+            currentPath = path.dirname(currentPath);
+        }
+
+        // If it's a file, check its extension
+        const extension = path.extname(normalizedPath);
+        return ignoredItems.includes(extension);
+    }
 
     function walkAndProcess(itemPath: string) {
         try {
+            if (processedFilesAndDirs.has(itemPath)) return;
+            processedFilesAndDirs.add(itemPath);
+
             const stat = fs.statSync(itemPath);
 
-            if (!processedFilesAndDirs.has(itemPath)) {
-                if (stat && stat.isDirectory()) {
-                    console.log(`Processing directory: ${itemPath}`);
+            if (stat.isDirectory()) {
+                console.log(`Processing directory: ${itemPath}`);
+                if (!isIgnored(itemPath)) {
                     dirCallback && dirCallback(itemPath);
                     const list = fs.readdirSync(itemPath);
                     list.forEach(file => {
@@ -26,16 +47,17 @@ export function processSelectedItems(
                         walkAndProcess(filePath);
                     });
                 } else {
-                    const extension = path.extname(itemPath);
-                    console.log(`Processing file: ${itemPath}, extension: ${extension}`);
-                    if (configManager.getFileTypes().includes(extension)) {
-                        console.log(`File ${itemPath} matches the file types in the configuration`);
-                        fileCallback(itemPath);
-                    } else {
-                        console.log(`File ${itemPath} does not match the file types in the configuration`);
-                    }
+                    console.log(`Directory ${itemPath} is ignored`);
                 }
-                processedFilesAndDirs.add(itemPath);
+            } else {
+                const extension = path.extname(itemPath);
+                console.log(`Processing file: ${itemPath}, extension: ${extension}`);
+                if (!isIgnored(itemPath) && fileTypes.includes(extension)) {
+                    console.log(`File ${itemPath} matches the file types in the configuration and is not ignored`);
+                    fileCallback(itemPath);
+                } else {
+                    console.log(`File ${itemPath} does not match the file types in the configuration or is ignored`);
+                }
             }
         } catch (error) {
             console.error(`Error processing ${itemPath}:`, error);

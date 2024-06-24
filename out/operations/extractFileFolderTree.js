@@ -24,52 +24,51 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extractFileFolderTree = void 0;
-// File: extractFileFolderTree.ts
+const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
-const __1 = require("..");
+const ConfigManager_1 = require("../config/ConfigManager");
 const commands_1 = require("../commands");
 const processSelectedItems_1 = require("./processSelectedItems");
-const ConfigManager_1 = require("../config/ConfigManager");
 const _1 = require(".");
-function extractFileFolderTree(contextSelection, allSelections) {
+async function extractFileFolderTree(configManager) {
     console.log("extractFileFolderTree: Function called");
-    const configManager = ConfigManager_1.ConfigManager.getInstance();
     try {
-        // Directly access the compressionLevel from configManager
-        const compressionLevel = configManager.getCompressionLevel();
-        const commonDir = __1.vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-        console.log(`Common Directory: ${commonDir}`);
-        if (!commonDir) {
-            __1.vscode.window.showErrorMessage('No workspace folder found');
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showInformationMessage('No workspace folder is opened.');
             return;
         }
+        const selectedItems = workspaceFolders.map(folder => folder.uri);
+        const compressionLevel = configManager.getValue(ConfigManager_1.ConfigKey.CompressionLevel);
+        const commonDir = workspaceFolders[0].uri.fsPath;
+        console.log(`Common Directory: ${commonDir}`);
         let pathsString = "";
         switch (compressionLevel) {
             case 3:
-                pathsString = generatePathStringCompressionHard(allSelections, commonDir);
+                pathsString = generatePathStringCompressionHard(selectedItems, commonDir);
                 break;
             case 2:
-                pathsString = generatePathStringCompressionMedium(allSelections, commonDir);
+                pathsString = generatePathStringCompressionMedium(selectedItems, commonDir);
                 break;
             case 1:
-                pathsString = generatePathStringCompressionLight(allSelections, commonDir);
+                pathsString = generatePathStringCompressionLight(selectedItems, commonDir);
                 break;
             default:
                 console.error('Unexpected compressionLevel:', compressionLevel);
                 return;
         }
         console.log(`Generated Paths String: ${pathsString}`);
-        (0, commands_1.copyToClipboard)(pathsString);
-        __1.vscode.window.showInformationMessage('Paths copied to clipboard!');
+        await (0, commands_1.copyToClipboard)(pathsString);
+        vscode.window.showInformationMessage('Paths copied to clipboard!');
     }
     catch (error) {
         if (error instanceof Error) {
             console.error('Error in extractFileFolderTree:', error.message);
-            __1.vscode.window.showErrorMessage(`An error occurred while generating the file tree: ${error.message}`);
+            vscode.window.showErrorMessage(`An error occurred while generating the file tree: ${error.message}`);
         }
         else {
             console.error('Unknown error in extractFileFolderTree:', error);
-            __1.vscode.window.showErrorMessage('An unknown error occurred while generating the file tree.');
+            vscode.window.showErrorMessage('An unknown error occurred while generating the file tree.');
         }
     }
 }

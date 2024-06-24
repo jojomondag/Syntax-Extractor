@@ -1,18 +1,27 @@
-/* CSS reset for margin and padding */
+:root {
+    --border-radius: 5px;
+    --background-light: #f7f7f7;
+    --background-medium: #e7e7e7;
+    --background-dark: #d4d4d4;
+    --background-active: #4CAF50;
+    --background-button: #007BFF;
+    --background-button-hover: #0056b3;
+    --border-color: #ccc;
+    --transition-speed: 0.3s ease;
+}
+
 *, *::before, *::after {
     margin: 0;
     padding: 0;
-    box-sizing: border-box; /* Include padding and borders in width and height */
+    box-sizing: border-box;
 }
 
-/* Ensure html and body take full viewport height and no auto margin is applied by browsers */
 html, body {
     height: 100%;
     width: 100%;
-    overflow-x: hidden; /* Prevents horizontal scrollbar */
+    overflow-x: hidden;
 }
 
-/* Full-width main container styles */
 .main-container {
     padding: 5px 10px;
     display: flex;
@@ -22,7 +31,6 @@ html, body {
     max-width: 100%;
 }
 
-/* Textarea styles */
 .textarea {
     width: 100%;
     padding: 10px;
@@ -36,13 +44,16 @@ html, body {
     overflow: auto;
 }
 
-/* Button general styles */
 .button {
-    padding: 10px 20px;
+    height: 36px; /* Adjusted to a common height */
+    padding: 0 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color var(--transition-speed);
+    line-height: 36px; /* Match the height */
+    white-space: nowrap;
+    font-size: 14px; /* Ensure consistent font size */
 }
 
 #compression-buttons .label {
@@ -51,21 +62,23 @@ html, body {
 
 #compression-buttons {
     display: flex;
-    flex-wrap: nowrap; /* Ensure the buttons do not wrap */
-    justify-content: center; /* This centers the buttons in the div, you can adjust as needed */
-    align-items: center; /* Aligns items vertically in the center */
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
 }
 
 .compression-button {
+    height: 36px; /* Match the button height */
     margin-right: 10px;
-    padding: 10px 20px; /* Vertical and horizontal padding */
-    border-radius: 5px; /* Rounded corners */
-    background-color: #e7e7e7;
+    padding: 0 20px;
+    border-radius: var(--border-radius);
+    background-color: var(--background-medium);
     color: #000;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color var(--transition-speed);
+    line-height: 36px; /* Match the height */
+    font-size: 14px; /* Ensure consistent font size */
 }
 
 .compression-button:hover {
@@ -85,16 +98,14 @@ html, body {
     background-color: #0056b3;
 }
 
-/* Layout for horizontal section */
 .horizontal-section {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: nowrap;
     margin-top: 10px;
 }
 
-/* Adjustments for inline counters for a more compact display */
 .counter {
     display: flex;
     flex-direction: row;
@@ -109,15 +120,18 @@ html, body {
 
 .input {
     width: 120px;
-    padding: 10px 20px;
+    height: 36px; /* Match the button height */
+    padding: 0 20px;
     border: none;
-    border-radius: 5px;
-    background-color: #e7e7e7;
+    border-radius: var(--border-radius);
+    background-color: var(--background-medium);
     text-align: center;
     cursor: not-allowed;
     color: #000;
-    transition: background-color 0.3s ease;
+    transition: background-color var(--transition-speed);
     margin: 0 5px;
+    line-height: 36px; /* Match the height */
+    font-size: 14px; /* Ensure consistent font size */
 }
 
 .input:hover {
@@ -126,91 +140,138 @@ html, body {
 
 .button, .input {
     margin-right: 5px;
-    white-space: nowrap; /* Prevent individual elements from wrapping */
+    white-space: nowrap;
 }
 
-/* JSON types container and list styles */
+/* New styles for drag-and-drop file types */
 .json-types-container {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    width: 100%;
     margin-top: 10px;
 }
 
-.json-types-list {
+.instructions {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    text-align: center;
+}
+
+.instructions p {
+    font-size: 16px;
+    color: #333;
+    margin: 0;
+}
+
+.row {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    list-style-type: none;
-    padding: 0;
+    justify-content: center;
+    margin: 10px 0;
     width: 100%;
 }
 
-.json-types-list li {
-    padding: 5px 10px;
-    border-radius: 4px;
-    background-color: #f0f0f0;
-    color: #000;
+.box {
+    height: 36px; /* Match the button height */
+    background-color: var(--background-button);
+    color: #fff;
+    margin: 5px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    cursor: grab;
+    user-select: none;
+    border-radius: var(--border-radius);
+    transition: background-color var(--transition-speed), transform 0.5s ease;
+    line-height: 36px; /* Ma    font-size: 14px; /* Ensure consistent font size */
 }
 
-.compression-options:before {
-    content: "Compression";
-    margin-right: 10px;
+.box:active {
+    cursor: grabbing;
+    background-color: var(--background-button-hover);
+}
+
+.line {
+    width: 100%;
+    height: 2px;
+    background-color: #ffffff; /* Make sure the line is visible against the dark background */
+    margin: 10px 0;
+}
+
+.placeholder {
+    height: 36px; /* Match the box height */
+    background-color: transparent;
+    border: 2px dotted lightgray;
+    margin: 5px;
+    border-radius: var(--border-radius);
+    padding: 0 10px;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+}
+
+.size-6 {
+    width: 1.5em;
+    height: 1.5em;
 }
 
 .filetype-input {
     width: 420px;
-    padding: 8px 10px;
+    height: 36px; /* Match the button height */
+    padding: 0 10px;
     margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
     font-size: 14px;
     display: block;
-    margin-left: auto;
-    margin-right: auto;
+    mar    margin-right: auto;
     cursor: text;
+    line-height: 36px; /* Match the height */
 }
 
-/* Responsive adjustments for narrower screens */
-
+/* Responsive adjustments */
 @media (max-width: 890px) {
     .horizontal-section {
-        flex-direction: column; /* Stack elements vertically */
+        flex-direction: column;
         align-items: stretch;
     }
 
     .horizontal-section > * {
-        margin-bottom: 10px; /* Add some space between vertically stacked elements */
+        margin-bottom: 10px;
     }
 
     .json-types-container, .json-types-list {
-        padding: 0 10px; /* Add padding on the sides for better readability */
+        padding: 0 10px;
     }
 
     .main-container {
         display: flex;
         flex-direction: column;
-        height: 100%; /* This ensures the main-container takes full height of its parent */
+        height: 100%;
     }
 
     .button, .input, .compression-button {
-        width: 100%; /* Ensure buttons and inputs use full width to avoid overflow */
+        width: 100%;
     }
 
     .filetype-input {
-        width: calc(100% - 20px); /* Adjust width to account for padding */
+        width: calc(100% - 20px);
     }
 }
 
-/* Further adjustments for even narrower screens */
 @media (max-width: 500px) {
     .button, .input, .compression-button, .textarea {
-        padding: 8px 10px; /* Further reduce padding for smaller elements */
+        padding: 8px 10px;
     }
 
     .filetype-input {
-        font-size: 12px; /* Reduce font size to ensure text fits well */
+        font-size: 12px;
     }
 }

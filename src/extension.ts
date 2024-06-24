@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { initializeFileTypeConfiguration, detectWorkspaceFileTypes } from './operations/initializeFileTypes';
-import { ConfigManager } from './config/ConfigManager';
+import { ConfigManager, ConfigKey } from './config/ConfigManager';
 import { extractAndCopyText, extractFileFolderTree, getTokenCount } from './operations';
 import { handleOpenWebpage } from './commands/openWebpage';
 
@@ -10,11 +10,18 @@ class MyDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     getChildren(): Thenable<vscode.TreeItem[]> { return Promise.resolve([]); }
 }
 
+let globalPanel: vscode.WebviewPanel | undefined;
+
 export async function activate(context: vscode.ExtensionContext) {
+    const configManager = ConfigManager.getInstance();
     const treeView = vscode.window.createTreeView('emptyView', { treeDataProvider: new MyDataProvider() });
 
-    context.subscriptions.push(vscode.commands.registerCommand('extension.createWebview', () => openWebviewAndExplorerSidebar(context)));
-    context.subscriptions.push(vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', extractFileFolderTree));
+    await loadFileTypes(configManager);
+
+    context.subscriptions.push(vscode.commands.registerCommand('extension.createWebview', async () => {
+        await openWebviewAndExplorerSidebar(context);
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', () => extractFileFolderTree(configManager)));
     context.subscriptions.push(vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', extractAndCopyText));
     context.subscriptions.push(vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes));
     
@@ -23,19 +30,16 @@ export async function activate(context: vscode.ExtensionContext) {
             openWebviewAndExplorerSidebar(context);
         }
     });
-
-    // Check if settings.json exists before initializing file types
-    const exists = await settingsFileExists();
-    if (!exists) {
-        console.log('settings.json not found. Initializing file types.');
+}
+async function loadFileTypes(configManager: ConfigManager) {
+    const fileTypes = configManager.getValue(ConfigKey.FileTypes);
+    if (!Array.isArray(fileTypes) || fileTypes.length === 0) {
+        console.log('No file types found. Initializing file types.');
         await initializeFileTypeConfiguration();
     } else {
-        console.log('settings.json already exists. Skipping initialization.');
+        console.log('File types already exist:', fileTypes);
     }
 }
-
-let globalPanel: vscode.WebviewPanel | undefined;
-
 
 // Function to check if settings.json exists
 async function settingsFileExists(): Promise<boolean> {
@@ -57,7 +61,9 @@ async function settingsFileExists(): Promise<boolean> {
     }
 }
 
-function openWebviewAndExplorerSidebar(context: vscode.ExtensionContext) {
+async function openWebviewAndExplorerSidebar(context: vscode.ExtensionContext) {
+    const configManager = ConfigManager.getInstance();
+
     if (globalPanel) {
         // Reveal the existing webview panel
         globalPanel.reveal(vscode.ViewColumn.One);
@@ -77,15 +83,13 @@ function openWebviewAndExplorerSidebar(context: vscode.ExtensionContext) {
         }, null, context.subscriptions);
 
         // Load the content into the webview
-        (async () => {
-            globalPanel.webview.html = await composeWebViewContent(globalPanel.webview, context.extensionUri);
-        })();
+        globalPanel.webview.html = await composeWebViewContent(globalPanel.webview, context.extensionUri);
 
         // Setup actions associated with the webview
         setupWebviewPanelActions(globalPanel, context);
 
         // Setup clipboard polling
-        clipBoardPolling(globalPanel);
+        await clipBoardPolling(globalPanel);
 
         // Listen to messages from the webview and handle them
         globalPanel.webview.onDidReceiveMessage(
@@ -101,36 +105,45 @@ function openWebviewAndExplorerSidebar(context: vscode.ExtensionContext) {
         // Send initial configuration to the webview
         globalPanel.webview.postMessage({
             command: 'initConfig',
-            fileTypes: ConfigManager.getInstance().getFileTypes(),
-            compressionLevel: ConfigManager.getInstance().getCompressionLevel(),
-            clipboardDataBoxHeight: ConfigManager.getInstance().getClipboardDataBoxHeight()
+            ...configManager.getAllConfig()
         });
     }
 
     // This command ensures that the Explorer view is always shown when the button is pressed
-    vscode.commands.executeCommand('workbench.view.explorer');
+    await vscode.commands.executeCommand('workbench.view.explorer');
 }
 
 async function refreshFileTypes() {
+    const configManager = ConfigManager.getInstance();
     console.log("Reinitializing file types...");
-    await initializeFileTypeConfiguration();
+    const detectedTypes = await detectWorkspaceFileTypes();
+    const fileTypes = detectedTypes.filter((type: unknown): type is string => typeof type === 'string');
+    await configManager.setValue(ConfigKey.FileTypes, fileTypes);
+    console.log("File types reinitialized:", fileTypes);
+    return fileTypes;
 }
 
-// Modified handleReceivedMessage to correctly handle async operations
 async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    const configManager = ConfigManager.getInstance();
+
     switch (message.command) {
         case 'refreshFileTypes':
-            await refreshFileTypes(); // Ensure this function is accessible here
+            await refreshFileTypes();
             panel.webview.postMessage({ command: 'refreshComplete' });
             break;
         case 'setCompressionLevel':
-            await ConfigManager.getInstance().setCompressionLevel(message.level);
+            await configManager.setValue(ConfigKey.CompressionLevel, message.level);
             break;
-        case 'setFileTypes':
-            await ConfigManager.getInstance().setFileTypes(message.fileTypes);
+        case 'updateFileTypes':
+            if (Array.isArray(message.activeFileTypes) && Array.isArray(message.ignoredFileTypes)) {
+                await configManager.setValue(ConfigKey.FileTypes, message.activeFileTypes);
+                await configManager.setValue(ConfigKey.FileTypesToIgnore, message.ignoredFileTypes);
+            } else {
+                console.error('Invalid file types received');
+            }
             break;
         case 'setClipboardDataBoxHeight':
-            await ConfigManager.getInstance().setClipboardDataBoxHeight(message.height);
+            await configManager.setValue(ConfigKey.ClipboardDataBoxHeight, message.height);
             break;
         case 'openWebpage':
             handleOpenWebpage();
@@ -147,32 +160,12 @@ async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, c
             panel.webview.postMessage({ command: 'setTokenCount', count: getTokenCount(message.text) });
             panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
             break;
-        case 'updateFileTypes':
-            const currentFileTypes = await ConfigManager.getInstance().getFileTypes();
-            const fileTypeIndex = currentFileTypes.indexOf(message.fileType);
-            if (fileTypeIndex > -1) {
-                currentFileTypes.splice(fileTypeIndex, 1);
-            } else {
-                currentFileTypes.push(message.fileType);
-            }
-            await ConfigManager.getInstance().setFileTypes(currentFileTypes);
-            panel.webview.postMessage({
-                command: 'configUpdated',
-                fileTypes: currentFileTypes
-            });
-            break;
     }
 
     // Post back the updated configuration
-    const updatedConfig = {
-        compressionLevel: await ConfigManager.getInstance().getCompressionLevel(),
-        fileTypes: await ConfigManager.getInstance().getFileTypes(),
-        clipboardDataBoxHeight: await ConfigManager.getInstance().getClipboardDataBoxHeight()
-    };
-    console.log(`Posting back updated config`);
     panel.webview.postMessage({
         command: 'configUpdated',
-        ...updatedConfig
+        ...configManager.getAllConfig()
     });
 }
 
@@ -180,7 +173,7 @@ async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, c
 async function clipBoardPolling(panel: vscode.WebviewPanel) {
     let lastKnownClipboardContent = ''; // Keep track of the last known content
 
-    setInterval(async () => {
+    const pollClipboard = async () => {
         const clipboardContent = await vscode.env.clipboard.readText();
         if (clipboardContent !== lastKnownClipboardContent) {
             lastKnownClipboardContent = clipboardContent; // Update last known content
@@ -189,21 +182,13 @@ async function clipBoardPolling(panel: vscode.WebviewPanel) {
                 content: clipboardContent
             });
         }
-    }, 800);
+    };
 
-    const clipboardContent = await vscode.env.clipboard.readText();
+    // Initial poll
+    await pollClipboard();
 
-    if (clipboardContent !== lastKnownClipboardContent) {
-        lastKnownClipboardContent = clipboardContent; // Update last known content
-        const tokenCount = getTokenCount(clipboardContent);
-        const charCount = clipboardContent.length;
-        panel.webview.postMessage({
-            command: 'updateClipboardDataBox',
-            content: clipboardContent,
-            tokenCount: tokenCount,
-            charCount: charCount
-        });
-    }
+    // Set up interval for polling
+    setInterval(pollClipboard, 800);
 }
 
 // Prepares and returns the HTML content to be displayed in the webview, including injecting the correct CSS file reference.
@@ -230,13 +215,13 @@ async function composeWebViewContent(webview: vscode.Webview, extensionUri: vsco
 }
 
 function setupWebviewPanelActions(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    const configManager = ConfigManager.getInstance();
+
     // Send initial configuration to webview
     const sendConfigToWebview = () => {
         panel.webview.postMessage({
             command: 'initConfig',
-            fileTypes: ConfigManager.getInstance().getFileTypes(),
-            compressionLevel: ConfigManager.getInstance().getCompressionLevel(),
-            clipboardDataBoxHeight: ConfigManager.getInstance().getClipboardDataBoxHeight()
+            ...configManager.getAllConfig()
         });
     };
 
@@ -250,3 +235,5 @@ function setupWebviewPanelActions(panel: vscode.WebviewPanel, context: vscode.Ex
     // Initial send of configuration to ensure webview is up-to-date
     sendConfigToWebview();
 }
+
+export function deactivate() {}

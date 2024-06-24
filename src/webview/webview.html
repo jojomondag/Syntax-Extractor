@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="webview.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syntax Extractor</title>
@@ -14,7 +13,6 @@
         
         <!-- Horizontal Section for Compression Options, Counters, and Open Webpage Button -->
         <section class="horizontal-section">
-
             <div id="compression-buttons">
                 <label class="label" for="compression-button">Compression</label>
                 <button class="compression-button" id="compressionLevelHard">Hard</button>
@@ -35,11 +33,21 @@
             <button id="openWebpageButton" class="button webpage-button">Open Webpage</button>
         </section>
         
-        <!-- JSON Types Container -->
+        <!-- Updated File Types Container with Drag-and-Drop Functionality -->
         <div class="json-types-container">
-            <ul id="file-types-container" class="json-types-list"></ul>
+            <div class="instructions">
+                <p>Press once to move the items. Click and hold to drag and drop.</p>
+            </div>
+            <div class="row" id="row1">
+                <!-- Existing file types will be populated here dynamically -->
+            </div>
+            <div class="line"></div>
+            <div class="row" id="row2">
+                <!-- Empty row for moved boxes -->
+            </div>
             <input type="text" id="fileTypeInput" class="input filetype-input" placeholder="Enter file extension or write refresh. Press Enter.">
         </div>
     </main>
+    <script src="webview.js"></script>
 </body>
 </html>
