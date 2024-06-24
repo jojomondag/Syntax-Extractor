@@ -30,28 +30,26 @@ const ConfigManager_1 = require("../config/ConfigManager");
 const commands_1 = require("../commands");
 const processSelectedItems_1 = require("./processSelectedItems");
 const _1 = require(".");
-async function extractFileFolderTree(configManager) {
+async function extractFileFolderTree(configManager, contextSelection, allSelections) {
     console.log("extractFileFolderTree: Function called");
     try {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showInformationMessage('No workspace folder is opened.');
+        if (!allSelections || allSelections.length === 0) {
+            vscode.window.showInformationMessage('No files or folders selected.');
             return;
         }
-        const selectedItems = workspaceFolders.map(folder => folder.uri);
         const compressionLevel = configManager.getValue(ConfigManager_1.ConfigKey.CompressionLevel);
-        const commonDir = workspaceFolders[0].uri.fsPath;
+        const commonDir = path.dirname(allSelections[0].fsPath);
         console.log(`Common Directory: ${commonDir}`);
         let pathsString = "";
         switch (compressionLevel) {
             case 3:
-                pathsString = generatePathStringCompressionHard(selectedItems, commonDir);
+                pathsString = generatePathStringCompressionHard(allSelections, commonDir);
                 break;
             case 2:
-                pathsString = generatePathStringCompressionMedium(selectedItems, commonDir);
+                pathsString = generatePathStringCompressionMedium(allSelections, commonDir);
                 break;
             case 1:
-                pathsString = generatePathStringCompressionLight(selectedItems, commonDir);
+                pathsString = generatePathStringCompressionLight(allSelections, commonDir);
                 break;
             default:
                 console.error('Unexpected compressionLevel:', compressionLevel);
@@ -83,7 +81,12 @@ function generatePathStringCompressionHard(allSelections, commonDir) {
             fileMap[dir] = [];
         }
         fileMap[dir].push(path.basename(relativePath));
-    }, (dirPath) => { });
+    }, (dirPath) => {
+        let relativePath = path.relative(adjustedCommonDir, dirPath).replace(/\\/g, '/');
+        if (!fileMap[relativePath]) {
+            fileMap[relativePath] = [];
+        }
+    });
     const compressedPaths = [];
     for (let dir in fileMap) {
         if (fileMap[dir].length > 0) {
@@ -105,6 +108,11 @@ function generatePathStringCompressionMedium(allSelections, commonDir) {
             directoryMap[dir] = [];
         }
         directoryMap[dir].push(path.basename(relativePath));
+    }, (dirPath) => {
+        let relativePath = path.relative(adjustedCommonDir, dirPath).replace(/\\/g, '/');
+        if (!directoryMap[relativePath]) {
+            directoryMap[relativePath] = [];
+        }
     });
     const pathsList = [];
     Object.keys(directoryMap).sort().forEach(dir => {
@@ -132,6 +140,11 @@ function generatePathStringCompressionLight(allSelections, commonDir) {
             directoryMap[dir] = [];
         }
         directoryMap[dir].push(path.basename(relativePath));
+    }, (dirPath) => {
+        let relativePath = path.relative(adjustedCommonDir, dirPath).replace(/\\/g, '/');
+        if (!directoryMap[relativePath]) {
+            directoryMap[relativePath] = [];
+        }
     });
     let resultString = `${adjustedCommonDir}\n`;
     const sortedDirs = Object.keys(directoryMap).sort();

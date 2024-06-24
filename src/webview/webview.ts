@@ -64,14 +64,10 @@ function initializeDragAndDrop() {
 
     document.querySelectorAll('.row').forEach(row => {
         row.addEventListener('dragover', (event: Event) => {
-            if (event instanceof DragEvent) {
-                handleDragOver(event);
-            }
+            handleDragOver(event as DragEvent);
         });
         row.addEventListener('drop', (event: Event) => {
-            if (event instanceof DragEvent) {
-                handleDrop(event);
-            }
+            handleDrop(event as DragEvent);
         });
     });
 
@@ -93,47 +89,55 @@ function initializeDragAndDrop() {
             placeholder.style.width = `${draggedElement.offsetWidth}px`;
             placeholder.style.height = `${draggedElement.offsetHeight}px`;
         }
+        removePlaceholder();
     }
 
     function handleDragOver(event: DragEvent) {
         event.preventDefault();
-        const target = (event.target as HTMLElement).closest('.box') as HTMLElement;
-        if (target && target !== draggedElement) {
-            const bounding = target.getBoundingClientRect();
-            const offset = bounding.y + bounding.height / 2;
-            if (event.clientY - offset > 0) {
-                target.parentNode!.insertBefore(placeholder, target.nextSibling);
-            } else {
-                target.parentNode!.insertBefore(placeholder, target);
+        if (!draggedElement) return;
+
+        const row = event.currentTarget as HTMLElement;
+        const boxes = Array.from(row.querySelectorAll('.box')) as HTMLElement[];
+        
+        let insertBefore: HTMLElement | null = null;
+        for (const box of boxes) {
+            const rect = box.getBoundingClientRect();
+            if (event.clientX < rect.left + rect.width / 2) {
+                insertBefore = box;
+                break;
             }
+        }
+
+        removePlaceholder();
+
+        if (insertBefore) {
+            row.insertBefore(placeholder, insertBefore);
+        } else {
+            row.appendChild(placeholder);
         }
     }
 
-    function handleDragEnd() {
+    function handleDragEnd(event: DragEvent) {
         if (draggedElement) {
             draggedElement.style.opacity = '';
         }
-        if (placeholder.parentNode) {
-            placeholder.parentNode.removeChild(placeholder);
-        }
+        removePlaceholder();
         draggedElement = null;
     }
 
     function handleDrop(event: DragEvent) {
         event.preventDefault();
         if (draggedElement && placeholder.parentNode) {
-            placeholder.parentNode.replaceChild(draggedElement, placeholder);
+            placeholder.parentNode.insertBefore(draggedElement, placeholder);
             draggedElement.style.opacity = '';
         }
-        if (placeholder.parentNode) {
-            placeholder.parentNode.removeChild(placeholder);
-        }
+        removePlaceholder();
         draggedElement = null;
         updateFileTypes();
     }
 
     function handleClick(event: MouseEvent) {
-        const box = (event.target as HTMLElement).closest('.box') as HTMLElement;
+        const box = event.currentTarget as HTMLElement;
         if (box) {
             moveBox(box);
         }
@@ -189,6 +193,12 @@ function initializeDragAndDrop() {
 
         // Update file types after moving the box
         updateFileTypes();
+    }
+
+    function removePlaceholder() {
+        if (placeholder.parentNode) {
+            placeholder.parentNode.removeChild(placeholder);
+        }
     }
 
     return { createBox, updateFileTypes };

@@ -57,14 +57,10 @@ function initializeDragAndDrop() {
     </svg>`;
     document.querySelectorAll('.row').forEach(row => {
         row.addEventListener('dragover', (event) => {
-            if (event instanceof DragEvent) {
-                handleDragOver(event);
-            }
+            handleDragOver(event);
         });
         row.addEventListener('drop', (event) => {
-            if (event instanceof DragEvent) {
-                handleDrop(event);
-            }
+            handleDrop(event);
         });
     });
     function createBox(fileType) {
@@ -84,44 +80,49 @@ function initializeDragAndDrop() {
             placeholder.style.width = `${draggedElement.offsetWidth}px`;
             placeholder.style.height = `${draggedElement.offsetHeight}px`;
         }
+        removePlaceholder();
     }
     function handleDragOver(event) {
         event.preventDefault();
-        const target = event.target.closest('.box');
-        if (target && target !== draggedElement) {
-            const bounding = target.getBoundingClientRect();
-            const offset = bounding.y + bounding.height / 2;
-            if (event.clientY - offset > 0) {
-                target.parentNode.insertBefore(placeholder, target.nextSibling);
-            }
-            else {
-                target.parentNode.insertBefore(placeholder, target);
+        if (!draggedElement)
+            return;
+        const row = event.currentTarget;
+        const boxes = Array.from(row.querySelectorAll('.box'));
+        let insertBefore = null;
+        for (const box of boxes) {
+            const rect = box.getBoundingClientRect();
+            if (event.clientX < rect.left + rect.width / 2) {
+                insertBefore = box;
+                break;
             }
         }
+        removePlaceholder();
+        if (insertBefore) {
+            row.insertBefore(placeholder, insertBefore);
+        }
+        else {
+            row.appendChild(placeholder);
+        }
     }
-    function handleDragEnd() {
+    function handleDragEnd(event) {
         if (draggedElement) {
             draggedElement.style.opacity = '';
         }
-        if (placeholder.parentNode) {
-            placeholder.parentNode.removeChild(placeholder);
-        }
+        removePlaceholder();
         draggedElement = null;
     }
     function handleDrop(event) {
         event.preventDefault();
         if (draggedElement && placeholder.parentNode) {
-            placeholder.parentNode.replaceChild(draggedElement, placeholder);
+            placeholder.parentNode.insertBefore(draggedElement, placeholder);
             draggedElement.style.opacity = '';
         }
-        if (placeholder.parentNode) {
-            placeholder.parentNode.removeChild(placeholder);
-        }
+        removePlaceholder();
         draggedElement = null;
         updateFileTypes();
     }
     function handleClick(event) {
-        const box = event.target.closest('.box');
+        const box = event.currentTarget;
         if (box) {
             moveBox(box);
         }
@@ -168,6 +169,11 @@ function initializeDragAndDrop() {
         }, 500);
         // Update file types after moving the box
         updateFileTypes();
+    }
+    function removePlaceholder() {
+        if (placeholder.parentNode) {
+            placeholder.parentNode.removeChild(placeholder);
+        }
     }
     return { createBox, updateFileTypes };
 }

@@ -49,7 +49,17 @@ async function activate(context) {
     await openWebviewAndExplorerSidebar(context);
     context.subscriptions.push(vscode.commands.registerCommand('extension.createWebview', async () => {
         await openWebviewAndExplorerSidebar(context);
-    }), vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', () => (0, operations_1.extractFileFolderTree)(configManager)), vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', operations_1.extractAndCopyText), vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes));
+    }), vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', (contextSelection, allSelections) => {
+        if (!allSelections) {
+            allSelections = contextSelection ? [contextSelection] : [];
+        }
+        (0, operations_1.extractFileFolderTree)(configManager, contextSelection, allSelections);
+    }), vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', (contextSelection, allSelections) => {
+        if (!allSelections) {
+            allSelections = contextSelection ? [contextSelection] : [];
+        }
+        (0, operations_1.extractAndCopyText)(contextSelection, allSelections);
+    }), vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes));
     treeView.onDidChangeVisibility(({ visible }) => {
         if (visible) {
             openWebviewAndExplorerSidebar(context);

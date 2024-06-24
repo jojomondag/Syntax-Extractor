@@ -32,8 +32,18 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('extension.createWebview', async () => {
             await openWebviewAndExplorerSidebar(context);
         }),
-        vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', () => extractFileFolderTree(configManager)),
-        vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', extractAndCopyText),
+        vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => {
+            if (!allSelections) {
+                allSelections = contextSelection ? [contextSelection] : [];
+            }
+            extractFileFolderTree(configManager, contextSelection, allSelections);
+        }),
+        vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => {
+            if (!allSelections) {
+                allSelections = contextSelection ? [contextSelection] : [];
+            }
+            extractAndCopyText(contextSelection, allSelections);
+        }),
         vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes)
     );
     
@@ -43,6 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 }
+
 async function loadFileTypes(configManager: ConfigManager) {
     const fileTypes = configManager.getValue(ConfigKey.FileTypes);
     if (!Array.isArray(fileTypes) || fileTypes.length === 0) {
