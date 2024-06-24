@@ -198,7 +198,7 @@ function setupFileTypeInputListener() {
         fileTypeInput.placeholder = '';
     });
     fileTypeInput.addEventListener('blur', () => {
-        fileTypeInput.placeholder = 'Enter file extension or write refresh. Press Enter.';
+        fileTypeInput.placeholder = 'Write Folder/File name to Add/Remove or refresh. Press Enter.';
     });
     fileTypeInput.addEventListener('keydown', event => {
         if (event.key === 'Enter') {
@@ -212,22 +212,25 @@ function setupFileTypeInputListener() {
             else if (fileType) {
                 const row1 = document.getElementById('row1');
                 const row2 = document.getElementById('row2');
-                // Check if the file type already exists in either row
-                const existingInRow1 = Array.from(row1.children).some(box => box.textContent.trim() === fileType);
-                const existingInRow2 = Array.from(row2.children).some(box => box.textContent.trim() === fileType);
-                if (!existingInRow1 && !existingInRow2) {
+                // Check if the file type exists in either row
+                const existingInRow1 = Array.from(row1.children).find(box => box.textContent.trim() === fileType);
+                const existingInRow2 = Array.from(row2.children).find(box => box.textContent.trim() === fileType);
+                if (existingInRow1) {
+                    // Remove from row1 (active file types)
+                    row1.removeChild(existingInRow1);
+                }
+                else if (existingInRow2) {
+                    // Remove from row2 (ignored file types)
+                    row2.removeChild(existingInRow2);
+                }
+                else {
+                    // Add to row1 if it doesn't exist in either
                     const { createBox } = initializeDragAndDrop();
                     const newBox = createBox(fileType);
                     row1.appendChild(newBox);
-                    updateFileTypes();
                 }
-                else {
-                    // Optionally, show an error message to the user
-                    vscode.postMessage({
-                        command: 'showErrorMessage',
-                        message: `File type "${fileType}" already exists.`
-                    });
-                }
+                // Update file types after adding or removing
+                updateFileTypes();
             }
             inputElement.value = '';
         }
