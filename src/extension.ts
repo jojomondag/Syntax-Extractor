@@ -23,7 +23,6 @@ export async function activate(context: vscode.ExtensionContext) {
         await createDefaultSettings();
     }
 
-    // Load file types
     await loadFileTypes(configManager);
 
     // Start the webview
@@ -44,15 +43,11 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 }
-
 async function loadFileTypes(configManager: ConfigManager) {
     const fileTypes = configManager.getValue(ConfigKey.FileTypes);
     if (!Array.isArray(fileTypes) || fileTypes.length === 0) {
         console.log('No file types found. Initializing file types.');
         await initializeFileTypeConfiguration();
-        // After initialization, retrieve the file types again
-        const initializedFileTypes = configManager.getValue(ConfigKey.FileTypes);
-        console.log('Initialized file types:', initializedFileTypes);
     } else {
         console.log('File types already exist:', fileTypes);
     }

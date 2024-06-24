@@ -1,7 +1,5 @@
 "use strict";
 const vscode = acquireVsCodeApi();
-let draggedElement = null;
-let placeholder;
 // Listen for messages from the extension
 window.addEventListener('message', event => {
     const message = event.data;
@@ -46,7 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('compressionLevelLight')?.addEventListener('click', () => updateCompressionLevel(1));
 });
 function initializeDragAndDrop() {
-    placeholder = document.createElement('div');
+    let draggedElement = null;
+    const placeholder = document.createElement('div');
     placeholder.className = 'placeholder';
     const svgIcon1 = `
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -134,34 +133,39 @@ function initializeDragAndDrop() {
         const targetRow = currentRow === row1 ? row2 : row1;
         // Store the original position
         const rect = box.getBoundingClientRect();
-        // Clone the box to preserve its content, including the icon
-        const clonedBox = box.cloneNode(true);
-        // Move the cloned box to the target row
-        targetRow.appendChild(clonedBox);
-        // Remove the original box
-        currentRow.removeChild(box);
-        // Get the new position
-        const newRect = clonedBox.getBoundingClientRect();
-        // Calculate the difference
-        const deltaX = rect.left - newRect.left;
-        const deltaY = rect.top - newRect.top;
-        // Animate the transition
-        clonedBox.style.transition = 'none';
-        clonedBox.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-        clonedBox.offsetHeight; // Force a reflow
-        clonedBox.style.transition = 'transform 0.5s ease-in-out';
-        clonedBox.style.transform = 'translate(0, 0)';
+        // Create a clone for the animation
+        const clone = box.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.left = `${rect.left}px`;
+        clone.style.top = `${rect.top}px`;
+        clone.style.width = `${rect.width}px`;
+        clone.style.height = `${rect.height}px`;
+        clone.style.margin = '0';
+        clone.style.transition = 'all 0.5s ease-in-out';
+        clone.style.zIndex = '1000';
+        document.body.appendChild(clone);
+        // Move the original box immediately
+        targetRow.appendChild(box);
+        // Force a reflow
+        void clone.offsetWidth;
+        // Calculate the new position
+        const newRect = box.getBoundingClientRect();
+        // Animate the clone to the new position
+        clone.style.left = `${newRect.left}px`;
+        clone.style.top = `${newRect.top}px`;
         // Update visual state
         if (targetRow === row2) {
-            clonedBox.style.opacity = '0.5'; // Make it slightly transparent when moved to row2
+            clone.style.opacity = '0.5';
+            box.style.opacity = '0.5';
         }
         else {
-            clonedBox.style.opacity = '1'; // Restore full opacity when moved back to row1
+            clone.style.opacity = '1';
+            box.style.opacity = '1';
         }
-        // Add event listeners to the cloned box
-        clonedBox.addEventListener('dragstart', handleDragStart);
-        clonedBox.addEventListener('dragend', handleDragEnd);
-        clonedBox.addEventListener('click', handleClick);
+        // Remove the clone after animation
+        setTimeout(() => {
+            document.body.removeChild(clone);
+        }, 500);
         // Update file types after moving the box
         updateFileTypes();
     }

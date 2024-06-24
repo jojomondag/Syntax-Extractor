@@ -44,7 +44,6 @@ async function activate(context) {
         // If settings.json doesn't exist, create it with default settings
         await createDefaultSettings();
     }
-    // Load file types
     await loadFileTypes(configManager);
     // Start the webview
     await openWebviewAndExplorerSidebar(context);
@@ -63,9 +62,6 @@ async function loadFileTypes(configManager) {
     if (!Array.isArray(fileTypes) || fileTypes.length === 0) {
         console.log('No file types found. Initializing file types.');
         await (0, initializeFileTypes_1.initializeFileTypeConfiguration)();
-        // After initialization, retrieve the file types again
-        const initializedFileTypes = configManager.getValue(ConfigManager_1.ConfigKey.FileTypes);
-        console.log('Initialized file types:', initializedFileTypes);
     }
     else {
         console.log('File types already exist:', fileTypes);
