@@ -38,13 +38,19 @@ let globalPanel;
 async function activate(context) {
     const configManager = ConfigManager_1.ConfigManager.getInstance();
     const treeView = vscode.window.createTreeView('emptyView', { treeDataProvider: new MyDataProvider() });
+    // Check if settings.json exists
+    const settingsExist = await settingsFileExists();
+    if (!settingsExist) {
+        // If settings.json doesn't exist, create it with default settings
+        await createDefaultSettings();
+    }
+    // Load file types
     await loadFileTypes(configManager);
+    // Start the webview
+    await openWebviewAndExplorerSidebar(context);
     context.subscriptions.push(vscode.commands.registerCommand('extension.createWebview', async () => {
         await openWebviewAndExplorerSidebar(context);
-    }));
-    context.subscriptions.push(vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', () => (0, operations_1.extractFileFolderTree)(configManager)));
-    context.subscriptions.push(vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', operations_1.extractAndCopyText));
-    context.subscriptions.push(vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes));
+    }), vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', () => (0, operations_1.extractFileFolderTree)(configManager)), vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', operations_1.extractAndCopyText), vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes));
     treeView.onDidChangeVisibility(({ visible }) => {
         if (visible) {
             openWebviewAndExplorerSidebar(context);
@@ -57,6 +63,9 @@ async function loadFileTypes(configManager) {
     if (!Array.isArray(fileTypes) || fileTypes.length === 0) {
         console.log('No file types found. Initializing file types.');
         await (0, initializeFileTypes_1.initializeFileTypeConfiguration)();
+        // After initialization, retrieve the file types again
+        const initializedFileTypes = configManager.getValue(ConfigManager_1.ConfigKey.FileTypes);
+        console.log('Initialized file types:', initializedFileTypes);
     }
     else {
         console.log('File types already exist:', fileTypes);
@@ -71,13 +80,32 @@ async function settingsFileExists() {
     }
     const settingsUri = vscode.Uri.joinPath(workspaceFolders[0].uri, '.vscode', 'settings.json');
     try {
-        // Try to read the settings.json to check if it exists
-        await vscode.workspace.fs.readFile(settingsUri);
+        await vscode.workspace.fs.stat(settingsUri);
         return true;
     }
     catch (error) {
-        // If the file does not exist
         return false;
+    }
+}
+// Function to create default settings
+async function createDefaultSettings() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        console.log('No workspace is opened. Cannot create settings.json');
+        return;
+    }
+    const settingsUri = vscode.Uri.joinPath(workspaceFolders[0].uri, '.vscode', 'settings.json');
+    const defaultSettings = {
+        "syntaxExtractor.fileTypes": [],
+        "syntaxExtractor.fileTypesToIgnore": [],
+        "syntaxExtractor.compressionLevel": "medium"
+    };
+    try {
+        await vscode.workspace.fs.writeFile(settingsUri, Buffer.from(JSON.stringify(defaultSettings, null, 2)));
+        console.log('Created default settings.json');
+    }
+    catch (error) {
+        console.error('Failed to create default settings.json:', error);
     }
 }
 async function openWebviewAndExplorerSidebar(context) {
