@@ -1,14 +1,4 @@
-:root {
-    --border-radius: 5px;
-    --background-light: #f7f7f7;
-    --background-medium: #e7e7e7;
-    --background-dark: #d4d4d4;
-    --background-active: #4CAF50;
-    --background-button: #007BFF;
-    --background-button-hover: #0056b3;
-    --border-color: #ccc;
-    --transition-speed: 0.3s ease;
-}
+@import 'variables.css';
 
 *, *::before, *::after {
     margin: 0;
@@ -23,41 +13,36 @@ html, body {
 }
 
 .main-container {
-    padding: 5px 10px;
+    padding: var(--size-padding-small) var(--size-padding-medium);
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    width: calc(100vw - 20px);
+    width: calc(100vw - 2 * var(--size-padding-medium));
     max-width: 100%;
 }
 
 .textarea {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #e7e7e7;
-    border-radius: 5px;
-    margin: 5px 0;
-    margin-bottom: 0;
-    background-color: #f7f7f7;
+    padding: var(--size-padding-medium);
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius);
+    margin: var(--size-margin-small) 0;
+    background-color: var(--color-background-light);
     resize: vertical;
     min-height: 30px;
     overflow: auto;
 }
 
 .button {
-    height: 36px; /* Adjusted to a common height */
-    padding: 0 20px;
+    height: var(--size-element-height);
+    padding: 0 var(--size-padding-large);
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--size-border-radius);
     cursor: pointer;
     transition: background-color var(--transition-speed);
-    line-height: 36px; /* Match the height */
+    line-height: var(--size-element-height);
     white-space: nowrap;
-    font-size: 14px; /* Ensure consistent font size */
-}
-
-#compression-buttons .label {
-    margin-right: 5px;
+    font-size: var(--size-font-default);
 }
 
 #compression-buttons {
@@ -67,35 +52,40 @@ html, body {
     align-items: center;
 }
 
+#compression-buttons .label {
+    margin-right: var(--size-margin-small);
+}
+
 .compression-button {
-    height: 36px; /* Match the button height */
-    margin-right: 10px;
-    padding: 0 20px;
-    border-radius: var(--border-radius);
-    background-color: var(--background-medium);
-    color: #000;
+    height: var(--size-element-height);
+    margin-right: var(--size-margin-medium);
+    padding: 0 var(--size-padding-large);
+    border-radius: var(--size-border-radius);
+    background-color: var(--color-background-medium);
+    color: var(--color-text);
     border: none;
     cursor: pointer;
     transition: background-color var(--transition-speed);
-    line-height: 36px; /* Match the height */
-    font-size: 14px; /* Ensure consistent font size */
+    line-height: var(--size-element-height);
+    font-size: var(--size-font-default);
 }
 
 .compression-button:hover {
-    background-color: #d4d4d4;
+    background-color: var(--color-background-dark);
 }
 
 .compression-button.selected {
-    background-color: #4CAF50;
-    color: #000;
+    background-color: var(--color-background-active);
+    color: var(--color-text-light);
 }
 
 .webpage-button {
-    background-color: #007BFF;
+    background-color: var(--color-button);
+    color: var(--color-text-light);
 }
 
 .webpage-button:hover {
-    background-color: #0056b3;
+    background-color: var(--color-button-hover);
 }
 
 .horizontal-section {
@@ -103,57 +93,51 @@ html, body {
     justify-content: center;
     align-items: center;
     flex-wrap: nowrap;
-    margin-top: 10px;
+    margin-top: var(--size-margin-medium);
 }
 
 .counter {
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin: 0 5px;
+    margin: 0 var(--size-margin-small);
     flex-basis: auto;
 }
 
 .counter .label {
-    margin-right: 5px;
+    margin-right: var(--size-margin-small);
 }
 
 .input {
-    width: 120px;
-    height: 36px; /* Match the button height */
-    padding: 0 20px;
+    width: var(--width-input);
+    height: var(--size-element-height);
+    padding: 0 var(--size-padding-large);
     border: none;
-    border-radius: var(--border-radius);
-    background-color: var(--background-medium);
+    border-radius: var(--size-border-radius);
+    background-color: var(--color-background-medium);
     text-align: center;
     cursor: not-allowed;
-    color: #000;
+    color: var(--color-text);
     transition: background-color var(--transition-speed);
-    margin: 0 5px;
-    line-height: 36px; /* Match the height */
-    font-size: 14px; /* Ensure consistent font size */
+    margin: 0 var(--size-margin-small);
+    line-height: var(--size-element-height);
+    font-size: var(--size-font-default);
 }
 
 .input:hover {
-    background-color: #d4d4d4;
+    background-color: var(--color-background-dark);
 }
 
-.button, .input {
-    margin-right: 5px;
-    white-space: nowrap;
-}
-
-/* New styles for drag-and-drop file types */
 .json-types-container {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 10px;
+    margin-top: var(--size-margin-medium);
 }
 
 .instructions {
-    margin-bottom: 10px;
+    margin-bottom: var(--size-margin-medium);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -162,8 +146,8 @@ html, body {
 }
 
 .instructions p {
-    font-size: 16px;
-    color: #333;
+    font-size: var(--size-font-large);
+    color: var(--color-text-muted);
     margin: 0;
 }
 
@@ -171,72 +155,73 @@ html, body {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    margin: 10px 0;
+    margin: var(--size-margin-medium) 0;
     width: 100%;
 }
 
 .box {
-    height: 36px; /* Match the button height */
-    background-color: var(--background-button);
-    color: #fff;
-    margin: 5px;
+    height: var(--size-element-height);
+    background-color: var(--color-button);
+    color: var(--color-text-light);
+    margin: var(--size-margin-small);
     display: inline-flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 var(--size-padding-medium);
     cursor: grab;
     user-select: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--size-border-radius);
     transition: background-color var(--transition-speed), transform 0.5s ease;
-    line-height: 36px; /* Ma    font-size: 14px; /* Ensure consistent font size */
+    line-height: var(--size-element-height);
+    font-size: var(--size-font-default);
 }
 
 .box:active {
     cursor: grabbing;
-    background-color: var(--background-button-hover);
+    background-color: var(--color-button-hover);
 }
 
 .line {
     width: 100%;
     height: 2px;
-    background-color: #ffffff; /* Make sure the line is visible against the dark background */
-    margin: 10px 0;
+    background-color: var(--color-border);
+    margin: var(--size-margin-medium) 0;
 }
 
 .placeholder {
-    height: 36px; /* Match the box height */
-    background-color: rgba(0, 123, 255, 0.1); /* Light blue background */
-    border: 2px dashed #007BFF; /* Blue dashed border */
-    margin: 5px;
-    border-radius: var(--border-radius);
-    transition: all 0.2s ease-in-out; /* Smooth transition for appearance */
+    height: var(--size-element-height);
+    background-color: transparent;
+    border: 2px dotted var(--color-border);
+    margin: var(--size-margin-small);
+    border-radius: var(--size-border-radius);
+    padding: 0 var(--size-padding-medium);
 }
 
 .icon {
     display: flex;
     align-items: center;
-    margin-right: 5px;
+    margin-right: var(--size-margin-small);
 }
 
 .size-6 {
-    width: 1.5em;
-    height: 1.5em;
+    width: 1.2em;
+    height: 1.2em;
 }
 
 .filetype-input {
-    width: 420px;
-    height: 36px; /* Match the button height */
-    padding: 0 10px;
-    margin: 10px 0;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    font-size: 14px;
+    width: var(--width-filetype-input);
+    height: var(--size-element-height);
+    padding: 0 var(--size-padding-medium);
+    margin: var(--size-margin-medium) 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius);
+    font-size: var(--size-font-default);
     display: block;
-    mar    margin-right: auto;
+    margin-left: auto;
+    margin-right: auto;
     cursor: text;
-    line-height: 36px; /* Match the height */
+    line-height: var(--size-element-height);
 }
 
-/* Responsive adjustments */
 @media (max-width: 890px) {
     .horizontal-section {
         flex-direction: column;
@@ -244,11 +229,11 @@ html, body {
     }
 
     .horizontal-section > * {
-        margin-bottom: 10px;
+        margin-bottom: var(--size-margin-medium);
     }
 
     .json-types-container, .json-types-list {
-        padding: 0 10px;
+        padding: 0 var(--size-padding-medium);
     }
 
     .main-container {
@@ -262,16 +247,16 @@ html, body {
     }
 
     .filetype-input {
-        width: calc(100% - 20px);
+        width: calc(100% - 2 * var(--size-padding-medium));
     }
 }
 
 @media (max-width: 500px) {
     .button, .input, .compression-button, .textarea {
-        padding: 8px 10px;
+        padding: 0 var(--size-padding-medium);
     }
 
     .filetype-input {
-        font-size: 12px;
+        font-size: var(--size-font-default);
     }
 }
