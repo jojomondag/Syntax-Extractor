@@ -41,7 +41,7 @@ function isBinary(buffer) {
     // A simple check for binary files is to see if there are any null bytes in the first few thousand bytes
     const length = buffer.length < 8000 ? buffer.length : 8000;
     for (let i = 0; i < length; i++) {
-        if (buffer[i] === 0) { // Null byte found
+        if (buffer[i] === 0) {
             return true;
         }
     }

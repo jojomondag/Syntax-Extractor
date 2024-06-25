@@ -197,9 +197,25 @@ html, body {
 }
 
 .icon {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    margin-right: var(--size-margin-small);
+    margin-right: 0.5em;
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.icon-file {
+    background-image: var(--icon-file);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.icon-folder {
+    background-image: var(--icon-folder);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .size-6 {

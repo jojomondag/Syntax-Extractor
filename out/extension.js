@@ -221,7 +221,7 @@ async function clipBoardPolling(panel) {
     // Initial poll
     await pollClipboard();
     // Set up interval for polling
-    setInterval(pollClipboard, 800);
+    setInterval(pollClipboard, 500);
 }
 // Prepares and returns the HTML content to be displayed in the webview, including injecting the correct CSS file reference.
 async function composeWebViewContent(webview, extensionUri) {
