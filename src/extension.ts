@@ -105,14 +105,8 @@ async function refreshFileTypes(): Promise<string[]> {
     const detectedTypes = await detectWorkspaceFileTypes();
     const fileTypes = detectedTypes.filter((type: unknown): type is string => typeof type === 'string');
     
-    // Set default ignored types
-    const defaultIgnoredTypes = ['.git', 'node_modules', '.vscode'];
-    
     await configManager.setValue(ConfigKey.FileTypes, fileTypes);
-    await configManager.setValue(ConfigKey.FileTypesToIgnore, defaultIgnoredTypes);
-    
-    console.log("File types refreshed:", fileTypes);
-    console.log("Default ignored types set:", defaultIgnoredTypes);
+
     return fileTypes;
 }
 

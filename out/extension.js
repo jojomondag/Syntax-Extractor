@@ -105,12 +105,7 @@ async function refreshFileTypes() {
     console.log("Refreshing file types...");
     const detectedTypes = await (0, initializeFileTypes_1.detectWorkspaceFileTypes)();
     const fileTypes = detectedTypes.filter((type) => typeof type === 'string');
-    // Set default ignored types
-    const defaultIgnoredTypes = ['.git', 'node_modules', '.vscode'];
     await configManager.setValue(ConfigManager_1.ConfigKey.FileTypes, fileTypes);
-    await configManager.setValue(ConfigManager_1.ConfigKey.FileTypesToIgnore, defaultIgnoredTypes);
-    console.log("File types refreshed:", fileTypes);
-    console.log("Default ignored types set:", defaultIgnoredTypes);
     return fileTypes;
 }
 async function updateWebviewFileTypes(panel) {
