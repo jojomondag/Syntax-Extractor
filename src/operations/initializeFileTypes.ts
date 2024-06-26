@@ -2,11 +2,19 @@ import * as vscode from 'vscode';
 import { ConfigManager, ConfigKey } from '../config/ConfigManager';
 
 export async function initializeFileTypeConfiguration() {
-    console.log('Initializing file types.');
-    const fileTypes = await detectWorkspaceFileTypes();
+    console.log('Checking if file types need initialization.');
     const configManager = ConfigManager.getInstance();
-    await configManager.setValue(ConfigKey.FileTypes, fileTypes);
-    console.log('File types initialized:', fileTypes);
+    const fileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
+    const fileTypesToIgnore = configManager.getValue(ConfigKey.FileTypesToIgnore) as string[];
+
+    if (fileTypes.length === 0 && fileTypesToIgnore.length === 0) {
+        console.log('File types are empty. Initializing...');
+        const detectedTypes = await detectWorkspaceFileTypes();
+        await configManager.setValue(ConfigKey.FileTypes, detectedTypes);
+        console.log('File types initialized:', detectedTypes);
+    } else {
+        console.log('File types already initialized. Skipping.');
+    }
 }
 
 export async function detectWorkspaceFileTypes(): Promise<string[]> {

@@ -31,6 +31,12 @@ window.addEventListener('message', event => {
                 charCountElement.value = message.count.toString();
             }
             break;
+        case 'updateFileTypes':
+            updateFileTypeBoxes(message.fileTypes, message.fileTypesToIgnore);
+            break;
+        case 'refreshComplete':
+            vscode.postMessage({ command: 'showInformationMessage', text: 'File types have been refreshed.' });
+            break;
     }
 });
 
@@ -145,10 +151,8 @@ function initializeDragAndDrop() {
         const currentRow = box.parentNode as HTMLElement;
         const targetRow = currentRow === row1 ? row2 : row1;
     
-        // Store the original position
         const rect = box.getBoundingClientRect();
     
-        // Create a clone for the animation
         const clone = box.cloneNode(true) as HTMLElement;
         clone.style.position = 'fixed';
         clone.style.left = `${rect.left}px`;
@@ -160,20 +164,15 @@ function initializeDragAndDrop() {
         clone.style.zIndex = '1000';
         document.body.appendChild(clone);
 
-        // Move the original box immediately
         targetRow.appendChild(box);
 
-        // Force a reflow
         void clone.offsetWidth;
 
-        // Calculate the new position
         const newRect = box.getBoundingClientRect();
 
-        // Animate the clone to the new position
         clone.style.left = `${newRect.left}px`;
         clone.style.top = `${newRect.top}px`;
 
-        // Update visual state
         if (targetRow === row2) {
             clone.style.opacity = '0.5';
             box.style.opacity = '0.5';
@@ -182,12 +181,10 @@ function initializeDragAndDrop() {
             box.style.opacity = '1';
         }
 
-        // Remove the clone after animation
         setTimeout(() => {
             document.body.removeChild(clone);
         }, 500);
 
-        // Update file types after moving the box
         updateFileTypes();
     }
 
@@ -203,11 +200,11 @@ function initializeDragAndDrop() {
 function updateFileTypes() {
     const activeFileTypes = Array.from(document.getElementById('row1')!.children)
         .map(box => (box as HTMLElement).textContent!.trim())
-        .filter((value, index, self) => self.indexOf(value) === index); // Remove duplicates
+        .filter((value, index, self) => self.indexOf(value) === index);
 
     const ignoredFileTypes = Array.from(document.getElementById('row2')!.children)
         .map(box => (box as HTMLElement).textContent!.trim())
-        .filter((value, index, self) => self.indexOf(value) === index); // Remove duplicates
+        .filter((value, index, self) => self.indexOf(value) === index);
 
     vscode.postMessage({
         command: 'updateFileTypes',
@@ -225,7 +222,7 @@ function setupFileTypeInputListener() {
     });
 
     fileTypeInput.addEventListener('blur', () => {
-        fileTypeInput.placeholder = 'Write Folder/File name to Add/Remove or refresh. Press Enter.';
+        fileTypeInput.placeholder = 'Write Folder/File name to Add/Remove. Press Enter.';
     });
 
     fileTypeInput.addEventListener('keydown', event => {
@@ -233,32 +230,23 @@ function setupFileTypeInputListener() {
             const inputElement = event.target as HTMLInputElement;
             const fileType = inputElement.value.trim();
 
-            if (fileType.toLowerCase() === 'refresh') {
-                vscode.postMessage({
-                    command: 'refreshFileTypes'
-                });
-            } else if (fileType) {
+            if (fileType) {
                 const row1 = document.getElementById('row1')!;
                 const row2 = document.getElementById('row2')!;
                 
-                // Check if the file type exists in either row
                 const existingInRow1 = Array.from(row1.children).find(box => (box as HTMLElement).textContent!.trim() === fileType) as HTMLElement | undefined;
                 const existingInRow2 = Array.from(row2.children).find(box => (box as HTMLElement).textContent!.trim() === fileType) as HTMLElement | undefined;
 
                 if (existingInRow1) {
-                    // Remove from row1 (active file types)
                     row1.removeChild(existingInRow1);
                 } else if (existingInRow2) {
-                    // Remove from row2 (ignored file types)
                     row2.removeChild(existingInRow2);
                 } else {
-                    // Add to row1 if it doesn't exist in either
                     const { createBox } = initializeDragAndDrop();
                     const newBox = createBox(fileType);
                     row1.appendChild(newBox);
                 }
 
-                // Update file types after adding or removing
                 updateFileTypes();
             }
             inputElement.value = '';
@@ -331,6 +319,10 @@ function updateUI(fileTypes: string[], fileTypesToIgnore: string[], compressionL
         }
     }
 
+    updateFileTypeBoxes(fileTypes, fileTypesToIgnore);
+}
+
+function updateFileTypeBoxes(fileTypes: string[], fileTypesToIgnore: string[]) {
     const row1 = document.getElementById('row1')!;
     const row2 = document.getElementById('row2')!;
     row1.innerHTML = '';
@@ -347,5 +339,11 @@ function updateUI(fileTypes: string[], fileTypesToIgnore: string[], compressionL
         const box = createBox(fileType);
         box.style.opacity = '0.5';
         row2.appendChild(box);
+    });
+}
+
+function refreshFileTypes() {
+    vscode.postMessage({
+        command: 'refreshFileTypes'
     });
 }
