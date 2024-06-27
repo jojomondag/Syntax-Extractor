@@ -1,7 +1,6 @@
 {
     "syntaxExtractor.clipboardDataBoxHeight": 197,
     "syntaxExtractor.fileTypes": [
-        ".md",
         ".json",
         ".vsix",
         ".js",
@@ -14,6 +13,7 @@
     "syntaxExtractor.compressionLevel": 1,
     "syntaxExtractor.fileTypesToIgnore": [
         ".vscodeignore",
-        ".png"
+        ".png",
+        ".md"
     ]
 }

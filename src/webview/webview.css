@@ -173,11 +173,31 @@ html, body {
     transition: background-color var(--transition-speed), transform 0.5s ease;
     line-height: var(--size-element-height);
     font-size: var(--size-font-default);
+    position: relative;
 }
 
 .box:active {
     cursor: grabbing;
     background-color: var(--color-button-hover);
+}
+
+.box-content {
+    display: flex;
+    align-items: center;
+}
+
+.eye-icon {
+    width: 20px;
+    height: 20px;
+    background-image: var(--icon-eye-open);
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin-left: 5px;
+    display: none;
+}
+
+#row2 .box .eye-icon {
+    display: inline-block;
 }
 
 .line {

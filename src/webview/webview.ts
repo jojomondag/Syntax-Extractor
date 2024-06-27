@@ -74,10 +74,14 @@ function initializeDragAndDrop() {
         
         const iconSpan = document.createElement('span');
         iconSpan.className = `icon ${fileType.startsWith('.') ? 'icon-file' : 'icon-folder'}`;
-
+    
+        const eyeIcon = document.createElement('span');
+        eyeIcon.className = 'eye-icon';
+    
         box.appendChild(iconSpan);
         box.appendChild(document.createTextNode(fileType));
-
+        box.appendChild(eyeIcon);
+    
         box.addEventListener('dragstart', handleDragStart);
         box.addEventListener('dragend', handleDragEnd);
         box.addEventListener('click', handleClick);
@@ -163,28 +167,30 @@ function initializeDragAndDrop() {
         clone.style.transition = 'all 0.5s ease-in-out';
         clone.style.zIndex = '1000';
         document.body.appendChild(clone);
-
+    
         targetRow.appendChild(box);
-
+    
         void clone.offsetWidth;
-
+    
         const newRect = box.getBoundingClientRect();
-
+    
         clone.style.left = `${newRect.left}px`;
         clone.style.top = `${newRect.top}px`;
-
+    
         if (targetRow === row2) {
             clone.style.opacity = '0.5';
             box.style.opacity = '0.5';
+            box.querySelector('.eye-icon')!.classList.add('visible');
         } else {
             clone.style.opacity = '1';
             box.style.opacity = '1';
+            box.querySelector('.eye-icon')!.classList.remove('visible');
         }
-
+    
         setTimeout(() => {
             document.body.removeChild(clone);
         }, 500);
-
+    
         updateFileTypes();
     }
 
@@ -338,6 +344,7 @@ function updateFileTypeBoxes(fileTypes: string[], fileTypesToIgnore: string[]) {
     fileTypesToIgnore.forEach(fileType => {
         const box = createBox(fileType);
         box.style.opacity = '0.5';
+        box.querySelector('.eye-icon')!.classList.add('visible');
         row2.appendChild(box);
     });
 }

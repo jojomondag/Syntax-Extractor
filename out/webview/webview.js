@@ -67,8 +67,11 @@ function initializeDragAndDrop() {
         box.draggable = true;
         const iconSpan = document.createElement('span');
         iconSpan.className = `icon ${fileType.startsWith('.') ? 'icon-file' : 'icon-folder'}`;
+        const eyeIcon = document.createElement('span');
+        eyeIcon.className = 'eye-icon';
         box.appendChild(iconSpan);
         box.appendChild(document.createTextNode(fileType));
+        box.appendChild(eyeIcon);
         box.addEventListener('dragstart', handleDragStart);
         box.addEventListener('dragend', handleDragEnd);
         box.addEventListener('click', handleClick);
@@ -152,10 +155,12 @@ function initializeDragAndDrop() {
         if (targetRow === row2) {
             clone.style.opacity = '0.5';
             box.style.opacity = '0.5';
+            box.querySelector('.eye-icon').classList.add('visible');
         }
         else {
             clone.style.opacity = '1';
             box.style.opacity = '1';
+            box.querySelector('.eye-icon').classList.remove('visible');
         }
         setTimeout(() => {
             document.body.removeChild(clone);
@@ -289,6 +294,7 @@ function updateFileTypeBoxes(fileTypes, fileTypesToIgnore) {
     fileTypesToIgnore.forEach(fileType => {
         const box = createBox(fileType);
         box.style.opacity = '0.5';
+        box.querySelector('.eye-icon').classList.add('visible');
         row2.appendChild(box);
     });
 }
