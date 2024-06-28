@@ -1,6 +1,162 @@
 "use strict";
 const vscode = acquireVsCodeApi();
-// Listen for messages from the extension
+// BoxManager Module
+const BoxManager = (() => {
+    class BoxManager {
+        constructor() {
+            this.draggedElement = null;
+            this.placeholder = document.createElement('div');
+            this.placeholder.className = 'placeholder';
+            this.row1 = document.getElementById('row1');
+            this.row2 = document.getElementById('row2');
+            this.initializeRows();
+        }
+        initializeRows() {
+            [this.row1, this.row2].forEach(row => {
+                row.addEventListener('dragover', this.handleDragOver.bind(this));
+                row.addEventListener('drop', this.handleDrop.bind(this));
+            });
+        }
+        createBox(fileType) {
+            const box = document.createElement('div');
+            box.className = 'box';
+            box.draggable = true;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = `icon ${fileType.startsWith('.') ? 'icon-file' : 'icon-folder'}`;
+            const eyeIcon = document.createElement('span');
+            eyeIcon.className = 'eye-icon';
+            box.appendChild(iconSpan);
+            box.appendChild(document.createTextNode(fileType));
+            box.appendChild(eyeIcon);
+            box.addEventListener('dragstart', this.handleDragStart.bind(this));
+            box.addEventListener('dragend', this.handleDragEnd.bind(this));
+            box.addEventListener('click', this.handleClick.bind(this));
+            return box;
+        }
+        handleDragStart(event) {
+            this.draggedElement = event.target;
+            if (this.draggedElement) {
+                this.draggedElement.style.opacity = '0.5';
+                this.placeholder.style.width = `${this.draggedElement.offsetWidth}px`;
+                this.placeholder.style.height = `${this.draggedElement.offsetHeight}px`;
+            }
+            this.removePlaceholder();
+        }
+        handleDragOver(event) {
+            event.preventDefault();
+            if (!this.draggedElement)
+                return;
+            const row = event.currentTarget;
+            const boxes = Array.from(row.querySelectorAll('.box'));
+            let insertBefore = null;
+            for (const box of boxes) {
+                const rect = box.getBoundingClientRect();
+                if (event.clientX < rect.left + rect.width / 2) {
+                    insertBefore = box;
+                    break;
+                }
+            }
+            this.removePlaceholder();
+            if (insertBefore) {
+                row.insertBefore(this.placeholder, insertBefore);
+            }
+            else {
+                row.appendChild(this.placeholder);
+            }
+        }
+        handleDragEnd(event) {
+            if (this.draggedElement) {
+                this.draggedElement.style.opacity = '';
+            }
+            this.removePlaceholder();
+            this.draggedElement = null;
+        }
+        handleDrop(event) {
+            event.preventDefault();
+            if (this.draggedElement && this.placeholder.parentNode) {
+                this.placeholder.parentNode.insertBefore(this.draggedElement, this.placeholder);
+                this.draggedElement.style.opacity = '';
+            }
+            this.removePlaceholder();
+            this.draggedElement = null;
+            this.updateFileTypes();
+        }
+        handleClick(event) {
+            const box = event.currentTarget;
+            if (box) {
+                this.moveBox(box);
+            }
+        }
+        moveBox(box) {
+            const currentRow = box.parentNode;
+            const targetRow = currentRow === this.row1 ? this.row2 : this.row1;
+            const rect = box.getBoundingClientRect();
+            const clone = box.cloneNode(true);
+            clone.style.position = 'fixed';
+            clone.style.left = `${rect.left}px`;
+            clone.style.top = `${rect.top}px`;
+            clone.style.width = `${rect.width}px`;
+            clone.style.height = `${rect.height}px`;
+            clone.style.margin = '0';
+            clone.style.transition = 'all 0.5s ease-in-out';
+            clone.style.zIndex = '1000';
+            document.body.appendChild(clone);
+            targetRow.appendChild(box);
+            void clone.offsetWidth;
+            const newRect = box.getBoundingClientRect();
+            clone.style.left = `${newRect.left}px`;
+            clone.style.top = `${newRect.top}px`;
+            if (targetRow === this.row2) {
+                clone.style.opacity = '0.5';
+                box.style.opacity = '0.5';
+                box.querySelector('.eye-icon').classList.add('visible');
+            }
+            else {
+                clone.style.opacity = '1';
+                box.style.opacity = '1';
+                box.querySelector('.eye-icon').classList.remove('visible');
+            }
+            setTimeout(() => {
+                document.body.removeChild(clone);
+            }, 500);
+            this.updateFileTypes();
+        }
+        removePlaceholder() {
+            if (this.placeholder.parentNode) {
+                this.placeholder.parentNode.removeChild(this.placeholder);
+            }
+        }
+        updateFileTypes() {
+            const activeFileTypes = Array.from(this.row1.children)
+                .map(box => box.textContent.trim())
+                .filter((value, index, self) => self.indexOf(value) === index);
+            const ignoredFileTypes = Array.from(this.row2.children)
+                .map(box => box.textContent.trim())
+                .filter((value, index, self) => self.indexOf(value) === index);
+            vscode.postMessage({
+                command: 'updateFileTypes',
+                activeFileTypes: activeFileTypes,
+                ignoredFileTypes: ignoredFileTypes
+            });
+        }
+        updateFileTypeBoxes(fileTypes, fileTypesToIgnore) {
+            this.row1.innerHTML = '';
+            this.row2.innerHTML = '';
+            fileTypes.forEach(fileType => {
+                const box = this.createBox(fileType);
+                this.row1.appendChild(box);
+            });
+            fileTypesToIgnore.forEach(fileType => {
+                const box = this.createBox(fileType);
+                box.style.opacity = '0.5';
+                box.querySelector('.eye-icon').classList.add('visible');
+                this.row2.appendChild(box);
+            });
+        }
+    }
+    return new BoxManager();
+})();
+// Rest of the webview.ts file remains the same
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.command) {
@@ -31,7 +187,7 @@ window.addEventListener('message', event => {
             }
             break;
         case 'updateFileTypes':
-            updateFileTypeBoxes(message.fileTypes, message.fileTypesToIgnore);
+            BoxManager.updateFileTypeBoxes(message.fileTypes, message.fileTypesToIgnore);
             break;
         case 'refreshComplete':
             vscode.postMessage({ command: 'showInformationMessage', text: 'File types have been refreshed.' });
@@ -43,150 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setClipboardDataBoxHeight();
     setupTextInput();
     setupFileTypeInputListener();
-    initializeDragAndDrop();
     document.getElementById('openWebpageButton')?.addEventListener('click', openWebpageButton);
     document.getElementById('compressionLevelHard')?.addEventListener('click', () => updateCompressionLevel(3));
     document.getElementById('compressionLevelMedium')?.addEventListener('click', () => updateCompressionLevel(2));
     document.getElementById('compressionLevelLight')?.addEventListener('click', () => updateCompressionLevel(1));
 });
-function initializeDragAndDrop() {
-    let draggedElement = null;
-    const placeholder = document.createElement('div');
-    placeholder.className = 'placeholder';
-    document.querySelectorAll('.row').forEach(row => {
-        row.addEventListener('dragover', (event) => {
-            handleDragOver(event);
-        });
-        row.addEventListener('drop', (event) => {
-            handleDrop(event);
-        });
-    });
-    function createBox(fileType) {
-        const box = document.createElement('div');
-        box.className = 'box';
-        box.draggable = true;
-        const iconSpan = document.createElement('span');
-        iconSpan.className = `icon ${fileType.startsWith('.') ? 'icon-file' : 'icon-folder'}`;
-        const eyeIcon = document.createElement('span');
-        eyeIcon.className = 'eye-icon';
-        box.appendChild(iconSpan);
-        box.appendChild(document.createTextNode(fileType));
-        box.appendChild(eyeIcon);
-        box.addEventListener('dragstart', handleDragStart);
-        box.addEventListener('dragend', handleDragEnd);
-        box.addEventListener('click', handleClick);
-        return box;
-    }
-    function handleDragStart(event) {
-        draggedElement = event.target;
-        if (draggedElement) {
-            draggedElement.style.opacity = '0.5';
-            placeholder.style.width = `${draggedElement.offsetWidth}px`;
-            placeholder.style.height = `${draggedElement.offsetHeight}px`;
-        }
-        removePlaceholder();
-    }
-    function handleDragOver(event) {
-        event.preventDefault();
-        if (!draggedElement)
-            return;
-        const row = event.currentTarget;
-        const boxes = Array.from(row.querySelectorAll('.box'));
-        let insertBefore = null;
-        for (const box of boxes) {
-            const rect = box.getBoundingClientRect();
-            if (event.clientX < rect.left + rect.width / 2) {
-                insertBefore = box;
-                break;
-            }
-        }
-        removePlaceholder();
-        if (insertBefore) {
-            row.insertBefore(placeholder, insertBefore);
-        }
-        else {
-            row.appendChild(placeholder);
-        }
-    }
-    function handleDragEnd(event) {
-        if (draggedElement) {
-            draggedElement.style.opacity = '';
-        }
-        removePlaceholder();
-        draggedElement = null;
-    }
-    function handleDrop(event) {
-        event.preventDefault();
-        if (draggedElement && placeholder.parentNode) {
-            placeholder.parentNode.insertBefore(draggedElement, placeholder);
-            draggedElement.style.opacity = '';
-        }
-        removePlaceholder();
-        draggedElement = null;
-        updateFileTypes();
-    }
-    function handleClick(event) {
-        const box = event.currentTarget;
-        if (box) {
-            moveBox(box);
-        }
-    }
-    function moveBox(box) {
-        const row1 = document.getElementById('row1');
-        const row2 = document.getElementById('row2');
-        const currentRow = box.parentNode;
-        const targetRow = currentRow === row1 ? row2 : row1;
-        const rect = box.getBoundingClientRect();
-        const clone = box.cloneNode(true);
-        clone.style.position = 'fixed';
-        clone.style.left = `${rect.left}px`;
-        clone.style.top = `${rect.top}px`;
-        clone.style.width = `${rect.width}px`;
-        clone.style.height = `${rect.height}px`;
-        clone.style.margin = '0';
-        clone.style.transition = 'all 0.5s ease-in-out';
-        clone.style.zIndex = '1000';
-        document.body.appendChild(clone);
-        targetRow.appendChild(box);
-        void clone.offsetWidth;
-        const newRect = box.getBoundingClientRect();
-        clone.style.left = `${newRect.left}px`;
-        clone.style.top = `${newRect.top}px`;
-        if (targetRow === row2) {
-            clone.style.opacity = '0.5';
-            box.style.opacity = '0.5';
-            box.querySelector('.eye-icon').classList.add('visible');
-        }
-        else {
-            clone.style.opacity = '1';
-            box.style.opacity = '1';
-            box.querySelector('.eye-icon').classList.remove('visible');
-        }
-        setTimeout(() => {
-            document.body.removeChild(clone);
-        }, 500);
-        updateFileTypes();
-    }
-    function removePlaceholder() {
-        if (placeholder.parentNode) {
-            placeholder.parentNode.removeChild(placeholder);
-        }
-    }
-    return { createBox, updateFileTypes };
-}
-function updateFileTypes() {
-    const activeFileTypes = Array.from(document.getElementById('row1').children)
-        .map(box => box.textContent.trim())
-        .filter((value, index, self) => self.indexOf(value) === index);
-    const ignoredFileTypes = Array.from(document.getElementById('row2').children)
-        .map(box => box.textContent.trim())
-        .filter((value, index, self) => self.indexOf(value) === index);
-    vscode.postMessage({
-        command: 'updateFileTypes',
-        activeFileTypes: activeFileTypes,
-        ignoredFileTypes: ignoredFileTypes
-    });
-}
 function setupFileTypeInputListener() {
     const fileTypeInput = document.getElementById('fileTypeInput');
     if (!fileTypeInput)
@@ -213,11 +230,10 @@ function setupFileTypeInputListener() {
                     row2.removeChild(existingInRow2);
                 }
                 else {
-                    const { createBox } = initializeDragAndDrop();
-                    const newBox = createBox(fileType);
+                    const newBox = BoxManager.createBox(fileType);
                     row1.appendChild(newBox);
                 }
-                updateFileTypes();
+                BoxManager.updateFileTypes();
             }
             inputElement.value = '';
         }
@@ -279,24 +295,7 @@ function updateUI(fileTypes, fileTypesToIgnore, compressionLevel, clipboardDataB
             clipboardDataBox.style.height = `${clipboardDataBoxHeight}px`;
         }
     }
-    updateFileTypeBoxes(fileTypes, fileTypesToIgnore);
-}
-function updateFileTypeBoxes(fileTypes, fileTypesToIgnore) {
-    const row1 = document.getElementById('row1');
-    const row2 = document.getElementById('row2');
-    row1.innerHTML = '';
-    row2.innerHTML = '';
-    const { createBox } = initializeDragAndDrop();
-    fileTypes.forEach(fileType => {
-        const box = createBox(fileType);
-        row1.appendChild(box);
-    });
-    fileTypesToIgnore.forEach(fileType => {
-        const box = createBox(fileType);
-        box.style.opacity = '0.5';
-        box.querySelector('.eye-icon').classList.add('visible');
-        row2.appendChild(box);
-    });
+    BoxManager.updateFileTypeBoxes(fileTypes, fileTypesToIgnore);
 }
 function refreshFileTypes() {
     vscode.postMessage({
