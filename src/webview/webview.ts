@@ -1,16 +1,16 @@
+import './styles/webview.css';
+import BoxManager from './components/BoxManager';
+
+
+// Declare acquireVsCodeApi to avoid TypeScript error
 declare function acquireVsCodeApi(): any;
+
 const vscode = acquireVsCodeApi();
-
-import './webview.css';
-import BoxManager from './boxManager';
-
 const boxManager = new BoxManager(vscode);
 
-// Rest of the webview.ts file remains the same
-window.addEventListener('message', event => {
+window.addEventListener('message', (event: MessageEvent) => {
     const message = event.data;
     switch (message.command) {
-        // updateUI, updateFileTypes, etc. should now use `boxManager` instead of `BoxManager`
         case 'initConfig':
         case 'configUpdated':
             updateUI(message.fileTypes, message.fileTypesToIgnore, message.compressionLevel, message.clipboardDataBoxHeight);
@@ -46,7 +46,6 @@ window.addEventListener('message', event => {
     }
 });
 
-// Initialize event listeners after DOM load
 document.addEventListener('DOMContentLoaded', () => {
     setClipboardDataBoxHeight();
     setupTextInput();
@@ -88,7 +87,7 @@ function setupFileTypeInputListener() {
                     row2.removeChild(existingInRow2);
                 } else {
                     const newBox = boxManager.createBox(fileType);
-                    row1.appendChild(newBox);
+                    row1.appendChild(newBox.getElement());
                 }
 
                 boxManager.updateFileTypes();

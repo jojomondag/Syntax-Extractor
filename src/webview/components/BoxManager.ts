@@ -1,6 +1,8 @@
+import Box from './Box';
+
 class BoxManager {
     private vscode: any;
-    private draggedElement: HTMLElement | null = null;
+    private draggedBox: Box | null = null;
     private placeholder: HTMLDivElement;
     private row1: HTMLElement;
     private row2: HTMLElement;
@@ -22,44 +24,26 @@ class BoxManager {
         });
     }
 
-    public createBox(fileType: string): HTMLDivElement {
-        const box = document.createElement('div');
-        box.className = 'box';
-        box.draggable = true;
-        
-        const iconSpan = document.createElement('span');
-        iconSpan.className = `icon ${fileType.startsWith('.') ? 'icon-file' : 'icon-folder'}`;
-    
-        const eyeIcon = document.createElement('span');
-        eyeIcon.className = 'eye-icon';
-    
-        box.appendChild(iconSpan);
-        box.appendChild(document.createTextNode(fileType));
-        box.appendChild(eyeIcon);
-    
-        box.addEventListener('dragstart', this.handleDragStart.bind(this));
-        box.addEventListener('dragend', this.handleDragEnd.bind(this));
-        box.addEventListener('click', this.handleClick.bind(this));
-        return box;
+    public createBox(fileType: string): Box {
+        return new Box(fileType, this.handleDragStart.bind(this), this.handleDragEnd.bind(this), this.handleClick.bind(this));
     }
 
-    private handleDragStart(event: DragEvent) {
-        this.draggedElement = event.target as HTMLElement;
-        if (this.draggedElement) {
-            this.draggedElement.style.opacity = '0.5';
-            this.placeholder.style.width = `${this.draggedElement.offsetWidth}px`;
-            this.placeholder.style.height = `${this.draggedElement.offsetHeight}px`;
-        }
+    private handleDragStart(box: Box, event: DragEvent) {
+        this.draggedBox = box;
+        const element = box.getElement();
+        element.style.opacity = '0.5';
+        this.placeholder.style.width = `${element.offsetWidth}px`;
+        this.placeholder.style.height = `${element.offsetHeight}px`;
         this.removePlaceholder();
     }
 
     private handleDragOver(event: DragEvent) {
         event.preventDefault();
-        if (!this.draggedElement) return;
+        if (!this.draggedBox) return;
 
         const row = event.currentTarget as HTMLElement;
         const boxes = Array.from(row.querySelectorAll('.box')) as HTMLElement[];
-        
+
         let insertBefore: HTMLElement | null = null;
         for (const box of boxes) {
             const rect = box.getBoundingClientRect();
@@ -78,39 +62,36 @@ class BoxManager {
         }
     }
 
-    private handleDragEnd(event: DragEvent) {
-        if (this.draggedElement) {
-            this.draggedElement.style.opacity = '';
-        }
+    private handleDragEnd(box: Box, event: DragEvent) {
+        const element = box.getElement();
+        element.style.opacity = '';
         this.removePlaceholder();
-        this.draggedElement = null;
+        this.draggedBox = null;
     }
 
     private handleDrop(event: DragEvent) {
         event.preventDefault();
-        if (this.draggedElement && this.placeholder.parentNode) {
-            this.placeholder.parentNode.insertBefore(this.draggedElement, this.placeholder);
-            this.draggedElement.style.opacity = '';
+        if (this.draggedBox && this.placeholder.parentNode) {
+            this.placeholder.parentNode.insertBefore(this.draggedBox.getElement(), this.placeholder);
+            this.draggedBox.getElement().style.opacity = '';
         }
         this.removePlaceholder();
-        this.draggedElement = null;
+        this.draggedBox = null;
         this.updateFileTypes();
     }
 
-    private handleClick(event: MouseEvent) {
-        const box = event.currentTarget as HTMLElement;
-        if (box) {
-            this.moveBox(box);
-        }
+    private handleClick(box: Box, event: MouseEvent) {
+        this.moveBox(box);
     }
-    
-    private moveBox(box: HTMLElement) {
-        const currentRow = box.parentNode as HTMLElement;
+
+    private moveBox(box: Box) {
+        const element = box.getElement();
+        const currentRow = element.parentNode as HTMLElement;
         const targetRow = currentRow === this.row1 ? this.row2 : this.row1;
-    
-        const rect = box.getBoundingClientRect();
-    
-        const clone = box.cloneNode(true) as HTMLElement;
+
+        const rect = element.getBoundingClientRect();
+
+        const clone = element.cloneNode(true) as HTMLElement;
         clone.style.position = 'fixed';
         clone.style.left = `${rect.left}px`;
         clone.style.top = `${rect.top}px`;
@@ -120,30 +101,30 @@ class BoxManager {
         clone.style.transition = 'all 0.5s ease-in-out';
         clone.style.zIndex = '1000';
         document.body.appendChild(clone);
-    
-        targetRow.appendChild(box);
-    
+
+        targetRow.appendChild(element);
+
         void clone.offsetWidth;
-    
-        const newRect = box.getBoundingClientRect();
-    
+
+        const newRect = element.getBoundingClientRect();
+
         clone.style.left = `${newRect.left}px`;
         clone.style.top = `${newRect.top}px`;
-    
+
         if (targetRow === this.row2) {
             clone.style.opacity = '0.5';
-            box.style.opacity = '0.5';
-            box.querySelector('.eye-icon')!.classList.add('visible');
+            element.style.opacity = '0.5';
+            box.toggleEyeIcon(true);
         } else {
             clone.style.opacity = '1';
-            box.style.opacity = '1';
-            box.querySelector('.eye-icon')!.classList.remove('visible');
+            element.style.opacity = '1';
+            box.toggleEyeIcon(false);
         }
-    
+
         setTimeout(() => {
             document.body.removeChild(clone);
         }, 500);
-    
+
         this.updateFileTypes();
     }
 
@@ -175,14 +156,14 @@ class BoxManager {
 
         fileTypes.forEach(fileType => {
             const box = this.createBox(fileType);
-            this.row1.appendChild(box);
+            this.row1.appendChild(box.getElement());
         });
 
         fileTypesToIgnore.forEach(fileType => {
             const box = this.createBox(fileType);
-            box.style.opacity = '0.5';
-            box.querySelector('.eye-icon')!.classList.add('visible');
-            this.row2.appendChild(box);
+            box.setOpacity('0.5');
+            box.toggleEyeIcon(true);
+            this.row2.appendChild(box.getElement());
         });
     }
 }
