@@ -15,7 +15,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -107,23 +106,22 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "clean": "rimraf out",
-    "compile": "tsc -p ./ && npm run copy-assets",
-    "copy-assets": "copyfiles src/webview/*.{html,css} src/resources/SyntaxExtractor256x256.png out/ -u 1",
-    "rebuild": "npm run clean && npm run compile",
-    "watch": "tsc -watch -p ./",
-    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    "vscode:prepublish": "webpack --mode production",
+    "compile": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.87.0",
-    "copyfiles": "^2.4.1",
-    "css-loader": "^6.10.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^6.11.0",
     "eslint": "^7.10.0",
-    "rimraf": "^5.0.5",
     "style-loader": "^3.3.4",
     "ts-loader": "^9.5.1",
-    "typescript": "^4.0.3"
+    "typescript": "^4.0.3",
+    "webpack": "^5.93.0",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "chardet": "^2.0.0",

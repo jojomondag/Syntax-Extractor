@@ -1,6 +1,8 @@
 declare function acquireVsCodeApi(): any;
 const vscode = acquireVsCodeApi();
 
+import './webview.css';
+
 // BoxManager Module
 const BoxManager = (() => {
     class BoxManager {

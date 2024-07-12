@@ -1,1 +1,0 @@
-{"version":3,"file":"openWebpage.js","sourceRoot":"","sources":["../../src/commands/openWebpage.ts"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;AAAA,+CAAiC;AAEjC,SAAgB,iBAAiB;IAC7B,MAAM,GAAG,GAAG,0BAA0B,CAAC,CAAC,wBAAwB;IAEhE,+BAA+B;IAC/B,MAAM,CAAC,GAAG,CAAC,YAAY,CAAC,MAAM,CAAC,GAAG,CAAC,KAAK,CAAC,GAAG,CAAC,CAAC,CAAC;AACnD,CAAC;AALD,8CAKC"}
