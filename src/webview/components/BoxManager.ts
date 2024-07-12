@@ -9,16 +9,21 @@ class BoxManager {
 
     constructor(vscode: any) {
         this.vscode = vscode;
-        this.placeholder = document.createElement('div');
-        this.placeholder.className = 'placeholder';
+        this.placeholder = this.createPlaceholder();
         this.row1 = document.getElementById('row1')!;
         this.row2 = document.getElementById('row2')!;
 
-        this.initializeRows();
+        this.initializeRows([this.row1, this.row2]);
     }
 
-    private initializeRows() {
-        [this.row1, this.row2].forEach(row => {
+    private createPlaceholder(): HTMLDivElement {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'placeholder';
+        return placeholder;
+    }
+
+    private initializeRows(rows: HTMLElement[]) {
+        rows.forEach(row => {
             row.addEventListener('dragover', this.handleDragOver.bind(this));
             row.addEventListener('drop', this.handleDrop.bind(this));
         });
@@ -30,10 +35,8 @@ class BoxManager {
 
     private handleDragStart(box: Box, event: DragEvent) {
         this.draggedBox = box;
-        const element = box.getElement();
-        element.style.opacity = '0.5';
-        this.placeholder.style.width = `${element.offsetWidth}px`;
-        this.placeholder.style.height = `${element.offsetHeight}px`;
+        this.draggedBox.getElement().classList.add('dragging');
+        this.updatePlaceholderSize(box.getElement());
         this.removePlaceholder();
     }
 
@@ -42,16 +45,7 @@ class BoxManager {
         if (!this.draggedBox) return;
 
         const row = event.currentTarget as HTMLElement;
-        const boxes = Array.from(row.querySelectorAll('.box')) as HTMLElement[];
-
-        let insertBefore: HTMLElement | null = null;
-        for (const box of boxes) {
-            const rect = box.getBoundingClientRect();
-            if (event.clientX < rect.left + rect.width / 2) {
-                insertBefore = box;
-                break;
-            }
-        }
+        const insertBefore = this.getInsertBeforeElement(row, event.clientX);
 
         this.removePlaceholder();
 
@@ -62,9 +56,15 @@ class BoxManager {
         }
     }
 
+    private getInsertBeforeElement(row: HTMLElement, clientX: number): HTMLElement | null {
+        return Array.from(row.querySelectorAll('.box')).find(box => {
+            const rect = box.getBoundingClientRect();
+            return clientX < rect.left + rect.width / 2;
+        }) as HTMLElement | null;
+    }
+
     private handleDragEnd(box: Box, event: DragEvent) {
-        const element = box.getElement();
-        element.style.opacity = '';
+        this.draggedBox?.getElement().classList.remove('dragging');
         this.removePlaceholder();
         this.draggedBox = null;
     }
@@ -72,97 +72,108 @@ class BoxManager {
     private handleDrop(event: DragEvent) {
         event.preventDefault();
         if (this.draggedBox && this.placeholder.parentNode) {
-            this.placeholder.parentNode.insertBefore(this.draggedBox.getElement(), this.placeholder);
-            this.draggedBox.getElement().style.opacity = '';
+            const targetRow = this.placeholder.parentNode as HTMLElement;
+            this.moveBox(this.draggedBox, targetRow);
+            this.draggedBox = null;
+            this.updateFileTypes();
         }
         this.removePlaceholder();
-        this.draggedBox = null;
-        this.updateFileTypes();
     }
 
-    private handleClick(box: Box, event: MouseEvent) {
-        this.moveBox(box);
-    }
-
-    private moveBox(box: Box) {
+    private moveBox(box: Box, targetRow: HTMLElement) {
         const element = box.getElement();
         const currentRow = element.parentNode as HTMLElement;
-        const targetRow = currentRow === this.row1 ? this.row2 : this.row1;
+        if (currentRow === targetRow) return;
 
-        const rect = element.getBoundingClientRect();
+        const isMovingToRow2 = targetRow === this.row2;
 
+        // Get the initial position
+        const initialRect = element.getBoundingClientRect();
+
+        // Create a clone for animation
         const clone = element.cloneNode(true) as HTMLElement;
         clone.style.position = 'fixed';
-        clone.style.left = `${rect.left}px`;
-        clone.style.top = `${rect.top}px`;
-        clone.style.width = `${rect.width}px`;
-        clone.style.height = `${rect.height}px`;
-        clone.style.margin = '0';
-        clone.style.transition = 'all 0.5s ease-in-out';
+        clone.style.left = `${initialRect.left}px`;
+        clone.style.top = `${initialRect.top}px`;
+        clone.style.width = `${initialRect.width}px`;
+        clone.style.height = `${initialRect.height}px`;
+        clone.style.transition = 'all 0.3s ease';
         clone.style.zIndex = '1000';
         document.body.appendChild(clone);
 
+        // Move the original element instantly
         targetRow.appendChild(element);
+        this.updateBoxAppearance(box, isMovingToRow2);
 
-        void clone.offsetWidth;
+        // Get the final position
+        const finalRect = element.getBoundingClientRect();
 
-        const newRect = element.getBoundingClientRect();
+        // Animate the clone
+        requestAnimationFrame(() => {
+            clone.style.left = `${finalRect.left}px`;
+            clone.style.top = `${finalRect.top}px`;
+            clone.style.opacity = isMovingToRow2 ? '0.5' : '1';
+        });
 
-        clone.style.left = `${newRect.left}px`;
-        clone.style.top = `${newRect.top}px`;
-
-        if (targetRow === this.row2) {
-            clone.style.opacity = '0.5';
-            element.style.opacity = '0.5';
-            box.toggleEyeIcon(true);
-        } else {
-            clone.style.opacity = '1';
-            element.style.opacity = '1';
-            box.toggleEyeIcon(false);
-        }
-
+        // Remove the clone after animation
         setTimeout(() => {
             document.body.removeChild(clone);
-        }, 500);
+        }, 300);
+    }
 
+    private updateBoxAppearance(box: Box, isInRow2: boolean) {
+        const element = box.getElement();
+        element.style.opacity = isInRow2 ? '0.5' : '1';
+        box.toggleEyeIcon(isInRow2);
+    }
+
+    public handleClick(box: Box, event: MouseEvent) {
+        const currentRow = box.getElement().parentNode as HTMLElement;
+        const targetRow = currentRow === this.row1 ? this.row2 : this.row1;
+        this.moveBox(box, targetRow);
         this.updateFileTypes();
     }
 
+    private updatePlaceholderSize(element: HTMLElement) {
+        this.placeholder.style.width = `${element.offsetWidth}px`;
+        this.placeholder.style.height = `${element.offsetHeight}px`;
+    }
+
     private removePlaceholder() {
-        if (this.placeholder.parentNode) {
-            this.placeholder.parentNode.removeChild(this.placeholder);
-        }
+        this.placeholder.remove();
     }
 
     public updateFileTypes() {
-        const activeFileTypes = Array.from(this.row1.children)
-            .map(box => (box as HTMLElement).textContent!.trim())
-            .filter((value, index, self) => self.indexOf(value) === index);
-
-        const ignoredFileTypes = Array.from(this.row2.children)
-            .map(box => (box as HTMLElement).textContent!.trim())
-            .filter((value, index, self) => self.indexOf(value) === index);
+        const getFileTypes = (row: HTMLElement) =>
+            Array.from(row.children)
+                .map(box => box.textContent!.trim())
+                .filter((value, index, self) => self.indexOf(value) === index);
 
         this.vscode.postMessage({
             command: 'updateFileTypes',
-            activeFileTypes: activeFileTypes,
-            ignoredFileTypes: ignoredFileTypes
+            activeFileTypes: getFileTypes(this.row1),
+            ignoredFileTypes: getFileTypes(this.row2)
         });
     }
 
     public updateFileTypeBoxes(fileTypes: string[], fileTypesToIgnore: string[]) {
+        this.clearRows();
+        this.populateRows(fileTypes, fileTypesToIgnore);
+    }
+
+    private clearRows() {
         this.row1.innerHTML = '';
         this.row2.innerHTML = '';
+    }
 
+    private populateRows(fileTypes: string[], fileTypesToIgnore: string[]) {
         fileTypes.forEach(fileType => {
             const box = this.createBox(fileType);
             this.row1.appendChild(box.getElement());
         });
-
         fileTypesToIgnore.forEach(fileType => {
             const box = this.createBox(fileType);
-            box.setOpacity('0.5');
-            box.toggleEyeIcon(true);
+            this.updateBoxAppearance(box, true);
             this.row2.appendChild(box.getElement());
         });
     }

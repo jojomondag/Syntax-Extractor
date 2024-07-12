@@ -157,6 +157,7 @@ html, body {
     justify-content: center;
     margin: var(--size-margin-medium) 0;
     width: 100%;
+    min-height: calc(var(--size-element-height) + 2 * var(--size-margin-small));
 }
 
 .box {
@@ -170,7 +171,7 @@ html, body {
     cursor: grab;
     user-select: none;
     border-radius: var(--size-border-radius);
-    transition: background-color var(--transition-speed), transform 0.5s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease;
     line-height: var(--size-element-height);
     font-size: var(--size-font-default);
     position: relative;
@@ -178,7 +179,6 @@ html, body {
 
 .box:active {
     cursor: grabbing;
-    background-color: var(--color-button-hover);
 }
 
 .box-content {
@@ -193,11 +193,12 @@ html, body {
     background-size: contain;
     background-repeat: no-repeat;
     margin-left: 5px;
-    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 #row2 .box .eye-icon {
-    display: inline-block;
+    opacity: 1;
 }
 
 .line {

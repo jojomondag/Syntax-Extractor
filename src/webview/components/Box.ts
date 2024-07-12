@@ -1,10 +1,20 @@
 export default class Box {
     private element: HTMLDivElement;
 
-    constructor(private fileType: string, private onDragStart: (box: Box, event: DragEvent) => void, private onDragEnd: (box: Box, event: DragEvent) => void, private onClick: (box: Box, event: MouseEvent) => void) {
-        this.element = document.createElement('div');
-        this.element.className = 'box';
-        this.element.draggable = true;
+    constructor(
+        private fileType: string, 
+        private onDragStart: (box: Box, event: DragEvent) => void, 
+        private onDragEnd: (box: Box, event: DragEvent) => void, 
+        private onClick: (box: Box, event: MouseEvent) => void
+    ) {
+        this.element = this.createBoxElement(fileType);
+        this.bindEvents();
+    }
+
+    private createBoxElement(fileType: string): HTMLDivElement {
+        const element = document.createElement('div');
+        element.className = 'box';
+        element.draggable = true;
 
         const iconSpan = document.createElement('span');
         iconSpan.className = `icon ${fileType.startsWith('.') ? 'icon-file' : 'icon-folder'}`;
@@ -12,10 +22,14 @@ export default class Box {
         const eyeIcon = document.createElement('span');
         eyeIcon.className = 'eye-icon';
 
-        this.element.appendChild(iconSpan);
-        this.element.appendChild(document.createTextNode(fileType));
-        this.element.appendChild(eyeIcon);
+        element.appendChild(iconSpan);
+        element.appendChild(document.createTextNode(fileType));
+        element.appendChild(eyeIcon);
 
+        return element;
+    }
+
+    private bindEvents() {
         this.element.addEventListener('dragstart', this.handleDragStart.bind(this));
         this.element.addEventListener('dragend', this.handleDragEnd.bind(this));
         this.element.addEventListener('click', this.handleClick.bind(this));
@@ -42,13 +56,9 @@ export default class Box {
     }
 
     public toggleEyeIcon(visible: boolean) {
-        const eyeIcon = this.element.querySelector('.eye-icon');
+        const eyeIcon = this.element.querySelector('.eye-icon') as HTMLElement;
         if (eyeIcon) {
-            if (visible) {
-                eyeIcon.classList.add('visible');
-            } else {
-                eyeIcon.classList.remove('visible');
-            }
+            eyeIcon.style.opacity = visible ? '1' : '0';
         }
     }
 
