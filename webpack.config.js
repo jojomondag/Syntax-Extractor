@@ -60,6 +60,7 @@ module.exports = [
         patterns: [
           { from: 'src/webview/webview.html', to: 'webview.html' },
           { from: 'src/webview/webview.css', to: 'webview.css' },
+          { from: 'src/webview/variables.css', to: 'variables.css' }, // Add this line
         ],
       }),
     ],
