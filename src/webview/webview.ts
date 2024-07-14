@@ -11,7 +11,6 @@ placeholder.className = 'placeholder';
 const clickAndHoldDuration = 200;
 let clickTimeout: number | undefined;
 let isClickAndHold = false;
-const boxNames = ["Assets", "Liabilities", "Equity", "Revenue", "Expenses", "Profit", "Loss", "Investment", "Savings", "Debt", "Credit", "Cash", "Income"];
 
 type Message = {
     command: string;
@@ -19,10 +18,22 @@ type Message = {
     clipboardDataBoxHeight?: number;
     content?: string;
     count?: number;
+    fileTypes?: string[];
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded and parsed');
+    setClipboardDataBoxHeight();
+    setupTextInput();
+    setupCompressionButtons();
+    setupOpenWebpageButton();
+    setupDragAndDrop();
+    requestFileTypes();
+});
 
 window.addEventListener('message', (event: MessageEvent<Message>) => {
     const message = event.data;
+    console.log('Received message:', message);
     switch (message.command) {
         case 'initConfig':
         case 'configUpdated':
@@ -30,45 +41,30 @@ window.addEventListener('message', (event: MessageEvent<Message>) => {
                 updateUI(message.compressionLevel, message.clipboardDataBoxHeight);
             }
             break;
-        case 'updateClipboardDataBox':
-            const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
-            if (clipboardDataBox && message.content !== undefined) {
-                clipboardDataBox.value = message.content;
-                vscode.postMessage({
-                    command: 'requestCounts',
-                    text: message.content
-                });
+        case 'updateFileTypes':
+            console.log("Received file types in webview:", message.fileTypes);
+            if (Array.isArray(message.fileTypes)) {
+                createBoxesFromFileTypes(message.fileTypes);
             }
+            break;
+        case 'updateClipboardDataBox':
+            updateClipboardDataBox(message.content);
             break;
         case 'setTokenCount':
-            const tokenCountElement = document.getElementById('tokenCount') as HTMLInputElement;
-            if (tokenCountElement && message.count !== undefined) {
-                tokenCountElement.value = message.count.toString();
-            }
+            updateTokenCount(message.count);
             break;
         case 'setCharCount':
-            const charCountElement = document.getElementById('charCount') as HTMLInputElement;
-            if (charCountElement && message.count !== undefined) {
-                charCountElement.value = message.count.toString();
-            }
+            updateCharCount(message.count);
             break;
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    setClipboardDataBoxHeight();
-    setupTextInput();
-    document.getElementById('openWebpageButton')?.addEventListener('click', openWebpageButton);
-    document.getElementById('compressionLevelHard')?.addEventListener('click', () => updateCompressionLevel(3));
-    document.getElementById('compressionLevelMedium')?.addEventListener('click', () => updateCompressionLevel(2));
-    document.getElementById('compressionLevelLight')?.addEventListener('click', () => updateCompressionLevel(1));
-    setupDragAndDrop();
-    createInitialBoxes();
-});
-
 function setupTextInput() {
     const textarea = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
-    if (!textarea) return;
+    if (!textarea) {
+        console.error('Clipboard data box not found');
+        return;
+    }
 
     textarea.addEventListener('input', () => {
         vscode.postMessage({
@@ -82,23 +78,61 @@ function setupTextInput() {
     });
 }
 
-function openWebpageButton() {
-    vscode.postMessage({
-        command: 'openWebpage'
+function setupCompressionButtons() {
+    document.getElementById('compressionLevelHard')?.addEventListener('click', () => updateCompressionLevel(3));
+    document.getElementById('compressionLevelMedium')?.addEventListener('click', () => updateCompressionLevel(2));
+    document.getElementById('compressionLevelLight')?.addEventListener('click', () => updateCompressionLevel(1));
+}
+
+function setupOpenWebpageButton() {
+    document.getElementById('openWebpageButton')?.addEventListener('click', () => {
+        vscode.postMessage({
+            command: 'openWebpage'
+        });
+    });
+}
+
+function createBoxesFromFileTypes(fileTypes: string[]) {
+    console.log("Creating boxes for file types:", fileTypes);
+    const row1 = document.getElementById('row1');
+    if (!row1) {
+        console.error("row1 element not found");
+        return;
+    }
+
+    row1.innerHTML = '';
+
+    const template = document.getElementById('box-template') as HTMLTemplateElement;
+    if (!template) {
+        console.error("Box template not found");
+        return;
+    }
+
+    fileTypes.forEach(fileType => {
+        try {
+            const box = new Box(template, fileType);
+            const boxElement = box.getElement();
+            row1.appendChild(boxElement);
+            box.updateBoxStyles();
+        } catch (error) {
+            console.error(`Error creating box for ${fileType}:`, error);
+        }
     });
 }
 
 function setClipboardDataBoxHeight() {
     const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+    if (!clipboardDataBox) {
+        console.error('Clipboard data box not found');
+        return;
+    }
 
     document.addEventListener('mouseup', () => {
-        if (clipboardDataBox) {
-            const height = clipboardDataBox.offsetHeight;
-            vscode.postMessage({
-                command: 'setClipboardDataBoxHeight',
-                height: height
-            });
-        }
+        const height = clipboardDataBox.offsetHeight;
+        vscode.postMessage({
+            command: 'setClipboardDataBoxHeight',
+            height: height
+        });
     });
 }
 
@@ -137,6 +171,10 @@ function setupDragAndDrop() {
         row.addEventListener('dragover', (event) => handleDragOver(event as DragEvent));
         row.addEventListener('drop', (event) => handleDrop(event as DragEvent));
     });
+
+    document.addEventListener('mousedown', handleBehavior);
+    document.addEventListener('mouseup', handleBehavior);
+    document.addEventListener('click', handleBehavior);
 }
 
 function handleBehavior(event: MouseEvent) {
@@ -178,7 +216,6 @@ function handleDragStart(event: DragEvent) {
         placeholder.style.width = `${draggedElement.offsetWidth}px`;
         placeholder.style.height = `${draggedElement.offsetHeight}px`;
 
-        // Ensure event.dataTransfer is available
         if (event.dataTransfer) {
             const dragImage = draggedElement.cloneNode(true) as HTMLElement;
             dragImage.style.position = 'absolute';
@@ -212,7 +249,6 @@ function handleDragEnd(event: DragEvent) {
     draggedElement = null;
     isClickAndHold = false;
 
-    // Remove the custom drag image
     const dragImages = document.querySelectorAll('.box[style*="position: absolute"]');
     dragImages.forEach(img => {
         img.remove();
@@ -247,7 +283,7 @@ function moveBox(box: HTMLElement) {
 
     box.style.transition = 'none';
     box.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-    box.offsetWidth;
+    box.offsetWidth; // Force reflow
     box.style.transition = 'transform 0.5s ease-in-out';
     box.style.transform = 'translate(0, 0)';
 
@@ -271,7 +307,7 @@ function updateBoxStyles(box: HTMLElement) {
         if (!blueRegion) {
             blueRegion = document.createElement('span');
             blueRegion.className = 'icon right-icon open-eye';
-            blueRegion.addEventListener('click', function(event) {
+            blueRegion.addEventListener('click', (event) => {
                 event.stopPropagation();
                 toggleEyeIcon(blueRegion);
             });
@@ -316,39 +352,31 @@ function toggleEyeIcon(blueRegion: HTMLElement) {
     }
 }
 
-function createBox() {
-    const template = document.getElementById('box-template') as HTMLTemplateElement;
-    if (!template) return;
-    
-    const newBox = template.content.cloneNode(true) as HTMLElement;
-    const row1 = document.getElementById('row1');
-    if (!row1) return;
-    
-    row1.appendChild(newBox);
-    const box = row1.lastElementChild as HTMLElement;
-    if (!box) return;
-    
-    box.addEventListener('mousedown', handleBehavior);
-    box.addEventListener('mouseup', handleBehavior);
-    box.addEventListener('click', handleBehavior);
-    box.addEventListener('dragstart', handleDragStart);
-    box.addEventListener('dragend', handleDragEnd);
-
-    const textElement = box.querySelector('.text') as HTMLElement;
-    if (textElement) {
-        textElement.textContent = getRandomName();
+function updateClipboardDataBox(content: string | undefined) {
+    const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+    if (clipboardDataBox && content !== undefined) {
+        clipboardDataBox.value = content;
+        vscode.postMessage({
+            command: 'requestCounts',
+            text: content
+        });
     }
-
-    updateBoxStyles(box);
 }
 
-function getRandomName() {
-    const randomIndex = Math.floor(Math.random() * boxNames.length);
-    return boxNames[randomIndex];
+function updateTokenCount(count: number | undefined) {
+    const tokenCountElement = document.getElementById('tokenCount') as HTMLInputElement;
+    if (tokenCountElement && count !== undefined) {
+        tokenCountElement.value = count.toString();
+    }
 }
 
-function createInitialBoxes() {
-    for (let i = 0; i < 8; i++) {
-        createBox();
+function updateCharCount(count: number | undefined) {
+    const charCountElement = document.getElementById('charCount') as HTMLInputElement;
+    if (charCountElement && count !== undefined) {
+        charCountElement.value = count.toString();
     }
+}
+
+function requestFileTypes() {
+    vscode.postMessage({ command: 'getFileTypes' });
 }

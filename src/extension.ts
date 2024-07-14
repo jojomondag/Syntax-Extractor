@@ -112,10 +112,11 @@ async function refreshFileTypes(): Promise<string[]> {
 
 async function updateWebviewFileTypes(panel: vscode.WebviewPanel) {
     const configManager = ConfigManager.getInstance();
+    const fileTypes = configManager.getValue(ConfigKey.FileTypes);
+    console.log("Sending file types to webview:", fileTypes); // Debug log
     panel.webview.postMessage({
         command: 'updateFileTypes',
-        fileTypes: configManager.getValue(ConfigKey.FileTypes),
-        fileTypesToIgnore: configManager.getValue(ConfigKey.FileTypesToIgnore)
+        fileTypes: fileTypes
     });
 }
 
@@ -156,6 +157,9 @@ async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, c
         case 'requestCounts':
             panel.webview.postMessage({ command: 'setTokenCount', count: getTokenCount(message.text) });
             panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
+            break;
+        case 'getFileTypes':
+            await updateWebviewFileTypes(panel);
             break;
     }
 
