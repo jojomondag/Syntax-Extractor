@@ -33,20 +33,26 @@
             <button id="openWebpageButton" class="button webpage-button">Open Webpage</button>
         </section>
         
-        <!-- Updated File Types Container with Drag-and-Drop Functionality -->
-        <div class="json-types-container">
+        <!-- Box Container -->
+        <div class="container">
             <div class="instructions">
                 <p>Press once to move the items. Click and hold to drag and drop.</p>
             </div>
             <div class="row" id="row1">
-                <!-- Existing file types will be populated here dynamically -->
+                <!-- Boxes will be inserted here -->
             </div>
             <div class="line"></div>
             <div class="row" id="row2">
                 <!-- Empty row for moved boxes -->
             </div>
-            <input type="text" id="fileTypeInput" class="input filetype-input" placeholder="Write Folder/File name to Add/Remove or refresh. Press Enter.">
         </div>
+
+        <template id="box-template">
+            <div class="box icon1" draggable="true">
+                <span class="icon left-icon"></span>
+                <span class="text" draggable="true">Assets</span>
+            </div>
+        </template>
     </main>
     <script src="webview.js"></script>
 </body>

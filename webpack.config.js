@@ -59,8 +59,7 @@ module.exports = [
       new CopyWebpackPlugin({
         patterns: [
           { from: 'src/webview/webview.html', to: 'webview.html' },
-          { from: 'src/webview/styles/webview.css', to: 'webview.css' },
-          { from: 'src/webview/styles/variables.css', to: 'variables.css' },
+          { from: 'src/webview/styles/webview.css', to: 'webview.css' }
         ],
       }),
     ],
