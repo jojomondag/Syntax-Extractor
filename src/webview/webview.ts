@@ -120,7 +120,6 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
             
             // Add remove button
             const removeButton = document.createElement('button');
-            removeButton.textContent = 'X';
             removeButton.className = 'remove-button';
             removeButton.addEventListener('click', (e) => {
                 e.stopPropagation();
