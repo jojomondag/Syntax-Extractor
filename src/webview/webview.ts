@@ -19,6 +19,7 @@ type Message = {
     content?: string;
     count?: number;
     fileTypes?: string[];
+    fileTypesToIgnore?: string[];
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,8 +44,9 @@ window.addEventListener('message', (event: MessageEvent<Message>) => {
             break;
         case 'updateFileTypes':
             console.log("Received file types in webview:", message.fileTypes);
-            if (Array.isArray(message.fileTypes)) {
-                createBoxesFromFileTypes(message.fileTypes);
+            console.log("Received ignored file types in webview:", message.fileTypesToIgnore);
+            if (Array.isArray(message.fileTypes) && Array.isArray(message.fileTypesToIgnore)) {
+                createBoxesFromFileTypes(message.fileTypes, message.fileTypesToIgnore);
             }
             break;
         case 'updateClipboardDataBox':
@@ -92,15 +94,18 @@ function setupOpenWebpageButton() {
     });
 }
 
-function createBoxesFromFileTypes(fileTypes: string[]) {
+function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string[]) {
     console.log("Creating boxes for file types:", fileTypes);
+    console.log("Creating boxes for ignored file types:", fileTypesToIgnore);
     const row1 = document.getElementById('row1');
-    if (!row1) {
-        console.error("row1 element not found");
+    const row2 = document.getElementById('row2');
+    if (!row1 || !row2) {
+        console.error("Row elements not found");
         return;
     }
 
     row1.innerHTML = '';
+    row2.innerHTML = '';
 
     const template = document.getElementById('box-template') as HTMLTemplateElement;
     if (!template) {
@@ -108,16 +113,36 @@ function createBoxesFromFileTypes(fileTypes: string[]) {
         return;
     }
 
-    fileTypes.forEach(fileType => {
+    const createBox = (item: string, row: HTMLElement) => {
         try {
-            const box = new Box(template, fileType);
+            const box = new Box(template, item);
             const boxElement = box.getElement();
-            row1.appendChild(boxElement);
+            
+            // Add remove button
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'X';
+            removeButton.className = 'remove-button';
+            removeButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeBox(boxElement);
+            });
+            boxElement.appendChild(removeButton);
+
+            // Set icon based on whether it's a file type or folder
+            const iconElement = boxElement.querySelector('.left-icon') as HTMLElement;
+            if (iconElement) {
+                iconElement.classList.add(item.startsWith('.') ? 'icon-file' : 'icon-folder');
+            }
+
+            row.appendChild(boxElement);
             box.updateBoxStyles();
         } catch (error) {
-            console.error(`Error creating box for ${fileType}:`, error);
+            console.error(`Error creating box for ${item}:`, error);
         }
-    });
+    };
+
+    fileTypes.forEach(item => createBox(item, row1));
+    fileTypesToIgnore.forEach(item => createBox(item, row2));
 }
 
 function setClipboardDataBoxHeight() {
@@ -266,6 +291,7 @@ function handleDrop(event: DragEvent) {
     }
     draggedElement = null;
     isClickAndHold = false;
+    updateFileTypes();
 }
 
 function moveBox(box: HTMLElement) {
@@ -297,6 +323,7 @@ function moveBox(box: HTMLElement) {
     }
 
     updateBoxStyles(box);
+    updateFileTypes();
 }
 
 function updateBoxStyles(box: HTMLElement) {
@@ -352,6 +379,30 @@ function toggleEyeIcon(blueRegion: HTMLElement) {
     }
 }
 
+function updateFileTypes() {
+    const row1 = document.getElementById('row1');
+    const row2 = document.getElementById('row2');
+    
+    if (!row1 || !row2) {
+        console.error('Row elements not found');
+        return;
+    }
+
+    const activeFileTypes = Array.from(row1.querySelectorAll('.box .text')).map(el => el.textContent || '');
+    const ignoredFileTypes = Array.from(row2.querySelectorAll('.box .text')).map(el => el.textContent || '');
+
+    vscode.postMessage({
+        command: 'updateFileTypes',
+        activeFileTypes: activeFileTypes,
+        ignoredFileTypes: ignoredFileTypes
+    });
+}
+
+function removeBox(box: HTMLElement) {
+    box.remove();
+    updateFileTypes();
+}
+
 function updateClipboardDataBox(content: string | undefined) {
     const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
     if (clipboardDataBox && content !== undefined) {
@@ -380,3 +431,44 @@ function updateCharCount(count: number | undefined) {
 function requestFileTypes() {
     vscode.postMessage({ command: 'getFileTypes' });
 }
+
+// Event listener for messages from the extension
+window.addEventListener('message', (event: MessageEvent<Message>) => {
+    const message = event.data;
+    console.log('Received message:', message);
+    switch (message.command) {
+        case 'initConfig':
+        case 'configUpdated':
+            if (message.compressionLevel !== undefined) {
+                updateUI(message.compressionLevel, message.clipboardDataBoxHeight);
+            }
+            break;
+        case 'updateFileTypes':
+            console.log("Received file types in webview:", message.fileTypes);
+            console.log("Received ignored file types in webview:", message.fileTypesToIgnore);
+            if (Array.isArray(message.fileTypes) && Array.isArray(message.fileTypesToIgnore)) {
+                createBoxesFromFileTypes(message.fileTypes, message.fileTypesToIgnore);
+            }
+            break;
+        case 'updateClipboardDataBox':
+            updateClipboardDataBox(message.content);
+            break;
+        case 'setTokenCount':
+            updateTokenCount(message.count);
+            break;
+        case 'setCharCount':
+            updateCharCount(message.count);
+            break;
+    }
+});
+
+// Initialize the webview
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded and parsed');
+    setClipboardDataBoxHeight();
+    setupTextInput();
+    setupCompressionButtons();
+    setupOpenWebpageButton();
+    setupDragAndDrop();
+    requestFileTypes();
+});

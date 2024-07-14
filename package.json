@@ -60,6 +60,16 @@
         "command": "syntaxExtractor.extractFileFolderTree",
         "title": "Extract File/Folder Tree",
         "category": "Syntax Extractor"
+      },
+      {
+        "command": "syntaxExtractor.addFileTypesOrFolders",
+        "title": "Add File Types/Folders",
+        "category": "Syntax Extractor"
+      },
+      {
+        "command": "syntaxExtractor.removeFromFileTypes",
+        "title": "Remove from File Types",
+        "category": "Syntax Extractor"
       }
     ],
     "menus": {
@@ -71,6 +81,14 @@
         {
           "command": "syntaxExtractor.extractFileFolderTree",
           "group": "0_navigation@1"
+        },
+        {
+          "command": "syntaxExtractor.addFileTypesOrFolders",
+          "group": "0_navigation@2"
+        },
+        {
+          "command": "syntaxExtractor.removeFromFileTypes",
+          "group": "0_navigation@3"
         }
       ]
     },

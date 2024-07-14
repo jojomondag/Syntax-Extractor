@@ -23,13 +23,13 @@ export async function extractFileFolderTree(configManager: ConfigManager, contex
 
         switch (compressionLevel) {
             case 3:
-                pathsString = generatePathStringCompressionHard(allSelections, commonDir);
+                pathsString = await generatePathStringCompressionHard(allSelections, commonDir);
                 break;
             case 2:
-                pathsString = generatePathStringCompressionMedium(allSelections, commonDir);
+                pathsString = await generatePathStringCompressionMedium(allSelections, commonDir);
                 break;
             case 1:
-                pathsString = generatePathStringCompressionLight(allSelections, commonDir);
+                pathsString = await generatePathStringCompressionLight(allSelections, commonDir);
                 break;
             default:
                 console.error('Unexpected compressionLevel:', compressionLevel);
@@ -50,22 +50,31 @@ export async function extractFileFolderTree(configManager: ConfigManager, contex
     }
 }
 
-function generatePathStringCompressionHard(allSelections: vscode.Uri[], commonDir: string): string {
+async function generatePathStringCompressionHard(allSelections: vscode.Uri[], commonDir: string): Promise<string> {
     const fileMap: { [directory: string]: string[] } = {};
     const adjustedCommonDir = getAdjustedCommonDir(allSelections, commonDir);
-    processSelectedItems(allSelections, (filePath) => {
-        let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
-        const dir = path.dirname(relativePath);
-        if (!fileMap[dir]) {
-            fileMap[dir] = [];
-        }
-        fileMap[dir].push(path.basename(relativePath));
-    }, (dirPath) => {
-        let relativePath = path.relative(adjustedCommonDir, dirPath).replace(/\\/g, '/');
-        if (!fileMap[relativePath]) {
-            fileMap[relativePath] = [];
-        }
+    
+    await new Promise<void>((resolve) => {
+        processSelectedItems(
+            allSelections,
+            (filePath) => {
+                let relativePath = path.relative(adjustedCommonDir, filePath).replace(/\\/g, '/');
+                const dir = path.dirname(relativePath);
+                if (!fileMap[dir]) {
+                    fileMap[dir] = [];
+                }
+                fileMap[dir].push(path.basename(relativePath));
+            },
+            (dirPath) => {
+                let relativePath = path.relative(adjustedCommonDir, dirPath).replace(/\\/g, '/');
+                if (!fileMap[relativePath]) {
+                    fileMap[relativePath] = [];
+                }
+            }
+        );
+        resolve();
     });
+
     const compressedPaths = [];
     for (let dir in fileMap) {
         if (fileMap[dir].length > 0) {

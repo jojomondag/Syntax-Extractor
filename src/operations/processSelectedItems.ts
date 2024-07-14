@@ -11,23 +11,25 @@ export function processSelectedItems(
     dirCallback?: (dirPath: string) => void
 ) {
     const processedFilesAndDirs = new Set<string>();
-    const ignoredItems = configManager.getValue(ConfigKey.FileTypesToIgnore) as string[];
-    const fileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
+    const fileTypesToIgnore = configManager.getValue(ConfigKey.FileTypesToIgnore) as string[];
+    const allowedFileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
 
-    function isIgnored(itemPath: string): boolean {
+    function isAllowedFile(itemPath: string): boolean {
+        const extension = path.extname(itemPath);
+        return allowedFileTypes.includes(extension) && !fileTypesToIgnore.includes(extension);
+    }
+
+    function isIgnoredPath(itemPath: string): boolean {
         const normalizedPath = path.normalize(itemPath);
         // Check if any parent folder is in the ignore list
         let currentPath = normalizedPath;
         while (currentPath !== path.dirname(currentPath)) {
-            if (ignoredItems.includes(path.basename(currentPath))) {
+            if (fileTypesToIgnore.includes(path.basename(currentPath))) {
                 return true;
             }
             currentPath = path.dirname(currentPath);
         }
-
-        // If it's a file, check its extension
-        const extension = path.extname(normalizedPath);
-        return ignoredItems.includes(extension);
+        return false;
     }
 
     function walkAndProcess(itemPath: string) {
@@ -39,7 +41,7 @@ export function processSelectedItems(
 
             if (stat.isDirectory()) {
                 console.log(`Processing directory: ${itemPath}`);
-                if (!isIgnored(itemPath)) {
+                if (!isIgnoredPath(itemPath)) {
                     dirCallback && dirCallback(itemPath);
                     const list = fs.readdirSync(itemPath);
                     list.forEach(file => {
@@ -50,13 +52,12 @@ export function processSelectedItems(
                     console.log(`Directory ${itemPath} is ignored`);
                 }
             } else {
-                const extension = path.extname(itemPath);
-                console.log(`Processing file: ${itemPath}, extension: ${extension}`);
-                if (!isIgnored(itemPath) && fileTypes.includes(extension)) {
-                    console.log(`File ${itemPath} matches the file types in the configuration and is not ignored`);
+                console.log(`Processing file: ${itemPath}`);
+                if (isAllowedFile(itemPath) && !isIgnoredPath(itemPath)) {
+                    console.log(`File ${itemPath} is allowed and not ignored`);
                     fileCallback(itemPath);
                 } else {
-                    console.log(`File ${itemPath} does not match the file types in the configuration or is ignored`);
+                    console.log(`File ${itemPath} is not allowed or is ignored`);
                 }
             }
         } catch (error) {

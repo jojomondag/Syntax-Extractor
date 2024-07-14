@@ -3,6 +3,7 @@ import { initializeFileTypeConfiguration, detectWorkspaceFileTypes } from './ope
 import { ConfigManager, ConfigKey } from './config/ConfigManager';
 import { extractAndCopyText, extractFileFolderTree, getTokenCount } from './operations';
 import { handleOpenWebpage } from './commands/openWebpage';
+import * as path from 'path';
 
 // Defines a data provider for a tree view, implementing the necessary interfaces for VS Code to render and manage tree items.
 class MyDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -32,7 +33,13 @@ export async function activate(context: vscode.ExtensionContext) {
             }
             extractAndCopyText(contextSelection, allSelections);
         }),
-        vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes)
+        vscode.commands.registerCommand('extension.refreshFileTypes', refreshFileTypes),
+        vscode.commands.registerCommand('syntaxExtractor.addFileTypesOrFolders', (contextSelection: vscode.Uri) => {
+            addFileTypesOrFolders(configManager, contextSelection);
+        }),
+        vscode.commands.registerCommand('syntaxExtractor.removeFromFileTypes', (contextSelection: vscode.Uri) => {
+            removeFromFileTypes(configManager, contextSelection);
+        })
     );
     
     treeView.onDidChangeVisibility(({ visible }: { visible: boolean }) => {
@@ -106,6 +113,7 @@ async function refreshFileTypes(): Promise<string[]> {
     const fileTypes = detectedTypes.filter((type: unknown): type is string => typeof type === 'string');
     
     await configManager.setValue(ConfigKey.FileTypes, fileTypes);
+    await configManager.setValue(ConfigKey.FileTypesToIgnore, []);
 
     return fileTypes;
 }
@@ -113,10 +121,13 @@ async function refreshFileTypes(): Promise<string[]> {
 async function updateWebviewFileTypes(panel: vscode.WebviewPanel) {
     const configManager = ConfigManager.getInstance();
     const fileTypes = configManager.getValue(ConfigKey.FileTypes);
-    console.log("Sending file types to webview:", fileTypes); // Debug log
+    const fileTypesToIgnore = configManager.getValue(ConfigKey.FileTypesToIgnore);
+    console.log("Sending file types to webview:", fileTypes);
+    console.log("Sending ignored file types to webview:", fileTypesToIgnore);
     panel.webview.postMessage({
         command: 'updateFileTypes',
-        fileTypes: fileTypes
+        fileTypes: fileTypes,
+        fileTypesToIgnore: fileTypesToIgnore
     });
 }
 
@@ -134,8 +145,10 @@ async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, c
             break;
         case 'updateFileTypes':
             if (Array.isArray(message.activeFileTypes) && Array.isArray(message.ignoredFileTypes)) {
-                await configManager.setValue(ConfigKey.FileTypes, message.activeFileTypes);
-                await configManager.setValue(ConfigKey.FileTypesToIgnore, message.ignoredFileTypes);
+                await updateFileTypeSettings(configManager, message.activeFileTypes, message.ignoredFileTypes);
+                await updateWebviewFileTypes(panel);
+                console.log('Updated file types:', message.activeFileTypes);
+                console.log('Updated ignored file types:', message.ignoredFileTypes);
             } else {
                 console.error('Invalid file types received');
             }
@@ -168,6 +181,25 @@ async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, c
         command: 'configUpdated',
         ...configManager.getAllConfig()
     });
+}
+
+async function updateFileTypeSettings(configManager: ConfigManager, activeFileTypes: string[], ignoredFileTypes: string[]) {
+    const currentFileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
+    const currentIgnoredFileTypes = configManager.getValue(ConfigKey.FileTypesToIgnore) as string[];
+
+    // Remove file types that are no longer present in either active or ignored lists
+    const allNewFileTypes = new Set([...activeFileTypes, ...ignoredFileTypes]);
+    const removedFileTypes = [...currentFileTypes, ...currentIgnoredFileTypes].filter(type => !allNewFileTypes.has(type));
+
+    // Update settings
+    await configManager.setValue(ConfigKey.FileTypes, activeFileTypes);
+    await configManager.setValue(ConfigKey.FileTypesToIgnore, ignoredFileTypes);
+
+    // Log removals
+    if (removedFileTypes.length > 0) {
+        console.log('Removed file types:', removedFileTypes);
+        vscode.window.showInformationMessage(`Removed file types: ${removedFileTypes.join(', ')}`);
+    }
 }
 
 async function clipBoardPolling(panel: vscode.WebviewPanel) {
@@ -225,6 +257,50 @@ function setupWebviewPanelActions(panel: vscode.WebviewPanel, context: vscode.Ex
         }
     });
     sendConfigToWebview();
+}
+
+async function addFileTypesOrFolders(configManager: ConfigManager, contextSelection: vscode.Uri) {
+    const stats = await vscode.workspace.fs.stat(contextSelection);
+    let newFileTypesOrFolders: string[] = [];
+
+    if (stats.type === vscode.FileType.Directory) {
+        // If it's a folder, add its name
+        newFileTypesOrFolders.push(path.basename(contextSelection.fsPath));
+    } else {
+        // If it's a file, add its extension
+        const extension = path.extname(contextSelection.fsPath);
+        if (extension) {
+            newFileTypesOrFolders.push(extension);
+        }
+    }
+
+    const currentFileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
+    const updatedFileTypes = Array.from(new Set([...currentFileTypes, ...newFileTypesOrFolders]));
+
+    await configManager.setValue(ConfigKey.FileTypes, updatedFileTypes);
+    vscode.window.showInformationMessage(`Added ${newFileTypesOrFolders.join(', ')} to File Types`);
+    
+    updateWebviewFileTypes(globalPanel!);
+}
+
+async function removeFromFileTypes(configManager: ConfigManager, contextSelection: vscode.Uri) {
+    const stats = await vscode.workspace.fs.stat(contextSelection);
+    let fileTypesToRemove: string[] = [];
+
+    if (stats.type === vscode.FileType.Directory) {
+        const files = await vscode.workspace.findFiles(new vscode.RelativePattern(contextSelection, '**/*'));
+        fileTypesToRemove = Array.from(new Set(files.map(file => path.extname(file.fsPath))));
+    } else {
+        fileTypesToRemove = [path.extname(contextSelection.fsPath)];
+    }
+
+    const currentFileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
+    const updatedFileTypes = currentFileTypes.filter(type => !fileTypesToRemove.includes(type));
+
+    await configManager.setValue(ConfigKey.FileTypes, updatedFileTypes);
+    vscode.window.showInformationMessage(`Removed ${fileTypesToRemove.join(', ')} from File Types`);
+    
+    updateWebviewFileTypes(globalPanel!);
 }
 
 export function deactivate() {}
