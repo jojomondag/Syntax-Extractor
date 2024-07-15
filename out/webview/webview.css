@@ -1,4 +1,3 @@
-/* webview.css */
 @import './variables.css';
 
 *, *::before, *::after {
@@ -280,82 +279,36 @@ html, body {
     background-image: var(--icon-eye-closed);
 }
 
-.remove-button {
-    position: absolute;
-    top: -10px;
-    right: 5px;
-    width: 16px;
-    height: 16px;
-    font-size: 14px;
-    line-height: 14px;
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    font-weight: bold;
-}
-
-.box:hover .remove-button {
+.line-container {
     display: flex;
-}
-
-.remove-button::after {
-    content: '-';
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: var(--size-margin-medium) 0;
+    width: 100%;
+    height: 40px; /* Add a fixed height */
 }
 
 .line {
-    width: 100%;
+    flex: 1;
     height: 2px;
     background-color: var(--color-border);
-    margin: var(--size-margin-medium) 0;
 }
 
-.placeholder {
-    height: var(--size-element-height);
-    background-color: transparent;
-    border: 2px dotted var(--color-border);
-    margin: var(--size-margin-small);
-    border-radius: var(--size-border-radius);
-    padding: 0 var(--size-padding-medium);
+.garbage-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--icon-garbage) no-repeat center center / 28px 28px; /* Slightly larger icon */
+    background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent background for contrast */
+    border-radius: 50%; /* Circular background */
+    cursor: pointer;
+    margin: 0 10px;
+    flex-shrink: 0;
+    transition: background-color 0.3s ease, background-image 0.3s ease;
 }
 
-.icon {
-    display: inline-flex;
-    align-items: center;
-    margin-right: var(--size-margin-small);
-    width: 1.2em;
-    height: 1.2em;
-}
-
-.size-6 {
-    width: 1.2em;
-    height: 1.2em;
-}
-
-.filetype-input {
-    width: var(--width-filetype-input);
-    height: var(--size-element-height);
-    padding: 0 var(--size-padding-small);
-    margin: var(--size-margin-small) 0;
-    border: 1px solid var(--color-border);
-    border-radius: var(--size-border-radius);
-    font-size: var(--size-font-default);
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    cursor: text;
-    line-height: var(--size-element-height);
-}
-
-/* Remove any margin or padding that might be causing gaps */
-.box > * {
-    margin: 0;
-    padding: 0;
+.garbage-icon:hover {
+    background-color: rgba(0, 0, 0, 0.2); /* Darker background on hover */
 }
 
 @media (max-width: 890px) {

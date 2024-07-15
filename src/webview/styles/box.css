@@ -1,4 +1,3 @@
-/* box.css */
 @import './variables.css';
 
 .box {
@@ -115,8 +114,8 @@
 }
 
 .remove-button {
-    width: 20px; /* Adjust width */
-    height: 20px; /* Adjust height */
+    width: 20px;
+    height: 20px;
     font-size: 14px;
     line-height: 14px;
     background-color: #ff4d4d;
@@ -124,12 +123,13 @@
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    display: flex; /* Always display */
+    display: flex;
     justify-content: center;
     align-items: center;
     padding: 0;
     font-weight: bold;
-    margin-top: var(--uniform-padding); /* Add margin to separate from text */
+    margin-top: 10px; /* Adjust margin to position the button */
+    position: relative; /* Ensure it stays within the flow of the box */
 }
 
 .remove-button::after {

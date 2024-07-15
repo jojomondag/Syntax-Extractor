@@ -1,7 +1,6 @@
 import './styles/webview.css';
 import { Box } from './components/Box';
 
-// Declare acquireVsCodeApi to avoid TypeScript error
 declare function acquireVsCodeApi(): any;
 
 const vscode = acquireVsCodeApi();
@@ -11,6 +10,7 @@ placeholder.className = 'placeholder';
 const clickAndHoldDuration = 200;
 let clickTimeout: number | undefined;
 let isClickAndHold = false;
+let garbageIcon: HTMLElement | null = null;
 
 type Message = {
     command: string;
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCompressionButtons();
     setupOpenWebpageButton();
     setupDragAndDrop();
+    setupGarbageIcon();
     requestFileTypes();
 });
 
@@ -117,15 +118,6 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
         try {
             const box = new Box(template, item);
             const boxElement = box.getElement();
-            
-            // Add remove button
-            const removeButton = document.createElement('button');
-            removeButton.className = 'remove-button';
-            removeButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                removeBox(boxElement);
-            });
-            boxElement.appendChild(removeButton);
 
             // Set icon based on whether it's a file type or folder
             const iconElement = boxElement.querySelector('.left-icon') as HTMLElement;
@@ -200,6 +192,36 @@ function setupDragAndDrop() {
     document.addEventListener('mouseup', handleBehavior);
     document.addEventListener('click', handleBehavior);
 }
+
+function setupGarbageIcon() {
+    garbageIcon = document.querySelector('.garbage-icon');
+    if (!garbageIcon) {
+        console.error('Garbage icon not found');
+        return;
+    }
+
+    garbageIcon.addEventListener('dragover', (event) => {
+        event.preventDefault();
+    });
+
+    garbageIcon.addEventListener('dragenter', () => {
+        garbageIcon?.style.setProperty('backgroundImage', 'var(--icon-garbage-open)');
+    });
+
+    garbageIcon.addEventListener('dragleave', () => {
+        garbageIcon?.style.setProperty('backgroundImage', 'var(--icon-garbage)');
+    });
+
+    garbageIcon.addEventListener('drop', (event) => {
+        event.preventDefault();
+        garbageIcon?.style.setProperty('backgroundImage', 'var(--icon-garbage)');
+        if (draggedElement) {
+            removeBox(draggedElement);
+            draggedElement = null;
+        }
+    });
+}
+
 
 function handleBehavior(event: MouseEvent) {
     const box = (event.target as HTMLElement).closest('.box') as HTMLElement;
@@ -430,44 +452,3 @@ function updateCharCount(count: number | undefined) {
 function requestFileTypes() {
     vscode.postMessage({ command: 'getFileTypes' });
 }
-
-// Event listener for messages from the extension
-window.addEventListener('message', (event: MessageEvent<Message>) => {
-    const message = event.data;
-    console.log('Received message:', message);
-    switch (message.command) {
-        case 'initConfig':
-        case 'configUpdated':
-            if (message.compressionLevel !== undefined) {
-                updateUI(message.compressionLevel, message.clipboardDataBoxHeight);
-            }
-            break;
-        case 'updateFileTypes':
-            console.log("Received file types in webview:", message.fileTypes);
-            console.log("Received ignored file types in webview:", message.fileTypesToIgnore);
-            if (Array.isArray(message.fileTypes) && Array.isArray(message.fileTypesToIgnore)) {
-                createBoxesFromFileTypes(message.fileTypes, message.fileTypesToIgnore);
-            }
-            break;
-        case 'updateClipboardDataBox':
-            updateClipboardDataBox(message.content);
-            break;
-        case 'setTokenCount':
-            updateTokenCount(message.count);
-            break;
-        case 'setCharCount':
-            updateCharCount(message.count);
-            break;
-    }
-});
-
-// Initialize the webview
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM fully loaded and parsed');
-    setClipboardDataBoxHeight();
-    setupTextInput();
-    setupCompressionButtons();
-    setupOpenWebpageButton();
-    setupDragAndDrop();
-    requestFileTypes();
-});
