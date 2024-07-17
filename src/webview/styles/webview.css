@@ -33,42 +33,45 @@ html, body {
     overflow: auto;
 }
 
-.button {
-    height: var(--size-element-height);
-    padding: 0 var(--size-padding-medium);
-    border: none;
-    border-radius: var(--size-border-radius);
-    cursor: pointer;
-    transition: background-color var(--transition-speed);
-    line-height: var(--size-element-height);
-    white-space: nowrap;
-    font-size: var(--size-font-default);
+.horizontal-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-top: var(--size-margin-medium);
+    margin-bottom: var(--size-margin-medium);
 }
 
 #compression-buttons {
     display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
     align-items: center;
-    margin: var(--size-margin-small);
 }
 
 #compression-buttons .label {
     margin-right: var(--size-margin-small);
 }
 
-.compression-button {
+.compression-button,
+.webpage-button {
     height: var(--size-element-height);
-    margin-right: var(--size-margin-small);
-    padding: 0 var(--size-padding-medium);
-    border-radius: var(--size-border-radius);
-    background-color: var(--color-background-medium);
-    color: var(--color-text);
+    padding: 0 var(--size-padding-large);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     border: none;
+    border-radius: var(--size-border-radius);
     cursor: pointer;
     transition: background-color var(--transition-speed);
-    line-height: var(--size-element-height);
     font-size: var(--size-font-default);
+    white-space: nowrap;
+    margin-right: var(--size-margin-small);
+    min-width: 80px;
+}
+
+.compression-button {
+    background-color: var(--color-background-medium);
+    color: var(--color-text);
 }
 
 .compression-button:hover {
@@ -83,51 +86,41 @@ html, body {
 .webpage-button {
     background-color: var(--color-button);
     color: var(--color-text-light);
+    min-width: 120px;
 }
 
 .webpage-button:hover {
     background-color: var(--color-button-hover);
 }
 
-.horizontal-section {
+.counters-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: nowrap;
-    margin-top: var(--size-margin-medium);
-    margin-bottom: var(--size-margin-medium);
+    gap: var(--size-margin-small);
 }
 
 .counter {
     display: flex;
-    flex-direction: row;
     align-items: center;
     margin: 0 var(--size-margin-small);
-    flex-basis: auto;
 }
 
 .counter .label {
     margin-right: var(--size-margin-small);
+    white-space: nowrap;
 }
 
 .input {
-    width: var(--width-input);
+    width: 60px;
     height: var(--size-element-height);
     padding: 0 var(--size-padding-small);
+    background-color: var(--color-background-medium);
+    color: var(--color-text);
     border: none;
     border-radius: var(--size-border-radius);
-    background-color: var(--color-background-medium);
     text-align: center;
-    cursor: not-allowed;
-    color: var(--color-text);
-    transition: background-color var(--transition-speed);
-    margin: 0 var(--size-margin-small);
-    line-height: var(--size-element-height);
     font-size: var(--size-font-default);
-}
-
-.input:hover {
-    background-color: var(--color-background-dark);
 }
 
 .json-types-container {
@@ -167,7 +160,7 @@ html, body {
     display: flex;
     align-items: center;
     height: 30px;
-    margin: 2px;
+    margin: var(--uniform-margin);
     cursor: grab;
     user-select: none;
     border-radius: var(--border-radius);
@@ -196,6 +189,7 @@ html, body {
     background-color: var(--icon-bg-color);
     cursor: grab;
     flex-shrink: 0;
+    padding-left: 6px;
 }
 
 #row2 .box .icon {
@@ -231,14 +225,24 @@ html, body {
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
     background-color: var(--text-bg-color);
     cursor: grab;
     height: 100%;
-    padding-left: var(--size-padding-small);
-    padding-right: var(--size-padding-small);
+    padding-left: 8px;
+    padding-right: 8px;
     color: var(--color-text-light);
     font-size: 0.9em;
+}
+
+#row1 .box .text {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    padding-right: 12px;
+}
+
+#row2 .box .text {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .box .right-icon {
@@ -251,16 +255,6 @@ html, body {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
     flex-shrink: 0;
-}
-
-#row1 .box .text {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
-}
-
-#row2 .box .text {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
 }
 
 .box .right-icon::before {
@@ -286,7 +280,7 @@ html, body {
     position: relative;
     margin: var(--size-margin-medium) 0;
     width: 100%;
-    height: 40px; /* Add a fixed height */
+    height: 40px;
 }
 
 .line {
@@ -298,9 +292,9 @@ html, body {
 .garbage-icon {
     width: 40px;
     height: 40px;
-    background: var(--icon-garbage) no-repeat center center / 28px 28px; /* Slightly larger icon */
-    background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent background for contrast */
-    border-radius: 50%; /* Circular background */
+    background: var(--icon-garbage) no-repeat center center / 28px 28px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
     cursor: pointer;
     margin: 0 10px;
     flex-shrink: 0;
@@ -308,7 +302,15 @@ html, body {
 }
 
 .garbage-icon:hover {
-    background-color: rgba(0, 0, 0, 0.2); /* Darker background on hover */
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.placeholder {
+    border: 4px dashed #ccc;
+    background-color: rgba(240, 240, 240, 0.2);
+    margin: var(--uniform-margin);
+    border-radius: var(--border-radius);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 890px) {
@@ -321,28 +323,45 @@ html, body {
         margin-bottom: var(--size-margin-small);
     }
 
+    #compression-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .compression-button,
+    .webpage-button {
+        width: 100%;
+        max-width: 200px;
+        margin: 0 auto var(--size-margin-small) auto;
+    }
+
+    .counters-container {
+        flex-direction: row;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .counter {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .input {
+        width: 60px;
+    }
+
     .json-types-container, .json-types-list {
         padding: 0 var(--size-padding-medium);
     }
 
     .main-container {
-        display: flex;
-        flex-direction: column;
         height: 100%;
-    }
-
-    .button, .input, .compression-button {
-        width: 100%;
-    }
-
-    .filetype-input {
-        width: calc(100% - 2 * var(--size-padding-medium));
     }
 }
 
 @media (max-width: 500px) {
     .button, .input, .compression-button, .textarea {
-        padding: 0 var(--size-padding-medium);
+        padding: 0 var(--size-padding-small);
     }
 
     .filetype-input {
