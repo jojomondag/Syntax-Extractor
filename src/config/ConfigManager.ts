@@ -131,4 +131,10 @@ export class ConfigManager {
             }
         }
     }
+
+    public isFileTypeOrFolderPresent(item: string): boolean {
+        const fileTypes = this.getValue(ConfigKey.FileTypes) as string[];
+        const fileTypesToIgnore = this.getValue(ConfigKey.FileTypesToIgnore) as string[];
+        return fileTypes.includes(item) || fileTypesToIgnore.includes(item);
+    }
 }

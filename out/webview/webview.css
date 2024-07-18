@@ -164,8 +164,11 @@ html, body {
     cursor: grab;
     user-select: none;
     border-radius: var(--border-radius);
-    transition: background-color var(--transition-speed), transform 0.5s ease, opacity var(--transition-speed);
+    transition: background-color var(--transition-speed), 
+                transform 0.3s ease-in-out, 
+                opacity 0.3s ease-in-out;
     overflow: visible;
+    will-change: transform, opacity;
 }
 
 .box:hover {
@@ -180,6 +183,12 @@ html, body {
     opacity: 0.5;
 }
 
+.box.dragging {
+    opacity: 0.8;
+    transform: scale(1.05);
+    z-index: 1000;
+}
+
 .box .icon {
     display: flex;
     align-items: center;
@@ -189,7 +198,7 @@ html, body {
     background-color: var(--icon-bg-color);
     cursor: grab;
     flex-shrink: 0;
-    padding-left: 6px;
+    padding: 0;
 }
 
 #row2 .box .icon {
@@ -237,7 +246,6 @@ html, body {
 #row1 .box .text {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
-    padding-right: 12px;
 }
 
 #row2 .box .text {
@@ -255,6 +263,7 @@ html, body {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
     flex-shrink: 0;
+    padding: 0;
 }
 
 .box .right-icon::before {
@@ -293,24 +302,22 @@ html, body {
     width: 40px;
     height: 40px;
     background: var(--icon-garbage) no-repeat center center / 28px 28px;
-    background-color: rgba(0, 0, 0, 0.1);
     border-radius: 50%;
     cursor: pointer;
     margin: 0 10px;
     flex-shrink: 0;
-    transition: background-color 0.3s ease, background-image 0.3s ease;
+    transition: background-image 0.3s ease;
 }
 
-.garbage-icon:hover {
-    background-color: rgba(0, 0, 0, 0.2);
+body[data-dragging="true"] .garbage-icon:hover {
+    background-image: var(--icon-garbage-open);
 }
 
 .placeholder {
-    border: 4px dashed #ccc;
-    background-color: rgba(240, 240, 240, 0.2);
+    border: 2px dashed #ccc;
+    background-color: rgba(204, 204, 204, 0.3);
     margin: var(--uniform-margin);
     border-radius: var(--border-radius);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 890px) {

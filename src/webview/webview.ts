@@ -11,6 +11,10 @@ const clickAndHoldDuration = 200;
 let clickTimeout: number | undefined;
 let isClickAndHold = false;
 let garbageIcon: HTMLElement | null = null;
+let isDragging = false;
+let initialCursorX = 0;
+let lastPlaceholderPosition: HTMLElement | null = null;
+const moveThreshold = 10; // Adjust this value as needed
 
 type Message = {
     command: string;
@@ -119,7 +123,6 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
             const box = new Box(template, item);
             const boxElement = box.getElement();
 
-            // Set icon based on whether it's a file type or folder
             const iconElement = boxElement.querySelector('.left-icon') as HTMLElement;
             if (iconElement) {
                 iconElement.classList.add(item.startsWith('.') ? 'icon-file' : 'icon-folder');
@@ -202,27 +205,30 @@ function setupGarbageIcon() {
 
     garbageIcon.addEventListener('dragover', (event) => {
         event.preventDefault();
-        garbageIcon?.style.setProperty('background-image', 'var(--icon-garbage-open)');
-    });
-
-    garbageIcon.addEventListener('dragenter', () => {
-        garbageIcon?.style.setProperty('background-image', 'var(--icon-garbage-open)');
+        if (isDragging && garbageIcon) {
+            garbageIcon.style.backgroundImage = 'var(--icon-garbage-open)';
+        }
     });
 
     garbageIcon.addEventListener('dragleave', () => {
-        garbageIcon?.style.setProperty('background-image', 'var(--icon-garbage)');
+        if (garbageIcon) {
+            garbageIcon.style.backgroundImage = 'var(--icon-garbage)';
+        }
     });
 
     garbageIcon.addEventListener('drop', (event) => {
         event.preventDefault();
-        garbageIcon?.style.setProperty('background-image', 'var(--icon-garbage)');
+        if (garbageIcon) {
+            garbageIcon.style.backgroundImage = 'var(--icon-garbage)';
+        }
         if (draggedElement) {
             removeBox(draggedElement);
             draggedElement = null;
         }
+        isDragging = false;
+        document.body.removeAttribute('data-dragging');
     });
 }
-
 
 function handleBehavior(event: MouseEvent) {
     const box = (event.target as HTMLElement).closest('.box') as HTMLElement;
@@ -237,22 +243,20 @@ function handleBehavior(event: MouseEvent) {
             isClickAndHold = false;
             clickTimeout = window.setTimeout(() => {
                 isClickAndHold = true;
-                handleDragStart(event as DragEvent);
+                handleDragStart(event as unknown as DragEvent);
             }, clickAndHoldDuration);
             break;
         case 'mouseup':
             clearTimeout(clickTimeout);
             if (isClickAndHold) {
-                handleDragEnd(event as DragEvent);
+                handleDragEnd(event as unknown as DragEvent);
             }
             break;
         case 'click':
             clearTimeout(clickTimeout);
-            clickTimeout = window.setTimeout(() => {
-                if (!isClickAndHold) {
-                    moveBox(box);
-                }
-            }, clickAndHoldDuration);
+            if (!isClickAndHold) {
+                moveBox(box);
+            }
             break;
     }
 }
@@ -260,51 +264,58 @@ function handleBehavior(event: MouseEvent) {
 function handleDragStart(event: DragEvent) {
     draggedElement = (event.target as HTMLElement).closest('.box') as HTMLElement;
     if (draggedElement) {
-        // Set placeholder dimensions to match the dragged element
+        isDragging = true;
+        document.body.setAttribute('data-dragging', 'true');
         placeholder.style.width = `${draggedElement.offsetWidth}px`;
         placeholder.style.height = `${draggedElement.offsetHeight}px`;
 
-        // Make dragged element semi-transparent
-        draggedElement.style.opacity = '0.5';
+        initialCursorX = event.clientX; // Track initial cursor position
 
         if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/html', draggedElement.outerHTML);
+            const dragImage = draggedElement.cloneNode(true) as HTMLElement;
+            dragImage.style.position = 'absolute';
+            dragImage.style.top = '-1000px';
+            dragImage.style.opacity = '1';
+            dragImage.style.pointerEvents = 'none';
+            document.body.appendChild(dragImage);
+            event.dataTransfer.setDragImage(dragImage, 0, 0);
         }
-    }
-
-    if (garbageIcon) {
-        garbageIcon.style.setProperty('background-image', 'var(--icon-garbage)');
     }
 }
 
 function handleDragOver(event: DragEvent) {
     event.preventDefault();
     const target = (event.target as HTMLElement).closest('.box') as HTMLElement;
-    if (target && draggedElement && target !== draggedElement) {
-        const bounding = target.getBoundingClientRect();
-        const offset = bounding.y + (bounding.height / 2);
-        if (event.clientY - offset > 0) {
-            target.parentNode!.insertBefore(placeholder, target.nextSibling);
-        } else {
-            target.parentNode!.insertBefore(placeholder, target);
+
+    // Only show placeholder if the cursor has moved the threshold distance
+    if (Math.abs(event.clientX - initialCursorX) > moveThreshold) {
+        if (target && target !== draggedElement && target !== lastPlaceholderPosition) {
+            const bounding = target.getBoundingClientRect();
+            const offset = bounding.y + bounding.height / 2;
+            if (event.clientY - offset > 0) {
+                target.parentNode!.insertBefore(placeholder, target.nextSibling);
+            } else {
+                target.parentNode!.insertBefore(placeholder, target);
+            }
+            lastPlaceholderPosition = target;
         }
     }
 }
 
 function handleDragEnd(event: DragEvent) {
-    if (draggedElement) {
-        draggedElement.style.opacity = '1';
-        draggedElement = null;
-    }
-    if (placeholder.parentNode) {
+    if (draggedElement && placeholder.parentNode) {
         placeholder.parentNode.removeChild(placeholder);
     }
+    draggedElement = null;
+    isDragging = false;
+    document.body.removeAttribute('data-dragging');
     isClickAndHold = false;
+    lastPlaceholderPosition = null;
 
-    if (garbageIcon) {
-        garbageIcon.style.setProperty('background-image', 'var(--icon-garbage)');
-    }
+    const dragImages = document.querySelectorAll('.box[style*="position: absolute"]');
+    dragImages.forEach(img => {
+        img.remove();
+    });
 }
 
 function handleDrop(event: DragEvent) {
@@ -313,7 +324,14 @@ function handleDrop(event: DragEvent) {
         placeholder.parentNode.replaceChild(draggedElement, placeholder);
         updateBoxStyles(draggedElement);
     }
-    handleDragEnd(event);
+    if (placeholder.parentNode) {
+        placeholder.parentNode.removeChild(placeholder);
+    }
+    draggedElement = null;
+    isDragging = false;
+    document.body.removeAttribute('data-dragging');
+    isClickAndHold = false;
+    lastPlaceholderPosition = null;
     updateFileTypes();
 }
 
@@ -323,47 +341,30 @@ function moveBox(box: HTMLElement) {
     const currentRow = box.parentNode as HTMLElement;
     const targetRow = currentRow.id === 'row1' ? row2 : row1;
 
-    // Get the current position of the box
     const rect = box.getBoundingClientRect();
-    const startLeft = rect.left;
-    const startTop = rect.top;
-
-    // Move the box to the target row
     targetRow.appendChild(box);
-
-    // Get the new position of the box
     const newRect = box.getBoundingClientRect();
-    const endLeft = newRect.left;
-    const endTop = newRect.top;
 
-    // Calculate the distance to move
-    const deltaX = startLeft - endLeft;
-    const deltaY = startTop - endTop;
+    const deltaX = rect.left - newRect.left;
+    const deltaY = rect.top - newRect.top;
 
-    // Set up the animation
     box.style.transition = 'none';
     box.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-
-    // Force a reflow
-    box.offsetWidth;
-
-    // Start the animation
+    box.offsetWidth; // Force reflow
     box.style.transition = 'transform 0.5s ease-in-out';
     box.style.transform = 'translate(0, 0)';
 
-    // Update styles after animation
-    box.addEventListener('transitionend', () => {
-        if (targetRow.id === 'row1') {
-            box.classList.remove('hidden');
-            const blueRegion = box.querySelector('.right-icon');
-            if (blueRegion) {
-                blueRegion.remove();
-            }
-            box.style.opacity = '1';
+    if (targetRow.id === 'row1') {
+        box.classList.remove('hidden');
+        const blueRegion = box.querySelector('.right-icon');
+        if (blueRegion) {
+            blueRegion.remove();
         }
-        updateBoxStyles(box);
-        updateFileTypes();
-    }, { once: true });
+        box.style.opacity = '1';
+    }
+
+    updateBoxStyles(box);
+    updateFileTypes();
 }
 
 function updateBoxStyles(box: HTMLElement) {

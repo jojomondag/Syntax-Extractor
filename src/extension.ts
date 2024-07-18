@@ -275,10 +275,27 @@ async function addFileTypesOrFolders(configManager: ConfigManager, contextSelect
     }
 
     const currentFileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
-    const updatedFileTypes = Array.from(new Set([...currentFileTypes, ...newFileTypesOrFolders]));
+    const updatedFileTypes = new Set(currentFileTypes);
+    const itemsAdded: string[] = [];
+    const itemsSkipped: string[] = [];
 
-    await configManager.setValue(ConfigKey.FileTypes, updatedFileTypes);
-    vscode.window.showInformationMessage(`Added ${newFileTypesOrFolders.join(', ')} to File Types`);
+    for (const item of newFileTypesOrFolders) {
+        if (!configManager.isFileTypeOrFolderPresent(item)) {
+            updatedFileTypes.add(item);
+            itemsAdded.push(item);
+        } else {
+            itemsSkipped.push(item);
+        }
+    }
+
+    if (itemsAdded.length > 0) {
+        await configManager.setValue(ConfigKey.FileTypes, Array.from(updatedFileTypes));
+        vscode.window.showInformationMessage(`Added ${itemsAdded.join(', ')} to File Types`);
+    }
+
+    if (itemsSkipped.length > 0) {
+        vscode.window.showWarningMessage(`Skipped ${itemsSkipped.join(', ')} as they already exist in File Types or Ignored Types`);
+    }
     
     updateWebviewFileTypes(globalPanel!);
 }

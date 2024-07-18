@@ -63,12 +63,7 @@
       },
       {
         "command": "syntaxExtractor.addFileTypesOrFolders",
-        "title": "Add File Types/Folders",
-        "category": "Syntax Extractor"
-      },
-      {
-        "command": "syntaxExtractor.removeFromFileTypes",
-        "title": "Remove from File Types",
+        "title": "Add File/Folders",
         "category": "Syntax Extractor"
       }
     ],
@@ -85,10 +80,6 @@
         {
           "command": "syntaxExtractor.addFileTypesOrFolders",
           "group": "0_navigation@2"
-        },
-        {
-          "command": "syntaxExtractor.removeFromFileTypes",
-          "group": "0_navigation@3"
         }
       ]
     },
