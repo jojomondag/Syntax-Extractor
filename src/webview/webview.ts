@@ -109,6 +109,18 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
         return;
     }
 
+    // Store the visibility state of existing boxes in row2
+    const visibilityState = new Map<string, boolean>();
+    row2.querySelectorAll('.box').forEach((boxElement: Element) => {
+        const textElement = boxElement.querySelector('.text');
+        if (textElement && textElement.textContent) {
+            const box = (boxElement as any).__box_instance;
+            if (box instanceof Box) {
+                visibilityState.set(textElement.textContent, box.getVisibility());
+            }
+        }
+    });
+
     row1.innerHTML = '';
     row2.innerHTML = '';
 
@@ -130,6 +142,17 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
 
             row.appendChild(boxElement);
             box.updateBoxStyles();
+
+            // Store the Box instance on the DOM element for easy retrieval
+            (boxElement as any).__box_instance = box;
+
+            // Restore visibility state for row2 boxes
+            if (row.id === 'row2') {
+                const isVisible = visibilityState.get(item);
+                if (isVisible !== undefined) {
+                    box.setVisibility(isVisible);
+                }
+            }
         } catch (error) {
             console.error(`Error creating box for ${item}:`, error);
         }
@@ -355,12 +378,25 @@ function moveBox(box: HTMLElement) {
     box.style.transform = 'translate(0, 0)';
 
     if (targetRow.id === 'row1') {
+        // Moving from row2 to row1
         box.classList.remove('hidden');
         const blueRegion = box.querySelector('.right-icon');
         if (blueRegion) {
             blueRegion.remove();
         }
         box.style.opacity = '1';
+    } else {
+        // Moving from row1 to row2
+        if (!box.querySelector('.right-icon')) {
+            const blueRegion = document.createElement('span');
+            blueRegion.className = 'icon right-icon open-eye';
+            blueRegion.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleEyeIcon(blueRegion);
+            });
+            box.appendChild(blueRegion);
+        }
+        // Don't change the visibility state of the box when moving to row2
     }
 
     updateBoxStyles(box);

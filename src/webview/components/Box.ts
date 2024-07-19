@@ -1,8 +1,10 @@
 export class Box {
     private element: HTMLElement;
+    private isVisible: boolean = true;
 
     constructor(template: HTMLTemplateElement, fileType: string) {
         this.element = this.createBoxElement(template, fileType);
+        this.setupEventListeners();
     }
 
     private createBoxElement(template: HTMLTemplateElement, fileType: string): HTMLElement {
@@ -18,6 +20,16 @@ export class Box {
         return box;
     }
 
+    private setupEventListeners() {
+        const rightIcon = this.element.querySelector('.right-icon');
+        if (rightIcon) {
+            rightIcon.addEventListener('click', (event) => {
+                event.stopPropagation();
+                this.toggleVisibility();
+            });
+        }
+    }
+
     public getElement(): HTMLElement {
         return this.element;
     }
@@ -28,7 +40,7 @@ export class Box {
             return;
         }
 
-        let blueRegion = this.element.querySelector('.right-icon') as HTMLElement;
+        let rightIcon = this.element.querySelector('.right-icon') as HTMLElement;
         const textElement = this.element.querySelector('.text') as HTMLElement;
 
         if (!textElement) {
@@ -43,20 +55,20 @@ export class Box {
         }
 
         if (parentRow.id === 'row2') {
-            if (!blueRegion) {
-                blueRegion = document.createElement('span');
-                blueRegion.className = 'icon right-icon open-eye';
-                blueRegion.addEventListener('click', (event) => {
+            if (!rightIcon) {
+                rightIcon = document.createElement('span');
+                rightIcon.className = 'icon right-icon open-eye';
+                rightIcon.addEventListener('click', (event) => {
                     event.stopPropagation();
-                    this.toggleEyeIcon(blueRegion);
+                    this.toggleVisibility();
                 });
-                this.element.appendChild(blueRegion);
+                this.element.appendChild(rightIcon);
             }
             textElement.style.borderTopRightRadius = "0";
             textElement.style.borderBottomRightRadius = "0";
         } else {
-            if (blueRegion) {
-                blueRegion.remove();
+            if (rightIcon) {
+                rightIcon.remove();
             }
             textElement.style.borderTopRightRadius = "var(--border-radius)";
             textElement.style.borderBottomRightRadius = "var(--border-radius)";
@@ -85,20 +97,35 @@ export class Box {
         }
     }
 
-    private toggleEyeIcon(blueRegion: HTMLElement) {
+    public toggleVisibility() {
         const parentRow = this.element.closest('.row');
         if (!parentRow || parentRow.id !== 'row2') return;
 
-        if (blueRegion.classList.contains('open-eye')) {
-            blueRegion.classList.remove('open-eye');
-            blueRegion.classList.add('closed-eye');
-            this.element.classList.add('hidden');
-            this.element.style.opacity = '0.5';
-        } else {
-            blueRegion.classList.remove('closed-eye');
-            blueRegion.classList.add('open-eye');
+        const rightIcon = this.element.querySelector('.right-icon') as HTMLElement;
+        if (!rightIcon) return;
+
+        this.isVisible = !this.isVisible;
+
+        if (this.isVisible) {
+            rightIcon.classList.remove('closed-eye');
+            rightIcon.classList.add('open-eye');
             this.element.classList.remove('hidden');
             this.element.style.opacity = '1';
+        } else {
+            rightIcon.classList.remove('open-eye');
+            rightIcon.classList.add('closed-eye');
+            this.element.classList.add('hidden');
+            this.element.style.opacity = '0.5';
         }
+    }
+
+    public setVisibility(isVisible: boolean) {
+        if (this.isVisible !== isVisible) {
+            this.toggleVisibility();
+        }
+    }
+
+    public getVisibility(): boolean {
+        return this.isVisible;
     }
 }
