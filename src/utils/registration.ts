@@ -1,45 +1,38 @@
 import * as vscode from 'vscode';
-import { ConfigManager } from '../config/ConfigManager';
-import { openWebviewAndExplorerSidebar, updateWebviewFileTypes, globalPanel, refreshFileTypes, addFileTypesOrFolders, removeFromFileTypes } from './webviewUtils'; // Update imports
+import * as path from 'path';
+import { ConfigManager, ConfigKey } from '../config/ConfigManager';
+import { openWebviewAndExplorerSidebar, updateWebviewFileTypes, globalPanel } from './webviewUtils';
 import { extractAndCopyText, extractFileFolderTree } from '../operations';
-import { handleOpenWebpage } from '../commands/openWebpage';
+import { handleFileTypeChange, refreshFileTypes } from './commonUtils';
+import { MyDataProvider } from './myDataProvider';
 
-export function registerCommands(context: vscode.ExtensionContext, configManager: ConfigManager) {
-    context.subscriptions.push(
-        vscode.commands.registerCommand('extension.createWebview', async () => {
-            await openWebviewAndExplorerSidebar(context);
-        }),
-        vscode.commands.registerCommand('syntaxExtractor.extractFileFolderTree', async (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => {
-            if (!allSelections) allSelections = contextSelection ? [contextSelection] : [];
-            await extractFileFolderTree(configManager, contextSelection, allSelections);
-        }),
-        vscode.commands.registerCommand('syntaxExtractor.extractAndCopyText', async (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => {
-            if (!allSelections) allSelections = contextSelection ? [contextSelection] : [];
-            await extractAndCopyText(contextSelection, allSelections);
-        }),
-        vscode.commands.registerCommand('extension.refreshFileTypes', async () => {
+export const registerCommands = (context: vscode.ExtensionContext, configManager: ConfigManager) => {
+    const commands = [
+        { command: 'extension.createWebview', callback: () => openWebviewAndExplorerSidebar(context) },
+        { command: 'syntaxExtractor.extractFileFolderTree', callback: (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => 
+            extractFileFolderTree(configManager, contextSelection, allSelections || [contextSelection]) },
+        { command: 'syntaxExtractor.extractAndCopyText', callback: (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => 
+            extractAndCopyText(contextSelection, allSelections || [contextSelection]) },
+        { command: 'extension.refreshFileTypes', callback: async () => {
             await refreshFileTypes();
             if (globalPanel) await updateWebviewFileTypes(globalPanel);
-        }),
-        vscode.commands.registerCommand('syntaxExtractor.addFileTypesOrFolders', async (contextSelection: vscode.Uri) => {
-            await addFileTypesOrFolders(configManager, contextSelection);
-        }),
-        vscode.commands.registerCommand('syntaxExtractor.removeFromFileTypes', async (contextSelection: vscode.Uri) => {
-            await removeFromFileTypes(configManager, contextSelection);
-        })
-    );
-}
+        }},
+        { command: 'syntaxExtractor.addFileTypesOrFolders', callback: (contextSelection: vscode.Uri) => 
+            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypes) },
+        { command: 'syntaxExtractor.removeFromFileTypes', callback: (contextSelection: vscode.Uri) => 
+            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypesToIgnore) }
+    ];
 
-export function registerTreeView(context: vscode.ExtensionContext) {
+    commands.forEach(({ command, callback }) => {
+        context.subscriptions.push(vscode.commands.registerCommand(command, callback));
+    });
+};
+
+export const registerTreeView = (context: vscode.ExtensionContext) => {
     const treeView = vscode.window.createTreeView('emptyView', { treeDataProvider: new MyDataProvider() });
     context.subscriptions.push(
-        treeView.onDidChangeVisibility(({ visible }: { visible: boolean }) => {
+        treeView.onDidChangeVisibility(({ visible }) => {
             if (visible) openWebviewAndExplorerSidebar(context);
         })
     );
-}
-
-class MyDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-    getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element; }
-    getChildren(): Thenable<vscode.TreeItem[]> { return Promise.resolve([]); }
-}
+};
