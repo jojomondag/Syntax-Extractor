@@ -7,6 +7,25 @@ import { detectWorkspaceFileTypes } from '../operations/initializeFileTypes';
 export const updateConfig = async (key: ConfigKey, value: any) => 
     await ConfigManager.getInstance().setValue(key, value);
 
+export const addFileOrFolder = async (configManager: ConfigManager, contextSelection: vscode.Uri) => {
+    const filePath = contextSelection.fsPath;
+    const folderName = path.basename(filePath); // Extract only the folder name
+
+    const fileTypesToCheck = configManager.getValue<string[]>(ConfigKey.FileTypesAndFoldersToCheck);
+    const fileTypesToIgnore = configManager.getValue<string[]>(ConfigKey.FileTypesAndFoldersToIgnore);
+    const fileTypesToHide = configManager.getValue<string[]>(ConfigKey.FileTypesAndFoldersToHide);
+
+    // Check if the folder name is already in any of the lists
+    if (!fileTypesToCheck.includes(folderName) && 
+        !fileTypesToIgnore.includes(folderName) && 
+        !fileTypesToHide.includes(folderName)) {
+        fileTypesToCheck.push(folderName);
+        await configManager.setValue(ConfigKey.FileTypesAndFoldersToCheck, fileTypesToCheck);
+    } else {
+        vscode.window.showInformationMessage(`The folder "${folderName}" is already in one of the lists.`);
+    }
+};
+
 export const handleFileTypeChange = async (configManager: ConfigManager, item: string, targetList: ConfigKey) => {
     const sourceList = targetList === ConfigKey.FileTypesAndFoldersToIgnore ? ConfigKey.FileTypesAndFoldersToCheck : ConfigKey.FileTypesAndFoldersToIgnore;
     const [sourcetypes, targettypes] = [sourceList, targetList].map(list => configManager.getValue(list) as string[]);

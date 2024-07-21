@@ -3,7 +3,7 @@ import * as path from 'path';
 import { ConfigManager, ConfigKey } from '../config/ConfigManager';
 import { openWebviewAndExplorerSidebar, updateWebviewFileTypes, globalPanel } from './webviewUtils';
 import { extractAndCopyText, extractFileFolderTree } from '../operations';
-import { handleFileTypeChange, refreshFileTypes } from './commonUtils';
+import { handleFileTypeChange, refreshFileTypes, addFileOrFolder } from './commonUtils';
 import { MyDataProvider } from './myDataProvider';
 
 export const registerCommands = (context: vscode.ExtensionContext, configManager: ConfigManager) => {
@@ -17,8 +17,10 @@ export const registerCommands = (context: vscode.ExtensionContext, configManager
             await refreshFileTypes();
             if (globalPanel) await updateWebviewFileTypes(globalPanel);
         }},
-        { command: 'syntaxExtractor.addFileTypesOrFolders', callback: (contextSelection: vscode.Uri) => 
-            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypesAndFoldersToCheck) },
+        { command: 'syntaxExtractor.addFileTypesOrFolders', callback: async (contextSelection: vscode.Uri) => {
+            await addFileOrFolder(configManager, contextSelection);
+            if (globalPanel) await updateWebviewFileTypes(globalPanel);
+        }},
         { command: 'syntaxExtractor.removeFromFileTypes', callback: (contextSelection: vscode.Uri) => 
             handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypesAndFoldersToIgnore) }
     ];
