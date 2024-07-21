@@ -134,22 +134,30 @@ function generatePathStringCompressionLight(allSelections: vscode.Uri[], commonD
             directoryMap[relativePath] = [];
         }
     });
-    let resultString = `${adjustedCommonDir}\n`;
-    const sortedDirs = Object.keys(directoryMap).sort();
+    
+    let resultString = adjustedCommonDir;
+    const sortedDirs = Object.keys(directoryMap).sort((a, b) => {
+        if (a === '.') return -1;
+        if (b === '.') return 1;
+        return a.localeCompare(b);
+    });
+    
     sortedDirs.forEach((dir, index) => {
         const isLastDir = index === sortedDirs.length - 1;
-        if (dir !== '.') { 
-            resultString += `${isLastDir ? '└──' : '├──'} ${dir}\n`;
+        if (dir === '.') {
+            // Handle root files
             directoryMap[dir].sort().forEach((fileName, fileIndex) => {
-                const isLastFile = fileIndex === directoryMap[dir].length - 1;
-                resultString += `    ${isLastFile ? '└──' : '├──'} ${fileName}\n`;
+                const isLastFile = fileIndex === directoryMap[dir].length - 1 && isLastDir;
+                resultString += `\n${isLastFile ? '└──' : '├──'}${fileName}`;
             });
         } else {
+            resultString += `\n${isLastDir ? '└──' : '├──'}${dir}`;
             directoryMap[dir].sort().forEach((fileName, fileIndex) => {
                 const isLastFile = fileIndex === directoryMap[dir].length - 1;
-                resultString += `${isLastFile ? '└──' : '├──'} ${fileName}\n`;
+                resultString += `\n    ${isLastFile ? '└──' : '├──'}${fileName}`;
             });
         }
     });
+    
     return resultString;
 }
