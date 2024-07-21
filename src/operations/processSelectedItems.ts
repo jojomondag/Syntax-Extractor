@@ -11,8 +11,8 @@ export function processSelectedItems(
     dirCallback?: (dirPath: string) => void
 ) {
     const processedFilesAndDirs = new Set<string>();
-    const fileTypesToIgnore = configManager.getValue(ConfigKey.FileTypesToIgnore) as string[];
-    const allowedFileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
+    const fileTypesToIgnore = configManager.getValue(ConfigKey.FileTypesAndFoldersToIgnore) as string[];
+    const allowedFileTypes = configManager.getValue(ConfigKey.FileTypesAndFoldersToCheck) as string[];
 
     function isAllowedFile(itemPath: string): boolean {
         const extension = path.extname(itemPath);

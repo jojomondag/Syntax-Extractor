@@ -3,7 +3,7 @@ import { ConfigManager, ConfigKey } from '../config/ConfigManager';
 import { getTokenCount } from '../operations/tokenUtils';
 import { handleOpenWebpage } from '../commands/openWebpage';
 import { updateWebviewFileTypes } from './commonUtils';
-import { refreshFileTypes, updateConfig} from './commonUtils';
+import { refreshFileTypes, updateConfig } from './commonUtils';
 
 export let globalPanel: vscode.WebviewPanel | undefined;
 export { updateWebviewFileTypes };
@@ -38,6 +38,7 @@ export const openWebviewAndExplorerSidebar = async (context: vscode.ExtensionCon
             globalPanel = undefined;
         });
 
+        // Sync webview with the current settings
         await updateWebviewFileTypes(globalPanel);
     }
 
@@ -57,8 +58,8 @@ const handleReceivedMessage = async (message: any, panel: vscode.WebviewPanel, c
         updateFileTypes: async () => {
             if (Array.isArray(message.activeFileTypes) && Array.isArray(message.ignoredFileTypes)) {
                 await Promise.all([
-                    updateConfig(ConfigKey.FileTypes, message.activeFileTypes),
-                    updateConfig(ConfigKey.FileTypesToIgnore, message.ignoredFileTypes)
+                    updateConfig(ConfigKey.FileTypesAndFoldersToCheck, message.activeFileTypes),
+                    updateConfig(ConfigKey.FileTypesAndFoldersToIgnore, message.ignoredFileTypes)
                 ]);
                 await updateWebviewFileTypes(panel);
             } else {
@@ -92,7 +93,7 @@ const handleReceivedMessage = async (message: any, panel: vscode.WebviewPanel, c
         updateHiddenStates: async () => {
             if (typeof message.hiddenStates === 'object') {
                 const hiddenItems = Object.keys(message.hiddenStates).filter(key => message.hiddenStates[key]);
-                await updateConfig(ConfigKey.HideFoldersAndFiles, hiddenItems);
+                await updateConfig(ConfigKey.FileTypesAndFoldersToHide, hiddenItems);
                 await configManager.syncAllSettings();
             }
         },
@@ -108,29 +109,29 @@ const handleReceivedMessage = async (message: any, panel: vscode.WebviewPanel, c
 };
 
 const addToHideFoldersAndFiles = async (configManager: ConfigManager, item: string) => {
-    const hiddenItems = configManager.getValue(ConfigKey.HideFoldersAndFiles) as string[];
+    const hiddenItems = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide) as string[];
     if (!hiddenItems.includes(item)) {
-        await updateConfig(ConfigKey.HideFoldersAndFiles, [...hiddenItems, item]);
+        await updateConfig(ConfigKey.FileTypesAndFoldersToHide, [...hiddenItems, item]);
     }
 };
 
 const removeFromHideFoldersAndFiles = async (configManager: ConfigManager, item: string) => {
-    const hiddenItems = configManager.getValue(ConfigKey.HideFoldersAndFiles) as string[];
-    await updateConfig(ConfigKey.HideFoldersAndFiles, hiddenItems.filter(i => i !== item));
+    const hiddenItems = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide) as string[];
+    await updateConfig(ConfigKey.FileTypesAndFoldersToHide, hiddenItems.filter(i => i !== item));
 };
 
 const sendHideFoldersAndFiles = async (panel: vscode.WebviewPanel) => {
     const configManager = ConfigManager.getInstance();
-    const hideFoldersAndFiles = configManager.getValue(ConfigKey.HideFoldersAndFiles);
+    const hideFoldersAndFiles = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide);
     panel.webview.postMessage({ command: 'updateHideFoldersAndFiles', hideFoldersAndFiles });
 };
 
 const setItemHiddenState = async (configManager: ConfigManager, item: string, isHidden: boolean) => {
-    const hiddenItems = configManager.getValue(ConfigKey.HideFoldersAndFiles) as string[];
+    const hiddenItems = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide) as string[];
     const updatedHiddenItems = isHidden
         ? [...new Set([...hiddenItems, item])]
         : hiddenItems.filter(i => i !== item);
-    await updateConfig(ConfigKey.HideFoldersAndFiles, updatedHiddenItems);
+    await updateConfig(ConfigKey.FileTypesAndFoldersToHide, updatedHiddenItems);
 };
 
 const setupWebviewPanelActions = (panel: vscode.WebviewPanel, context: vscode.ExtensionContext) => {

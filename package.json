@@ -20,15 +20,20 @@
     "configuration": {
       "title": "syntaxExtractor",
       "properties": {
-        "syntaxExtractor.fileTypes": {
+        "syntaxExtractor.fileTypesAndFoldersToCheck": {
           "type": "array",
           "default": [],
-          "description": "File types to be handled by the extension."
+          "description": "File types and folders to be handled by the extension."
         },
-        "syntaxExtractor.fileTypesToIgnore": {
+        "syntaxExtractor.fileTypesAndFoldersToIgnore": {
           "type": "array",
           "default": [],
-          "description": "File types to be ignored by the extension."
+          "description": "File types and folders to be ignored by the extension."
+        },
+        "syntaxExtractor.fileTypesAndFoldersToHide": {
+          "type": "array",
+          "default": [],
+          "description": "File types and folders to be hidden (eye icon closed)."
         },
         "syntaxExtractor.compressionLevel": {
           "type": "number",
@@ -39,11 +44,6 @@
           "type": "number",
           "default": 100,
           "description": "Height of the clipboard data box in pixels."
-        },
-        "syntaxExtractor.hideFoldersAndFiles": {
-          "type": "array",
-          "default": [],
-          "description": "Folders and files to be hidden (eye icon closed)."
         }
       }
     },

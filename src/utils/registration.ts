@@ -18,9 +18,9 @@ export const registerCommands = (context: vscode.ExtensionContext, configManager
             if (globalPanel) await updateWebviewFileTypes(globalPanel);
         }},
         { command: 'syntaxExtractor.addFileTypesOrFolders', callback: (contextSelection: vscode.Uri) => 
-            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypes) },
+            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypesAndFoldersToCheck) },
         { command: 'syntaxExtractor.removeFromFileTypes', callback: (contextSelection: vscode.Uri) => 
-            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypesToIgnore) }
+            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypesAndFoldersToIgnore) }
     ];
 
     commands.forEach(({ command, callback }) => {

@@ -8,7 +8,7 @@ export const updateConfig = async (key: ConfigKey, value: any) =>
     await ConfigManager.getInstance().setValue(key, value);
 
 export const handleFileTypeChange = async (configManager: ConfigManager, item: string, targetList: ConfigKey) => {
-    const sourceList = targetList === ConfigKey.FileTypesToIgnore ? ConfigKey.FileTypes : ConfigKey.FileTypesToIgnore;
+    const sourceList = targetList === ConfigKey.FileTypesAndFoldersToIgnore ? ConfigKey.FileTypesAndFoldersToCheck : ConfigKey.FileTypesAndFoldersToIgnore;
     const [sourcetypes, targettypes] = [sourceList, targetList].map(list => configManager.getValue(list) as string[]);
 
     await Promise.all([
@@ -20,9 +20,9 @@ export const handleFileTypeChange = async (configManager: ConfigManager, item: s
 export const updateWebviewFileTypes = async (panel: vscode.WebviewPanel) => {
     const configManager = ConfigManager.getInstance();
     const config = {
-        fileTypes: configManager.getValue(ConfigKey.FileTypes),
-        fileTypesToIgnore: configManager.getValue(ConfigKey.FileTypesToIgnore),
-        hideFoldersAndFiles: configManager.getValue(ConfigKey.HideFoldersAndFiles)
+        fileTypes: configManager.getValue(ConfigKey.FileTypesAndFoldersToCheck),
+        fileTypesToIgnore: configManager.getValue(ConfigKey.FileTypesAndFoldersToIgnore),
+        hideFoldersAndFiles: configManager.getValue(ConfigKey.FileTypesAndFoldersToHide)
     };
     panel.webview.postMessage({ command: 'updateFileTypes', ...config });
 };
@@ -30,40 +30,55 @@ export const updateWebviewFileTypes = async (panel: vscode.WebviewPanel) => {
 export const refreshFileTypes = async (): Promise<string[]> => {
     const configManager = ConfigManager.getInstance();
     const fileTypes = (await detectWorkspaceFileTypes()).filter((type): type is string => typeof type === 'string');
-    const hideFoldersAndFiles = configManager.getValue(ConfigKey.HideFoldersAndFiles) as string[];
+    const hideFoldersAndFiles = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide) as string[];
     
     const updatedFileTypes = fileTypes.filter(type => !hideFoldersAndFiles.includes(type));
     
     await Promise.all([
-        updateConfig(ConfigKey.FileTypes, updatedFileTypes),
-        updateConfig(ConfigKey.FileTypesToIgnore, [])
+        updateConfig(ConfigKey.FileTypesAndFoldersToCheck, updatedFileTypes),
+        updateConfig(ConfigKey.FileTypesAndFoldersToIgnore, [])
     ]);
     return updatedFileTypes;
 };
 
-export const ensureVscodeSettings = async () => {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return;
+export async function ensureVscodeSettings() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+        const settingsPath = path.join(workspaceFolders[0].uri.fsPath, '.vscode', 'settings.json');
+        try {
+            await fs.mkdir(path.dirname(settingsPath), { recursive: true });
 
-    const settingsPath = path.join(workspaceFolder.uri.fsPath, '.vscode', 'settings.json');
-    try {
-        await fs.mkdir(path.dirname(settingsPath), { recursive: true });
-        let settings = await fs.readFile(settingsPath, 'utf8').then(JSON.parse).catch(() => ({}));
+            let settings: any = {};
+            let isNewFile = false;
 
-        const defaultSettings = {
-            'syntaxExtractor.fileTypes': await detectWorkspaceFileTypes(),
-            'syntaxExtractor.fileTypesToIgnore': [],
-            'syntaxExtractor.hideFoldersAndFiles': [],
-            'syntaxExtractor.compressionLevel': 2,
-            'syntaxExtractor.clipboardDataBoxHeight': 100
-        };
+            try {
+                const existingSettings = await fs.readFile(settingsPath, 'utf8');
+                settings = JSON.parse(existingSettings);
+            } catch {
+                isNewFile = true;
+            }
 
-        settings = { ...defaultSettings, ...settings };
+            if (isNewFile || Object.keys(settings).length === 0) {
+                const allFileTypes = await detectWorkspaceFileTypes();
+                settings['syntaxExtractor.fileTypesAndFoldersToCheck'] = allFileTypes;
+                settings['syntaxExtractor.fileTypesAndFoldersToIgnore'] = [];
+                settings['syntaxExtractor.fileTypesAndFoldersToHide'] = [];
+                settings['syntaxExtractor.compressionLevel'] = 2;
+                settings['syntaxExtractor.clipboardDataBoxHeight'] = 100;
+            } else {
+                // Ensure all default settings are set if they don't exist
+                settings['syntaxExtractor.fileTypesAndFoldersToCheck'] = settings['syntaxExtractor.fileTypesAndFoldersToCheck'] || await detectWorkspaceFileTypes();
+                settings['syntaxExtractor.fileTypesAndFoldersToIgnore'] = settings['syntaxExtractor.fileTypesAndFoldersToIgnore'] || [];
+                settings['syntaxExtractor.fileTypesAndFoldersToHide'] = settings['syntaxExtractor.fileTypesAndFoldersToHide'] || [];
+                settings['syntaxExtractor.compressionLevel'] = settings['syntaxExtractor.compressionLevel'] || 2;
+                settings['syntaxExtractor.clipboardDataBoxHeight'] = settings['syntaxExtractor.clipboardDataBoxHeight'] || 100;
+            }
 
-        await fs.writeFile(settingsPath, JSON.stringify(settings, null, 4));
-        console.log('Updated .vscode/settings.json');
-    } catch (error) {
-        console.error('Failed to create or update .vscode/settings.json:', error);
-        vscode.window.showErrorMessage('Failed to create or update .vscode/settings.json');
+            await fs.writeFile(settingsPath, JSON.stringify(settings, null, 4));
+            console.log('Ensured .vscode/settings.json');
+        } catch (error) {
+            console.error('Failed to create or update .vscode/settings.json:', error);
+            vscode.window.showErrorMessage('Failed to create or update .vscode/settings.json');
+        }
     }
-};
+}
