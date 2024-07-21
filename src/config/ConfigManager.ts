@@ -4,7 +4,8 @@ export enum ConfigKey {
     FileTypes = 'fileTypes',
     FileTypesToIgnore = 'fileTypesToIgnore',
     CompressionLevel = 'compressionLevel',
-    ClipboardDataBoxHeight = 'clipboardDataBoxHeight'
+    ClipboardDataBoxHeight = 'clipboardDataBoxHeight',
+    HideFoldersAndFiles = 'hideFoldersAndFiles'
 }
 
 type ConfigValue = string[] | number;
@@ -45,6 +46,7 @@ export class ConfigManager {
         switch (key) {
             case ConfigKey.FileTypes:
             case ConfigKey.FileTypesToIgnore:
+            case ConfigKey.HideFoldersAndFiles:
                 return this.get<string[]>(key, []) as T;
             case ConfigKey.CompressionLevel:
                 return this.get<number>(key, 1) as T;
@@ -64,6 +66,7 @@ export class ConfigManager {
         switch (key) {
             case ConfigKey.FileTypes:
             case ConfigKey.FileTypesToIgnore:
+            case ConfigKey.HideFoldersAndFiles:
                 if (!Array.isArray(value) || !value.every(item => typeof item === 'string')) {
                     throw new Error(`Invalid value for ${key}. Expected array of strings.`);
                 }
@@ -86,7 +89,8 @@ export class ConfigManager {
             [ConfigKey.FileTypes]: this.getValue(ConfigKey.FileTypes),
             [ConfigKey.FileTypesToIgnore]: this.getValue(ConfigKey.FileTypesToIgnore),
             [ConfigKey.CompressionLevel]: this.getValue(ConfigKey.CompressionLevel),
-            [ConfigKey.ClipboardDataBoxHeight]: this.getValue(ConfigKey.ClipboardDataBoxHeight)
+            [ConfigKey.ClipboardDataBoxHeight]: this.getValue(ConfigKey.ClipboardDataBoxHeight),
+            [ConfigKey.HideFoldersAndFiles]: this.getValue(ConfigKey.HideFoldersAndFiles)
         };
     }
 
@@ -132,9 +136,35 @@ export class ConfigManager {
         }
     }
 
+    public async syncAllSettings(): Promise<void> {
+        const config = this.getAllConfig();
+        await this.setAllConfig(config);
+    }
+
     public isFileTypeOrFolderPresent(item: string): boolean {
         const fileTypes = this.getValue(ConfigKey.FileTypes) as string[];
         const fileTypesToIgnore = this.getValue(ConfigKey.FileTypesToIgnore) as string[];
         return fileTypes.includes(item) || fileTypesToIgnore.includes(item);
+    }
+
+    // Methods to move file types to different sections
+    public async moveFileTypeToIgnore(fileType: string): Promise<void> {
+        const fileTypes = this.getValue(ConfigKey.FileTypes) as string[];
+        const updatedFileTypes = fileTypes.filter(type => type !== fileType);
+        await this.setValue(ConfigKey.FileTypes, updatedFileTypes);
+
+        const fileTypesToIgnore = this.getValue(ConfigKey.FileTypesToIgnore) as string[];
+        fileTypesToIgnore.push(fileType);
+        await this.setValue(ConfigKey.FileTypesToIgnore, fileTypesToIgnore);
+    }
+
+    public async moveFileTypeToHide(fileType: string): Promise<void> {
+        const fileTypes = this.getValue(ConfigKey.FileTypes) as string[];
+        const updatedFileTypes = fileTypes.filter(type => type !== fileType);
+        await this.setValue(ConfigKey.FileTypes, updatedFileTypes);
+
+        const hideFoldersAndFiles = this.getValue(ConfigKey.HideFoldersAndFiles) as string[];
+        hideFoldersAndFiles.push(fileType);
+        await this.setValue(ConfigKey.HideFoldersAndFiles, hideFoldersAndFiles);
     }
 }

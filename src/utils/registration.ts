@@ -1,15 +1,8 @@
 import * as vscode from 'vscode';
 import { ConfigManager } from '../config/ConfigManager';
+import { openWebviewAndExplorerSidebar, updateWebviewFileTypes, globalPanel, refreshFileTypes, addFileTypesOrFolders, removeFromFileTypes } from './webviewUtils'; // Update imports
 import { extractAndCopyText, extractFileFolderTree } from '../operations';
 import { handleOpenWebpage } from '../commands/openWebpage';
-import { 
-    updateWebviewFileTypes, 
-    openWebviewAndExplorerSidebar, 
-    refreshFileTypes, 
-    addFileTypesOrFolders, 
-    removeFromFileTypes,
-    globalPanel
-} from './webviewUtils';
 
 export function registerCommands(context: vscode.ExtensionContext, configManager: ConfigManager) {
     context.subscriptions.push(

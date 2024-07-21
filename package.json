@@ -39,6 +39,11 @@
           "type": "number",
           "default": 100,
           "description": "Height of the clipboard data box in pixels."
+        },
+        "syntaxExtractor.hideFoldersAndFiles": {
+          "type": "array",
+          "default": [],
+          "description": "Folders and files to be hidden (eye icon closed)."
         }
       }
     },

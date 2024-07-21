@@ -24,6 +24,7 @@ type Message = {
     count?: number;
     fileTypes?: string[];
     fileTypesToIgnore?: string[];
+    hideFoldersAndFiles?: string[];
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop();
     setupGarbageIcon();
     requestFileTypes();
+    requestHiddenFoldersAndFiles();
 });
 
 window.addEventListener('message', (event: MessageEvent<Message>) => {
@@ -54,6 +56,11 @@ window.addEventListener('message', (event: MessageEvent<Message>) => {
                 createBoxesFromFileTypes(message.fileTypes, message.fileTypesToIgnore);
             }
             break;
+        case 'updateHideFoldersAndFiles':
+            if (Array.isArray(message.hideFoldersAndFiles)) {
+                updateHiddenBoxes(message.hideFoldersAndFiles);
+            }
+            break;
         case 'updateClipboardDataBox':
             updateClipboardDataBox(message.content);
             break;
@@ -65,6 +72,30 @@ window.addEventListener('message', (event: MessageEvent<Message>) => {
             break;
     }
 });
+
+function updateHiddenBoxes(hiddenItems: string[]) {
+    const row2 = document.getElementById('row2');
+    if (!row2) return;
+
+    row2.querySelectorAll('.box').forEach((box: Element) => {
+        const textElement = box.querySelector('.text');
+        const blueRegion = box.querySelector('.right-icon') as HTMLElement;
+        if (textElement && blueRegion) {
+            const itemValue = textElement.textContent || '';
+            if (hiddenItems.includes(itemValue)) {
+                blueRegion.classList.remove('open-eye');
+                blueRegion.classList.add('closed-eye');
+                (box as HTMLElement).classList.add('hidden');
+                (box as HTMLElement).style.opacity = '0.5';
+            } else {
+                blueRegion.classList.remove('closed-eye');
+                blueRegion.classList.add('open-eye');
+                (box as HTMLElement).classList.remove('hidden');
+                (box as HTMLElement).style.opacity = '1';
+            }
+        }
+    });
+}
 
 function setupTextInput() {
     const textarea = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
@@ -109,18 +140,6 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
         return;
     }
 
-    // Store the visibility state of existing boxes in row2
-    const visibilityState = new Map<string, boolean>();
-    row2.querySelectorAll('.box').forEach((boxElement: Element) => {
-        const textElement = boxElement.querySelector('.text');
-        if (textElement && textElement.textContent) {
-            const box = (boxElement as any).__box_instance;
-            if (box instanceof Box) {
-                visibilityState.set(textElement.textContent, box.getVisibility());
-            }
-        }
-    });
-
     row1.innerHTML = '';
     row2.innerHTML = '';
 
@@ -146,12 +165,11 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
             // Store the Box instance on the DOM element for easy retrieval
             (boxElement as any).__box_instance = box;
 
-            // Restore visibility state for row2 boxes
+            // Set initial visibility state for row2 boxes
             if (row.id === 'row2') {
-                const isVisible = visibilityState.get(item);
-                if (isVisible !== undefined) {
-                    box.setVisibility(isVisible);
-                }
+                const hiddenItems = getHiddenItems();
+                const isHidden = hiddenItems.includes(item);
+                box.setVisibility(!isHidden);
             }
         } catch (error) {
             console.error(`Error creating box for ${item}:`, error);
@@ -160,6 +178,14 @@ function createBoxesFromFileTypes(fileTypes: string[], fileTypesToIgnore: string
 
     fileTypes.forEach(item => createBox(item, row1));
     fileTypesToIgnore.forEach(item => createBox(item, row2));
+}
+
+function getHiddenItems(): string[] {
+    return JSON.parse(localStorage.getItem('hiddenItems') || '[]');
+}
+
+function setHiddenItems(items: string[]) {
+    localStorage.setItem('hiddenItems', JSON.stringify(items));
 }
 
 function setClipboardDataBoxHeight() {
@@ -346,6 +372,7 @@ function handleDrop(event: DragEvent) {
     if (draggedElement && placeholder.parentNode) {
         placeholder.parentNode.replaceChild(draggedElement, placeholder);
         updateBoxStyles(draggedElement);
+        updateFileTypes();
     }
     if (placeholder.parentNode) {
         placeholder.parentNode.removeChild(placeholder);
@@ -355,7 +382,6 @@ function handleDrop(event: DragEvent) {
     document.body.removeAttribute('data-dragging');
     isClickAndHold = false;
     lastPlaceholderPosition = null;
-    updateFileTypes();
 }
 
 function moveBox(box: HTMLElement) {
@@ -385,6 +411,7 @@ function moveBox(box: HTMLElement) {
             blueRegion.remove();
         }
         box.style.opacity = '1';
+        removeFromIgnoreList(box.querySelector('.text')?.textContent || '');
     } else {
         // Moving from row1 to row2
         if (!box.querySelector('.right-icon')) {
@@ -396,7 +423,7 @@ function moveBox(box: HTMLElement) {
             });
             box.appendChild(blueRegion);
         }
-        // Don't change the visibility state of the box when moving to row2
+        addToIgnoreList(box.querySelector('.text')?.textContent || '');
     }
 
     updateBoxStyles(box);
@@ -443,23 +470,67 @@ function toggleEyeIcon(blueRegion: HTMLElement) {
     const box = blueRegion.closest('.box') as HTMLElement;
     if ((box.parentNode as HTMLElement).id !== 'row2') return;
 
+    const textElement = box.querySelector('.text') as HTMLElement;
+    const itemValue = textElement.textContent || '';
+
     if (blueRegion.classList.contains('open-eye')) {
         blueRegion.classList.remove('open-eye');
         blueRegion.classList.add('closed-eye');
         box.classList.add('hidden');
         box.style.opacity = '0.5';
+        addToHideFoldersAndFiles(itemValue);
     } else {
         blueRegion.classList.remove('closed-eye');
         blueRegion.classList.add('open-eye');
         box.classList.remove('hidden');
         box.style.opacity = '1';
+        removeFromHideFoldersAndFiles(itemValue);
     }
+}
+
+function addToIgnoreList(item: string) {
+    vscode.postMessage({
+        command: 'addToIgnoreList',
+        item: item
+    });
+}
+
+function removeFromIgnoreList(item: string) {
+    vscode.postMessage({
+        command: 'removeFromIgnoreList',
+        item: item
+    });
+}
+
+function addToHideFoldersAndFiles(item: string) {
+    const hiddenItems = getHiddenItems();
+    if (!hiddenItems.includes(item)) {
+        hiddenItems.push(item);
+        setHiddenItems(hiddenItems);
+    }
+    vscode.postMessage({
+        command: 'addToHideFoldersAndFiles',
+        item: item
+    });
+}
+
+function removeFromHideFoldersAndFiles(item: string) {
+    const hiddenItems = getHiddenItems();
+    const index = hiddenItems.indexOf(item);
+    if (index > -1) {
+        hiddenItems.splice(index, 1);
+        setHiddenItems(hiddenItems);
+    }
+    vscode.postMessage({
+        command: 'removeFromHideFoldersAndFiles',
+        item: item
+    });
 }
 
 function updateFileTypes() {
     const row1 = document.getElementById('row1');
     const row2 = document.getElementById('row2');
-    
+
     if (!row1 || !row2) {
         console.error('Row elements not found');
         return;
@@ -468,10 +539,24 @@ function updateFileTypes() {
     const activeFileTypes = Array.from(row1.querySelectorAll('.box .text')).map(el => el.textContent || '');
     const ignoredFileTypes = Array.from(row2.querySelectorAll('.box .text')).map(el => el.textContent || '');
 
+    const hiddenStates: { [key: string]: boolean } = {};
+    row2.querySelectorAll('.box').forEach((box: Element) => {
+        const textElement = box.querySelector('.text');
+        const rightIcon = box.querySelector('.right-icon');
+        if (textElement && textElement.textContent && rightIcon) {
+            hiddenStates[textElement.textContent] = rightIcon.classList.contains('closed-eye');
+        }
+    });
+
     vscode.postMessage({
         command: 'updateFileTypes',
         activeFileTypes: activeFileTypes,
         ignoredFileTypes: ignoredFileTypes
+    });
+
+    vscode.postMessage({
+        command: 'updateHiddenStates',
+        hiddenStates: hiddenStates
     });
 }
 
@@ -507,4 +592,8 @@ function updateCharCount(count: number | undefined) {
 
 function requestFileTypes() {
     vscode.postMessage({ command: 'getFileTypes' });
+}
+
+function requestHiddenFoldersAndFiles() {
+    vscode.postMessage({ command: 'getHideFoldersAndFiles' });
 }

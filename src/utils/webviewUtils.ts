@@ -1,45 +1,67 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { ConfigManager, ConfigKey } from '../config/ConfigManager';
-import { getTokenCount } from '../operations';
+import { getTokenCount } from '../operations/tokenUtils'; // Adjust the path as needed
 import { handleOpenWebpage } from '../commands/openWebpage';
-import { detectWorkspaceFileTypes, initializeFileTypeConfiguration } from '../operations/initializeFileTypes';
+import { detectWorkspaceFileTypes } from '../operations/initializeFileTypes'; // Ensure this import is correct
+import * as path from 'path'; // Ensure this import is correct
 
+// Declare global variables
 export let globalPanel: vscode.WebviewPanel | undefined;
 
+// Move the method implementations to this file to avoid conflicts
 export async function openWebviewAndExplorerSidebar(context: vscode.ExtensionContext) {
     const configManager = ConfigManager.getInstance();
+    await configManager.syncAllSettings();
 
-    // Check and initialize file types before opening the webview
-    await initializeFileTypeConfiguration();
+    // Check if the globalPanel is disposed and reset it if necessary
+    if (globalPanel && globalPanel.webview.html === '') {
+        setGlobalPanel(undefined);
+    }
 
     if (globalPanel) {
         globalPanel.reveal(vscode.ViewColumn.One);
     } else {
-        globalPanel = vscode.window.createWebviewPanel(
+        const panel = vscode.window.createWebviewPanel(
             'webPageView', 'SynExt', vscode.ViewColumn.One, {
                 enableScripts: true,
                 localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'out', 'webview')]
             }
         );
 
-        globalPanel.onDidDispose(() => {
-            console.log('Webview was closed');
-            globalPanel = undefined;
-        }, null, context.subscriptions);
+        panel.webview.html = await composeWebViewContent(panel.webview, context.extensionUri);
+        setupWebviewPanelActions(panel, context);
+        await clipBoardPolling(panel);
 
-        globalPanel.webview.html = await composeWebViewContent(globalPanel.webview, context.extensionUri);
-        setupWebviewPanelActions(globalPanel, context);
-        await clipBoardPolling(globalPanel);
-
-        globalPanel.webview.onDidReceiveMessage(async message => {
-            if (globalPanel) await handleReceivedMessage(message, globalPanel, context);
+        panel.webview.onDidReceiveMessage(async message => {
+            await handleReceivedMessage(message, panel, context);
         }, undefined, context.subscriptions);
 
-        await updateWebviewFileTypes(globalPanel);
+        panel.onDidDispose(() => {
+            setGlobalPanel(undefined);
+        });
+
+        setGlobalPanel(panel);
+        await updateWebviewFileTypes(panel);
     }
 
     await vscode.commands.executeCommand('workbench.view.explorer');
+}
+
+function setGlobalPanel(panel: vscode.WebviewPanel | undefined) {
+    globalPanel = panel;
+}
+
+export async function updateWebviewFileTypes(panel: vscode.WebviewPanel) {
+    const configManager = ConfigManager.getInstance();
+    const fileTypes = configManager.getValue(ConfigKey.FileTypes);
+    const fileTypesToIgnore = configManager.getValue(ConfigKey.FileTypesToIgnore);
+    const hideFoldersAndFiles = configManager.getValue(ConfigKey.HideFoldersAndFiles);
+    panel.webview.postMessage({
+        command: 'updateFileTypes',
+        fileTypes,
+        fileTypesToIgnore,
+        hideFoldersAndFiles
+    });
 }
 
 export async function refreshFileTypes(): Promise<string[]> {
@@ -49,123 +71,6 @@ export async function refreshFileTypes(): Promise<string[]> {
     await configManager.setValue(ConfigKey.FileTypes, fileTypes);
     await configManager.setValue(ConfigKey.FileTypesToIgnore, []);
     return fileTypes;
-}
-
-export async function updateWebviewFileTypes(panel: vscode.WebviewPanel) {
-    const configManager = ConfigManager.getInstance();
-    const fileTypes = configManager.getValue(ConfigKey.FileTypes);
-    const fileTypesToIgnore = configManager.getValue(ConfigKey.FileTypesToIgnore);
-    panel.webview.postMessage({ command: 'updateFileTypes', fileTypes, fileTypesToIgnore });
-}
-
-export async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
-    const configManager = ConfigManager.getInstance();
-    switch (message.command) {
-        case 'refreshFileTypes':
-            await refreshFileTypes();
-            await updateWebviewFileTypes(panel);
-            panel.webview.postMessage({ command: 'refreshComplete' });
-            break;
-        case 'setCompressionLevel':
-            await configManager.setValue(ConfigKey.CompressionLevel, message.level);
-            break;
-        case 'updateFileTypes':
-            if (Array.isArray(message.activeFileTypes) && Array.isArray(message.ignoredFileTypes)) {
-                await updateFileTypeSettings(configManager, message.activeFileTypes, message.ignoredFileTypes);
-                await updateWebviewFileTypes(panel);
-            } else {
-                console.error('Invalid file types received');
-            }
-            break;
-        case 'setClipboardDataBoxHeight':
-            await configManager.setValue(ConfigKey.ClipboardDataBoxHeight, message.height);
-            break;
-        case 'openWebpage':
-            handleOpenWebpage();
-            break;
-        case 'countTokens':
-            const tokenCount = getTokenCount(message.text);
-            panel.webview.postMessage({ command: 'setTokenCount', count: tokenCount });
-            break;
-        case 'countChars':
-            panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
-            break;
-        case 'requestCounts':
-            panel.webview.postMessage({ command: 'setTokenCount', count: getTokenCount(message.text) });
-            panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
-            break;
-        case 'getFileTypes':
-            await updateWebviewFileTypes(panel);
-            break;
-    }
-
-    panel.webview.postMessage({ command: 'configUpdated', ...configManager.getAllConfig() });
-}
-
-function setupWebviewPanelActions(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
-    const sendConfigToWebview = () => {
-        const configManager = ConfigManager.getInstance();
-        panel.webview.postMessage({ command: 'initConfig', ...configManager.getAllConfig() });
-    };
-
-    panel.onDidChangeViewState(({ webviewPanel }) => {
-        if (webviewPanel.visible) {
-            sendConfigToWebview();
-            clipBoardPolling(panel);
-        }
-    });
-    sendConfigToWebview();
-}
-
-export async function composeWebViewContent(webview: vscode.Webview, extensionUri: vscode.Uri): Promise<string> {
-    try {
-        const htmlPath = vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.html');
-        const htmlContentUint8 = await vscode.workspace.fs.readFile(htmlPath);
-        let htmlContent = Buffer.from(htmlContentUint8).toString('utf8');
-
-        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.css'));
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.js'));
-
-        htmlContent = htmlContent.replace(/<link rel="stylesheet" href=".\/webview.css">/, `<link rel="stylesheet" href="${styleUri}">`);
-        htmlContent = htmlContent.replace(/<script src="webview.js"><\/script>/, `<script src="${scriptUri}"></script>`);
-
-        return htmlContent;
-        
-    } catch (error) {
-        console.error(`Failed to load webview content: ${error}`);
-        return 'Error loading webview content.';
-    }
-}
-
-export async function clipBoardPolling(panel: vscode.WebviewPanel) {
-    let lastKnownClipboardContent = '';
-
-    const pollClipboard = async () => {
-        const clipboardContent = await vscode.env.clipboard.readText();
-        if (clipboardContent !== lastKnownClipboardContent) {
-            lastKnownClipboardContent = clipboardContent;
-            panel.webview.postMessage({ command: 'updateClipboardDataBox', content: clipboardContent });
-        }
-    };
-
-    await pollClipboard();
-    setInterval(pollClipboard, 500);
-}
-
-async function updateFileTypeSettings(configManager: ConfigManager, activeFileTypes: string[], ignoredFileTypes: string[]) {
-    const currentFileTypes = configManager.getValue(ConfigKey.FileTypes) as string[];
-    const currentIgnoredFileTypes = configManager.getValue(ConfigKey.FileTypesToIgnore) as string[];
-
-    const allNewFileTypes = new Set([...activeFileTypes, ...ignoredFileTypes]);
-    const removedFileTypes = [...currentFileTypes, ...currentIgnoredFileTypes].filter(type => !allNewFileTypes.has(type));
-
-    await configManager.setValue(ConfigKey.FileTypes, activeFileTypes);
-    await configManager.setValue(ConfigKey.FileTypesToIgnore, ignoredFileTypes);
-
-    if (removedFileTypes.length > 0) {
-        console.log('Removed file types:', removedFileTypes);
-        vscode.window.showInformationMessage(`Removed file types: ${removedFileTypes.join(', ')}`);
-    }
 }
 
 export async function addFileTypesOrFolders(configManager: ConfigManager, contextSelection: vscode.Uri) {
@@ -223,4 +128,158 @@ export async function removeFromFileTypes(configManager: ConfigManager, contextS
     vscode.window.showInformationMessage(`Removed ${fileTypesToRemove.join(', ')} from File Types`);
 
     updateWebviewFileTypes(globalPanel!);
+}
+
+export async function handleReceivedMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    const configManager = ConfigManager.getInstance();
+    switch (message.command) {
+        case 'refreshFileTypes':
+            await refreshFileTypes();
+            await updateWebviewFileTypes(panel);
+            panel.webview.postMessage({ command: 'refreshComplete' });
+            break;
+        case 'setCompressionLevel':
+            await configManager.setValue(ConfigKey.CompressionLevel, message.level);
+            break;
+        case 'updateFileTypes':
+            if (Array.isArray(message.activeFileTypes) && Array.isArray(message.ignoredFileTypes)) {
+                await configManager.setValue(ConfigKey.FileTypes, message.activeFileTypes);
+                await configManager.setValue(ConfigKey.FileTypesToIgnore, message.ignoredFileTypes);
+                await updateWebviewFileTypes(panel);
+            } else {
+                console.error('Invalid file types received');
+            }
+            break;
+        case 'setClipboardDataBoxHeight':
+            await configManager.setValue(ConfigKey.ClipboardDataBoxHeight, message.height);
+            break;
+        case 'openWebpage':
+            handleOpenWebpage();
+            break;
+        case 'countTokens':
+            const tokenCount = getTokenCount(message.text);
+            panel.webview.postMessage({ command: 'setTokenCount', count: tokenCount });
+            break;
+        case 'countChars':
+            panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
+            break;
+        case 'requestCounts':
+            panel.webview.postMessage({ command: 'setTokenCount', count: getTokenCount(message.text) });
+            panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
+            break;
+        case 'getFileTypes':
+            await updateWebviewFileTypes(panel);
+            break;
+        case 'moveFileTypeToIgnore':
+            await configManager.moveFileTypeToIgnore(message.fileType);
+            await updateWebviewFileTypes(panel);
+            break;
+        case 'moveFileTypeToHide':
+            await configManager.moveFileTypeToHide(message.fileType);
+            await updateWebviewFileTypes(panel);
+            break;
+        case 'addToHideFoldersAndFiles':
+            await addToHideFoldersAndFiles(configManager, message.item);
+            await sendHideFoldersAndFiles(panel);
+            break;
+        case 'removeFromHideFoldersAndFiles':
+            await removeFromHideFoldersAndFiles(configManager, message.item);
+            await sendHideFoldersAndFiles(panel);
+            break;
+        case 'getHideFoldersAndFiles':
+            await sendHideFoldersAndFiles(panel);
+            break;
+        case 'updateHiddenStates':
+            if (typeof message.hiddenStates === 'object') {
+                const hiddenItems = Object.keys(message.hiddenStates).filter(key => message.hiddenStates[key]);
+                await configManager.setValue(ConfigKey.HideFoldersAndFiles, hiddenItems);
+                await configManager.syncAllSettings();
+            }
+            break;
+        case 'setItemHiddenState':
+            if (typeof message.item === 'string' && typeof message.isHidden === 'boolean') {
+                await setItemHiddenState(configManager, message.item, message.isHidden);
+            }
+            break;
+    }
+
+    panel.webview.postMessage({ command: 'configUpdated', ...configManager.getAllConfig() });
+}
+
+async function addToHideFoldersAndFiles(configManager: ConfigManager, item: string) {
+    const hiddenItems = configManager.getValue(ConfigKey.HideFoldersAndFiles) as string[];
+    if (!hiddenItems.includes(item)) {
+        hiddenItems.push(item);
+        await configManager.setValue(ConfigKey.HideFoldersAndFiles, hiddenItems);
+    }
+}
+
+async function removeFromHideFoldersAndFiles(configManager: ConfigManager, item: string) {
+    const hiddenItems = configManager.getValue(ConfigKey.HideFoldersAndFiles) as string[];
+    const updatedHiddenItems = hiddenItems.filter(i => i !== item);
+    await configManager.setValue(ConfigKey.HideFoldersAndFiles, updatedHiddenItems);
+}
+
+async function sendHideFoldersAndFiles(panel: vscode.WebviewPanel) {
+    const configManager = ConfigManager.getInstance();
+    const hideFoldersAndFiles = configManager.getValue(ConfigKey.HideFoldersAndFiles);
+    panel.webview.postMessage({ command: 'updateHideFoldersAndFiles', hideFoldersAndFiles });
+}
+
+async function setItemHiddenState(configManager: ConfigManager, item: string, isHidden: boolean) {
+    const hiddenItems = configManager.getValue(ConfigKey.HideFoldersAndFiles) as string[];
+    const updatedHiddenItems = isHidden
+        ? [...new Set([...hiddenItems, item])]
+        : hiddenItems.filter(i => i !== item);
+    await configManager.setValue(ConfigKey.HideFoldersAndFiles, updatedHiddenItems);
+}
+
+function setupWebviewPanelActions(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    const sendConfigToWebview = () => {
+        const configManager = ConfigManager.getInstance();
+        panel.webview.postMessage({ command: 'initConfig', ...configManager.getAllConfig() });
+    };
+
+    panel.onDidChangeViewState(({ webviewPanel }) => {
+        if (webviewPanel.visible) {
+            sendConfigToWebview();
+            clipBoardPolling(panel);
+        }
+    });
+    sendConfigToWebview();
+}
+
+export async function composeWebViewContent(webview: vscode.Webview, extensionUri: vscode.Uri): Promise<string> {
+    try {
+        const htmlPath = vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.html');
+        const htmlContentUint8 = await vscode.workspace.fs.readFile(htmlPath);
+        let htmlContent = Buffer.from(htmlContentUint8).toString('utf8');
+
+        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.css'));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.js'));
+
+        htmlContent = htmlContent.replace(/<link rel="stylesheet" href=".\/webview.css">/, `<link rel="stylesheet" href="${styleUri}">`);
+        htmlContent = htmlContent.replace(/<script src="webview.js"><\/script>/, `<script src="${scriptUri}"></script>`);
+
+        return htmlContent;
+
+    } catch (error) {
+        console.error(`Failed to load webview content: ${error}`);
+        return 'Error loading webview content.';
+    }
+}
+
+export async function clipBoardPolling(panel: vscode.WebviewPanel) {
+    let lastKnownClipboardContent = '';
+
+    const pollClipboard = async () => {
+        const clipboardContent = await vscode.env.clipboard.readText();
+        if (clipboardContent !== lastKnownClipboardContent) {
+            lastKnownClipboardContent = clipboardContent;
+            panel.webview.postMessage({ command: 'updateClipboardDataBox', content: clipboardContent });
+        }
+    };
+
+    await pollClipboard();
+    setInterval(pollClipboard, 500);
 }
