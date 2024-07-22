@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { ConfigManager, ConfigKey } from '../config/ConfigManager';
 import { openWebviewAndExplorerSidebar, updateWebviewFileTypes, globalPanel } from './webviewUtils';
 import { extractAndCopyText, extractFileFolderTree } from '../operations';
@@ -18,11 +17,13 @@ export const registerCommands = (context: vscode.ExtensionContext, configManager
             if (globalPanel) await updateWebviewFileTypes(globalPanel);
         }},
         { command: 'syntaxExtractor.addFileTypesOrFolders', callback: async (contextSelection: vscode.Uri) => {
-            await addFileOrFolder(configManager, contextSelection);
+            await addFileOrFolder(contextSelection);
             if (globalPanel) await updateWebviewFileTypes(globalPanel);
         }},
-        { command: 'syntaxExtractor.removeFromFileTypes', callback: (contextSelection: vscode.Uri) => 
-            handleFileTypeChange(configManager, path.extname(contextSelection.fsPath), ConfigKey.FileTypesAndFoldersToIgnore) }
+        { command: 'syntaxExtractor.removeFromFileTypes', callback: async (contextSelection: vscode.Uri) => {
+            const extension = vscode.Uri.parse(contextSelection.path).path.split('.').pop() || '';
+            await handleFileTypeChange('.' + extension, ConfigKey.FileTypesAndFoldersToIgnore);
+        }}
     ];
 
     commands.forEach(({ command, callback }) => {

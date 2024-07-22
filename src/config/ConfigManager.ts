@@ -20,18 +20,14 @@ export class ConfigManager {
     }
 
     public static getInstance(): ConfigManager {
-        if (!ConfigManager.instance) {
-            ConfigManager.instance = new ConfigManager();
-        }
-        return ConfigManager.instance;
+        return ConfigManager.instance ??= new ConfigManager();
     }
 
-    private refreshConfiguration() {
+    private refreshConfiguration(): void {
         this.configuration = vscode.workspace.getConfiguration('syntaxExtractor');
     }
 
     public getValue<T extends ConfigValue>(key: ConfigKey): T {
-        this.refreshConfiguration();
         return this.configuration.get<T>(key, this.getDefaultValue(key) as T);
     }
 
@@ -51,42 +47,36 @@ export class ConfigManager {
         this.refreshConfiguration();
     }
 
-    private onConfigChange(event: vscode.ConfigurationChangeEvent) {
-        if (event.affectsConfiguration('syntaxExtractor')) {
-            this.refreshConfiguration();
-        }
+    private onConfigChange(event: vscode.ConfigurationChangeEvent): void {
+        if (event.affectsConfiguration('syntaxExtractor')) this.refreshConfiguration();
     }
 
     public async syncAllSettings(): Promise<void> {
-        for (const key of Object.values(ConfigKey)) {
+        await Promise.all(Object.values(ConfigKey).map(async key => {
             const value = this.getValue(key);
-            if (this.configuration.get(key) !== value) {
-                await this.setValue(key, value);
-            }
+            if (this.configuration.get(key) !== value) await this.setValue(key, value);
+        }));
+    }
+
+    public getAllConfig(): Record<string, ConfigValue> {
+        return Object.values(ConfigKey).reduce((config, key) => ({...config, [key]: this.getValue(key)}), {});
+    }
+
+    public async moveFileType(fileType: string, fromKey: ConfigKey, toKey: ConfigKey): Promise<void> {
+        const fromArray = this.getValue<string[]>(fromKey);
+        const toArray = this.getValue<string[]>(toKey);
+
+        if (fromArray.includes(fileType) && !toArray.includes(fileType)) {
+            await this.setValue(fromKey, fromArray.filter(ft => ft !== fileType));
+            await this.setValue(toKey, [...toArray, fileType]);
         }
     }
 
     public async moveFileTypeToIgnore(fileType: string): Promise<void> {
-        const currentToIgnore = this.getValue<string[]>(ConfigKey.FileTypesAndFoldersToIgnore);
-        if (!currentToIgnore.includes(fileType)) {
-            currentToIgnore.push(fileType);
-            await this.setValue(ConfigKey.FileTypesAndFoldersToIgnore, currentToIgnore);
-        }
+        await this.moveFileType(fileType, ConfigKey.FileTypesAndFoldersToCheck, ConfigKey.FileTypesAndFoldersToIgnore);
     }
 
     public async moveFileTypeToHideFoldersAndFiles(fileType: string): Promise<void> {
-        const currentToHide = this.getValue<string[]>(ConfigKey.FileTypesAndFoldersToHide);
-        if (!currentToHide.includes(fileType)) {
-            currentToHide.push(fileType);
-            await this.setValue(ConfigKey.FileTypesAndFoldersToHide, currentToHide);
-        }
-    }
-
-    public getAllConfig(): Record<string, ConfigValue> {
-        const config: Record<string, ConfigValue> = {};
-        for (const key of Object.values(ConfigKey)) {
-            config[key] = this.getValue(key);
-        }
-        return config;
+        await this.moveFileType(fileType, ConfigKey.FileTypesAndFoldersToCheck, ConfigKey.FileTypesAndFoldersToHide);
     }
 }
