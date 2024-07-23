@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
 import { ConfigManager, ConfigKey } from '../config/ConfigManager';
-import { handleOpenWebpage } from '../commands/openWebpage';
 import { getTokenCount } from '../operations/tokenUtils';
+import { handleOpenWebpage } from '../commands/openWebpage';
+import { updateWebviewFileTypes } from './commonUtils';
+import { refreshFileTypes, updateConfig } from './commonUtils';
 
 export let globalPanel: vscode.WebviewPanel | undefined;
+export { updateWebviewFileTypes };
 
 export const openWebviewAndExplorerSidebar = async (context: vscode.ExtensionContext) => {
     const configManager = ConfigManager.getInstance();
@@ -35,6 +38,7 @@ export const openWebviewAndExplorerSidebar = async (context: vscode.ExtensionCon
             globalPanel = undefined;
         });
 
+        // Sync webview with the current settings
         await updateWebviewFileTypes(globalPanel);
     }
 
@@ -42,14 +46,107 @@ export const openWebviewAndExplorerSidebar = async (context: vscode.ExtensionCon
     await vscode.commands.executeCommand('workbench.view.explorer');
 };
 
-export const updateWebviewFileTypes = async (panel: vscode.WebviewPanel) => {
+const handleReceivedMessage = async (message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) => {
     const configManager = ConfigManager.getInstance();
-    const config = {
-        fileTypes: configManager.getValue(ConfigKey.FileTypesAndFoldersToCheck),
-        fileTypesToIgnore: configManager.getValue(ConfigKey.FileTypesAndFoldersToIgnore),
-        hideFoldersAndFiles: configManager.getValue(ConfigKey.FileTypesAndFoldersToHide)
+    const handlers: Record<string, () => Promise<void>> = {
+        refreshFileTypes: async () => {
+            await refreshFileTypes();
+            await updateWebviewFileTypes(panel);
+            panel.webview.postMessage({ command: 'refreshComplete' });
+        },
+        setCompressionLevel: async () => await updateConfig(ConfigKey.CompressionLevel, message.level),
+        updateFileTypes: async () => {
+            if (Array.isArray(message.activeFileTypes) && Array.isArray(message.ignoredFileTypes)) {
+                await Promise.all([
+                    updateConfig(ConfigKey.FileTypesAndFoldersToCheck, message.activeFileTypes),
+                    updateConfig(ConfigKey.FileTypesAndFoldersToIgnore, message.ignoredFileTypes)
+                ]);
+                await updateWebviewFileTypes(panel);
+            } else {
+                console.error('Invalid file types received');
+            }
+        },
+        setClipboardDataBoxHeight: async () => await updateConfig(ConfigKey.ClipboardDataBoxHeight, message.height),
+        openWebpage: async () => await handleOpenWebpage(),
+        countTokens: async () => {
+            panel.webview.postMessage({ command: 'setTokenCount', count: getTokenCount(message.text) });
+        },
+        countChars: async () => {
+            panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
+        },
+        requestCounts: async () => {
+            panel.webview.postMessage({ command: 'setTokenCount', count: getTokenCount(message.text) });
+            panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
+        },
+        getFileTypes: async () => await updateWebviewFileTypes(panel),
+        moveFileTypeToIgnore: async () => {
+            await configManager.moveFileTypeToIgnore(message.fileType);
+            await updateWebviewFileTypes(panel);
+        },
+        moveFileTypeToHide: async () => {
+            await configManager.moveFileTypeToHideFoldersAndFiles(message.fileType);
+            await updateWebviewFileTypes(panel);
+        },
+        addToHideFoldersAndFiles: async () => await addToHideFoldersAndFiles(configManager, message.item),
+        removeFromHideFoldersAndFiles: async () => await removeFromHideFoldersAndFiles(configManager, message.item),
+        getHideFoldersAndFiles: async () => await sendHideFoldersAndFiles(panel),
+        updateHiddenStates: async () => {
+            if (typeof message.hiddenStates === 'object') {
+                const hiddenItems = Object.keys(message.hiddenStates).filter(key => message.hiddenStates[key]);
+                await updateConfig(ConfigKey.FileTypesAndFoldersToHide, hiddenItems);
+                await configManager.syncAllSettings();
+            }
+        },
+        setItemHiddenState: async () => {
+            if (typeof message.item === 'string' && typeof message.isHidden === 'boolean') {
+                await setItemHiddenState(configManager, message.item, message.isHidden);
+            }
+        }
     };
-    panel.webview.postMessage({ command: 'updateFileTypes', ...config });
+
+    await (handlers[message.command] || (async () => {}))();
+    panel.webview.postMessage({ command: 'configUpdated', ...configManager.getAllConfig() });
+};
+
+const addToHideFoldersAndFiles = async (configManager: ConfigManager, item: string) => {
+    const hiddenItems = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide) as string[];
+    if (!hiddenItems.includes(item)) {
+        await updateConfig(ConfigKey.FileTypesAndFoldersToHide, [...hiddenItems, item]);
+    }
+};
+
+const removeFromHideFoldersAndFiles = async (configManager: ConfigManager, item: string) => {
+    const hiddenItems = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide) as string[];
+    await updateConfig(ConfigKey.FileTypesAndFoldersToHide, hiddenItems.filter(i => i !== item));
+};
+
+const sendHideFoldersAndFiles = async (panel: vscode.WebviewPanel) => {
+    const configManager = ConfigManager.getInstance();
+    const hideFoldersAndFiles = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide);
+    panel.webview.postMessage({ command: 'updateHideFoldersAndFiles', hideFoldersAndFiles });
+};
+
+const setItemHiddenState = async (configManager: ConfigManager, item: string, isHidden: boolean) => {
+    const hiddenItems = configManager.getValue(ConfigKey.FileTypesAndFoldersToHide) as string[];
+    const updatedHiddenItems = isHidden
+        ? [...new Set([...hiddenItems, item])]
+        : hiddenItems.filter(i => i !== item);
+    await updateConfig(ConfigKey.FileTypesAndFoldersToHide, updatedHiddenItems);
+};
+
+const setupWebviewPanelActions = (panel: vscode.WebviewPanel, context: vscode.ExtensionContext) => {
+    const sendConfigToWebview = () => {
+        const configManager = ConfigManager.getInstance();
+        panel.webview.postMessage({ command: 'initConfig', ...configManager.getAllConfig() });
+    };
+
+    panel.onDidChangeViewState(({ webviewPanel }) => {
+        if (webviewPanel.visible) {
+            sendConfigToWebview();
+            clipBoardPolling(panel);
+        }
+    });
+    sendConfigToWebview();
 };
 
 const composeWebViewContent = async (webview: vscode.Webview, extensionUri: vscode.Uri): Promise<string> => {
@@ -71,21 +168,6 @@ const composeWebViewContent = async (webview: vscode.Webview, extensionUri: vsco
     }
 };
 
-const setupWebviewPanelActions = (panel: vscode.WebviewPanel, context: vscode.ExtensionContext) => {
-    const sendConfigToWebview = () => {
-        const configManager = ConfigManager.getInstance();
-        panel.webview.postMessage({ command: 'initConfig', ...configManager.getAllConfig() });
-    };
-
-    panel.onDidChangeViewState(({ webviewPanel }) => {
-        if (webviewPanel.visible) {
-            sendConfigToWebview();
-            clipBoardPolling(panel);
-        }
-    });
-    sendConfigToWebview();
-};
-
 const clipBoardPolling = async (panel: vscode.WebviewPanel) => {
     let lastKnownClipboardContent = '';
 
@@ -99,64 +181,4 @@ const clipBoardPolling = async (panel: vscode.WebviewPanel) => {
 
     await pollClipboard();
     setInterval(pollClipboard, 500);
-};
-
-const handleReceivedMessage = (message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) => {
-    switch (message.command) {
-        case 'setCompressionLevel':
-            ConfigManager.getInstance().setValue(ConfigKey.CompressionLevel, message.level);
-            break;
-        case 'setClipboardDataBoxHeight':
-            ConfigManager.getInstance().setValue(ConfigKey.ClipboardDataBoxHeight, message.height);
-            break;
-        case 'countTokens':
-            panel.webview.postMessage({ command: 'setTokenCount', count: getTokenCount(message.text) });
-            break;
-        case 'countChars':
-            panel.webview.postMessage({ command: 'setCharCount', count: message.text.length });
-            break;
-        case 'openWebpage':
-            handleOpenWebpage();
-            break;
-        case 'updateFileTypes':
-            updateFileTypes(message.activeFileTypes, message.ignoredFileTypes, message.hiddenStates);
-            break;
-        case 'addToIgnoreList':
-        case 'removeFromIgnoreList':
-        case 'addToHideFoldersAndFiles':
-        case 'removeFromHideFoldersAndFiles':
-            handleFileTypeChange(message);
-            break;
-    }
-};
-
-const updateFileTypes = (activeFileTypes: string[], ignoredFileTypes: string[], hiddenStates: Record<string, boolean>) => {
-    const configManager = ConfigManager.getInstance();
-    configManager.setValue(ConfigKey.FileTypesAndFoldersToCheck, activeFileTypes);
-    configManager.setValue(ConfigKey.FileTypesAndFoldersToIgnore, ignoredFileTypes);
-    
-    const hiddenItems = Object.entries(hiddenStates)
-        .filter(([_, isHidden]) => isHidden)
-        .map(([item]) => item);
-    configManager.setValue(ConfigKey.FileTypesAndFoldersToHide, hiddenItems);
-};
-
-const handleFileTypeChange = (message: any) => {
-    const configManager = ConfigManager.getInstance();
-    const { command, item } = message;
-    
-    switch (command) {
-        case 'addToIgnoreList':
-            configManager.moveFileTypeToIgnore(item);
-            break;
-        case 'removeFromIgnoreList':
-            configManager.moveFileType(item, ConfigKey.FileTypesAndFoldersToIgnore, ConfigKey.FileTypesAndFoldersToCheck);
-            break;
-        case 'addToHideFoldersAndFiles':
-            configManager.moveFileTypeToHideFoldersAndFiles(item);
-            break;
-        case 'removeFromHideFoldersAndFiles':
-            configManager.moveFileType(item, ConfigKey.FileTypesAndFoldersToHide, ConfigKey.FileTypesAndFoldersToCheck);
-            break;
-    }
 };

@@ -5,83 +5,155 @@ declare function acquireVsCodeApi(): any;
 
 const vscode = acquireVsCodeApi();
 let draggedElement: HTMLElement | null = null;
-const placeholder = Object.assign(document.createElement('div'), { className: 'placeholder' });
+const placeholder = document.createElement('div');
+placeholder.className = 'placeholder';
+const clickAndHoldDuration = 200;
+let clickTimeout: number | undefined;
+let isClickAndHold = false;
+let garbageIcon: HTMLElement | null = null;
 let isDragging = false;
 let initialCursorX = 0;
 let lastPlaceholderPosition: HTMLElement | null = null;
+const moveThreshold = 10;
 
-const postMessage = (command: string, payload = {}) => vscode.postMessage({ command, ...payload });
+type Message = {
+    command: string;
+    compressionLevel?: number;
+    clipboardDataBoxHeight?: number;
+    content?: string;
+    count?: number;
+    fileTypes?: string[];
+    fileTypesToIgnore?: string[];
+    hideFoldersAndFiles?: string[];
+};
 
-const $ = (selector: string) => document.querySelector(selector);
-const $$ = (selector: string) => Array.from(document.querySelectorAll(selector));
+const postMessage = (command: string, payload: object = {}) => {
+    vscode.postMessage({ command, ...payload });
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeWebview();
-    ['getFileTypes', 'getHideFoldersAndFiles'].forEach(postMessage);
+    requestFileTypes();
+    requestHiddenFoldersAndFiles();
 });
 
-const updateUI = ({ compressionLevel, clipboardDataBoxHeight }: { compressionLevel?: number, clipboardDataBoxHeight?: number }) => {
-    $$('.compression-button').forEach(button => button.classList.remove('selected'));
-    if (compressionLevel) $(`#compressionLevel${['Light', 'Medium', 'Hard'][compressionLevel - 1]}`)?.classList.add('selected');
-    if (clipboardDataBoxHeight) ($("#clipboardDataBox") as HTMLTextAreaElement).style.height = `${clipboardDataBoxHeight}px`;
-};
-
-const messageHandlers: Record<string, (data: any) => void> = {
-    initConfig: updateUI,
-    configUpdated: updateUI,
-    updateFileTypes: ({ fileTypes, fileTypesToIgnore }) => createBoxes(fileTypes, fileTypesToIgnore),
-    updateHideFoldersAndFiles: ({ hideFoldersAndFiles }) => updateHiddenBoxes(hideFoldersAndFiles),
-    updateClipboardDataBox: ({ content }) => updateClipboardContent(content),
-    setTokenCount: ({ count }) => updateCount('tokenCount', count),
-    setCharCount: ({ count }) => updateCount('charCount', count),
-};
-
-window.addEventListener('message', ({ data }) => messageHandlers[data.command]?.(data));
+window.addEventListener('message', (event: MessageEvent<Message>) => {
+    const message = event.data;
+    console.log('Received message:', message);
+    const handlers: Record<string, () => void> = {
+        initConfig: () => updateUI(message.compressionLevel, message.clipboardDataBoxHeight),
+        configUpdated: () => updateUI(message.compressionLevel, message.clipboardDataBoxHeight),
+        updateFileTypes: () => createBoxes(message.fileTypes, message.fileTypesToIgnore),
+        updateHideFoldersAndFiles: () => updateHiddenBoxes(message.hideFoldersAndFiles),
+        updateClipboardDataBox: () => updateClipboardContent(message.content),
+        setTokenCount: () => updateTokenCount(message.count),
+        setCharCount: () => updateCharCount(message.count),
+    };
+    handlers[message.command]?.();
+});
 
 const initializeWebview = () => {
-    setupListeners();
+    setClipboardDataBoxHeight();
+    setupTextInput();
     setupButtons();
     setupDragAndDrop();
+    setupGarbageIcon();
 };
 
-const setupListeners = () => {
-    const clipboardDataBox = $('#clipboardDataBox') as HTMLTextAreaElement;
-    document.addEventListener('mouseup', () => postMessage('setClipboardDataBoxHeight', { height: clipboardDataBox.offsetHeight }));
-    clipboardDataBox.addEventListener('input', () => ['countTokens', 'countChars'].forEach(cmd => postMessage(cmd, { text: clipboardDataBox.value })));
+const setClipboardDataBoxHeight = () => {
+    const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+    if (!clipboardDataBox) return;
+
+    document.addEventListener('mouseup', () => {
+        postMessage('setClipboardDataBoxHeight', { height: clipboardDataBox.offsetHeight });
+    });
+};
+
+const setupTextInput = () => {
+    const textarea = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    textarea.addEventListener('input', () => {
+        const text = textarea.value;
+        postMessage('countTokens', { text });
+        postMessage('countChars', { text });
+    });
 };
 
 const setupButtons = () => {
-    ['Hard', 'Medium', 'Light'].forEach((level, index) => 
-        $(`#compressionLevel${level}`)?.addEventListener('click', () => updateCompressionLevel(3 - index))
-    );
-    $('#openWebpageButton')?.addEventListener('click', () => postMessage('openWebpage'));
+    const compressionLevels = [
+        { id: 'compressionLevelHard', level: 3 },
+        { id: 'compressionLevelMedium', level: 2 },
+        { id: 'compressionLevelLight', level: 1 },
+    ];
+
+    compressionLevels.forEach(({ id, level }) => {
+        document.getElementById(id)?.addEventListener('click', () => updateCompressionLevel(level));
+    });
+
+    document.getElementById('openWebpageButton')?.addEventListener('click', () => {
+        postMessage('openWebpage');
+    });
 };
 
-const updateCompressionLevel = (level: number) => postMessage('setCompressionLevel', { level });
+const updateCompressionLevel = (level: number) => {
+    console.log(`Sending compression level: ${level}`);
+    postMessage('setCompressionLevel', { level });
+};
+
+const updateUI = (compressionLevel?: number, clipboardDataBoxHeight?: number) => {
+    document.querySelectorAll('.compression-button').forEach(button => button.classList.remove('selected'));
+
+    if (compressionLevel !== undefined) {
+        const levelMap = ['compressionLevelLight', 'compressionLevelMedium', 'compressionLevelHard'];
+        document.getElementById(levelMap[compressionLevel - 1])?.classList.add('selected');
+    }
+
+    if (clipboardDataBoxHeight !== undefined) {
+        const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+        clipboardDataBox.style.height = `${clipboardDataBoxHeight}px`;
+    }
+};
 
 const setupDragAndDrop = () => {
-    $$('.row').forEach(row => {
-        row.addEventListener('dragover', (event: Event) => handleDragOver(event as DragEvent));
-        row.addEventListener('drop', (event: Event) => handleDrop(event as DragEvent));
+    document.querySelectorAll('.row').forEach(row => {
+        row.addEventListener('dragover', (event) => handleDragOver(event as DragEvent));
+        row.addEventListener('drop', (event) => handleDrop(event as DragEvent));
     });
-    ['mousedown', 'mouseup', 'click'].forEach(event => 
-        document.addEventListener(event, (e: Event) => handleMouseEvents(e as MouseEvent))
-    );
+
+    document.addEventListener('mousedown', handleMouseEvents);
+    document.addEventListener('mouseup', handleMouseEvents);
+    document.addEventListener('click', handleMouseEvents);
+};
+
+const setupGarbageIcon = () => {
+    garbageIcon = document.querySelector('.garbage-icon');
+    if (!garbageIcon) return;
+
+    garbageIcon.addEventListener('dragover', (event) => handleGarbageEvent(event as DragEvent, 'over'));
+    garbageIcon.addEventListener('dragleave', () => handleGarbageEvent(null, 'leave'));
+    garbageIcon.addEventListener('drop', (event) => handleGarbageEvent(event as DragEvent, 'drop'));
 };
 
 const handleMouseEvents = (event: MouseEvent) => {
-    const box = (event.target as HTMLElement).closest('.box');
+    const box = (event.target as HTMLElement).closest('.box') as HTMLElement;
     if (!box || (event.target as HTMLElement).closest('.right-icon')) return;
 
-    if (event.type === 'mousedown') {
-        setTimeout(() => {
-            isDragging = true;
-            handleDragStart(event as unknown as DragEvent);
-        }, 200);
-    } else if (event.type === 'mouseup' && isDragging) {
-        handleDragEnd();
-    } else if (event.type === 'click' && !isDragging) {
-        moveBox(box as HTMLElement);
+    switch (event.type) {
+        case 'mousedown':
+            clickTimeout = window.setTimeout(() => {
+                isClickAndHold = true;
+                handleDragStart(event as unknown as DragEvent);
+            }, clickAndHoldDuration);
+            break;
+        case 'mouseup':
+            clearTimeout(clickTimeout);
+            if (isClickAndHold) handleDragEnd(event as unknown as DragEvent);
+            break;
+        case 'click':
+            clearTimeout(clickTimeout);
+            if (!isClickAndHold) moveBox(box);
+            break;
     }
 };
 
@@ -89,16 +161,19 @@ const handleDragStart = (event: DragEvent) => {
     draggedElement = (event.target as HTMLElement).closest('.box') as HTMLElement;
     if (!draggedElement) return;
 
+    isDragging = true;
     document.body.setAttribute('data-dragging', 'true');
-    Object.assign(placeholder.style, { 
-        width: `${draggedElement.offsetWidth}px`, 
-        height: `${draggedElement.offsetHeight}px` 
-    });
+    placeholder.style.width = `${draggedElement.offsetWidth}px`;
+    placeholder.style.height = `${draggedElement.offsetHeight}px`;
+
     initialCursorX = event.clientX;
 
     if (event.dataTransfer) {
         const dragImage = draggedElement.cloneNode(true) as HTMLElement;
-        Object.assign(dragImage.style, { position: 'absolute', top: '-1000px', opacity: '1', pointerEvents: 'none' });
+        dragImage.style.position = 'absolute';
+        dragImage.style.top = '-1000px';
+        dragImage.style.opacity = '1';
+        dragImage.style.pointerEvents = 'none';
         document.body.appendChild(dragImage);
         event.dataTransfer.setDragImage(dragImage, 0, 0);
     }
@@ -108,22 +183,25 @@ const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
     const target = (event.target as HTMLElement).closest('.box') as HTMLElement;
 
-    if (Math.abs(event.clientX - initialCursorX) > 10 && target && target !== draggedElement && target !== lastPlaceholderPosition) {
-        const { y, height } = target.getBoundingClientRect();
-        target.parentNode!.insertBefore(placeholder, event.clientY - y - height / 2 > 0 ? target.nextSibling : target);
+    if (Math.abs(event.clientX - initialCursorX) > moveThreshold && target && target !== draggedElement && target !== lastPlaceholderPosition) {
+        const bounding = target.getBoundingClientRect();
+        const offset = bounding.y + bounding.height / 2;
+        target.parentNode!.insertBefore(placeholder, event.clientY - offset > 0 ? target.nextSibling : target);
         lastPlaceholderPosition = target;
     }
 };
 
-const handleDragEnd = () => {
-    placeholder.remove();
+const handleDragEnd = (event: DragEvent) => {
+    if (draggedElement && placeholder.parentNode) {
+        placeholder.parentNode.removeChild(placeholder);
+    }
     cleanupDragState();
 };
 
 const handleDrop = (event: DragEvent) => {
     event.preventDefault();
     if (draggedElement && placeholder.parentNode) {
-        placeholder.replaceWith(draggedElement);
+        placeholder.parentNode.replaceChild(draggedElement, placeholder);
         updateBoxStyles(draggedElement);
         updateFileTypes();
     }
@@ -134,22 +212,47 @@ const cleanupDragState = () => {
     draggedElement = null;
     isDragging = false;
     document.body.removeAttribute('data-dragging');
+    isClickAndHold = false;
     lastPlaceholderPosition = null;
-    $$('.box[style*="position: absolute"]').forEach(img => img.remove());
+
+    document.querySelectorAll('.box[style*="position: absolute"]').forEach(img => img.remove());
+};
+
+const handleGarbageEvent = (event: DragEvent | null, action: 'over' | 'leave' | 'drop') => {
+    if (!garbageIcon) return;
+
+    switch (action) {
+        case 'over':
+            event?.preventDefault();
+            garbageIcon.style.backgroundImage = 'var(--icon-garbage-open)';
+            break;
+        case 'leave':
+            garbageIcon.style.backgroundImage = 'var(--icon-garbage)';
+            break;
+        case 'drop':
+            event?.preventDefault();
+            garbageIcon.style.backgroundImage = 'var(--icon-garbage)';
+            if (draggedElement) removeBox(draggedElement);
+            cleanupDragState();
+            break;
+    }
 };
 
 const createBoxes = (fileTypes: string[] = [], fileTypesToIgnore: string[] = []) => {
-    ['row1', 'row2'].forEach((rowId, index) => {
-        const row = $(`#${rowId}`);
-        const template = $('#box-template') as HTMLTemplateElement;
-        if (!row || !template) return;
+    const rows = { row1: fileTypes, row2: fileTypesToIgnore };
+    Object.entries(rows).forEach(([rowId, types]) => {
+        const row = document.getElementById(rowId) as HTMLElement;
+        if (!row) return;
 
         row.innerHTML = '';
-        (index === 0 ? fileTypes : fileTypesToIgnore).forEach(type => {
+        const template = document.getElementById('box-template') as HTMLTemplateElement;
+        if (!template) return;
+
+        types.forEach(type => {
             try {
                 const box = new Box(template, type);
                 const boxElement = box.getElement();
-                boxElement.querySelector('.left-icon')?.classList.add(type.startsWith('.') ? 'icon-file' : 'icon-folder');
+                (boxElement.querySelector('.left-icon') as HTMLElement)?.classList.add(type.startsWith('.') ? 'icon-file' : 'icon-folder');
                 row.appendChild(boxElement);
                 box.updateBoxStyles();
                 (boxElement as any).__box_instance = box;
@@ -165,9 +268,9 @@ const createBoxes = (fileTypes: string[] = [], fileTypesToIgnore: string[] = [])
 };
 
 const moveBox = (box: HTMLElement) => {
-    const isMovingToRow2 = box.parentElement?.id === 'row1';
-    const targetRow = $(`#row${isMovingToRow2 ? '2' : '1'}`);
-    if (!targetRow) return;
+    const parentElement = box.parentNode as HTMLElement;
+    const targetRowId = parentElement.id === 'row1' ? 'row2' : 'row1';
+    const targetRow = document.getElementById(targetRowId) as HTMLElement;
 
     const rect = box.getBoundingClientRect();
     targetRow.appendChild(box);
@@ -175,27 +278,26 @@ const moveBox = (box: HTMLElement) => {
 
     box.style.transition = 'none';
     box.style.transform = `translate(${rect.left - newRect.left}px, ${rect.top - newRect.top}px)`;
-    box.offsetHeight; // Force reflow
+    box.offsetWidth;  // Force reflow
     box.style.transition = 'transform 0.5s ease-in-out';
     box.style.transform = 'translate(0, 0)';
 
-    if (isMovingToRow2) {
-        if (!box.querySelector('.right-icon')) {
-            const blueRegion = Object.assign(document.createElement('span'), {
-                className: 'icon right-icon open-eye',
-                onclick: (event: Event) => {
-                    event.stopPropagation();
-                    toggleEyeIcon(blueRegion);
-                }
-            });
-            box.appendChild(blueRegion);
-        }
-        postMessage('addToIgnoreList', { item: box.querySelector('.text')?.textContent || '' });
-    } else {
+    if (targetRowId === 'row1') {
         box.classList.remove('hidden');
         box.querySelector('.right-icon')?.remove();
         box.style.opacity = '1';
         postMessage('removeFromIgnoreList', { item: box.querySelector('.text')?.textContent || '' });
+    } else {
+        if (!box.querySelector('.right-icon')) {
+            const blueRegion = document.createElement('span');
+            blueRegion.className = 'icon right-icon open-eye';
+            blueRegion.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleEyeIcon(blueRegion);
+            });
+            box.appendChild(blueRegion);
+        }
+        postMessage('addToIgnoreList', { item: box.querySelector('.text')?.textContent || '' });
     }
 
     updateBoxStyles(box);
@@ -203,51 +305,66 @@ const moveBox = (box: HTMLElement) => {
 };
 
 const updateBoxStyles = (box: HTMLElement) => {
+    let blueRegion = box.querySelector('.right-icon') as HTMLElement;
     const textElement = box.querySelector('.text') as HTMLElement;
-    const isRow2 = box.parentElement?.id === 'row2';
+    const parentElement = box.parentNode as HTMLElement;
 
-    if (isRow2) {
-        if (!box.querySelector('.right-icon')) {
-            const blueRegion = Object.assign(document.createElement('span'), {
-                className: 'icon right-icon open-eye',
-                onclick: (event: Event) => {
-                    event.stopPropagation();
-                    toggleEyeIcon(blueRegion);
-                }
+    if (parentElement.id === 'row2') {
+        if (!blueRegion) {
+            blueRegion = document.createElement('span');
+            blueRegion.className = 'icon right-icon open-eye';
+            blueRegion.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleEyeIcon(blueRegion);
             });
             box.appendChild(blueRegion);
         }
-        textElement.style.borderTopRightRadius = textElement.style.borderBottomRightRadius = "0";
+        textElement.style.borderTopRightRadius = "0";
+        textElement.style.borderBottomRightRadius = "0";
     } else {
-        box.querySelector('.right-icon')?.remove();
-        textElement.style.borderTopRightRadius = textElement.style.borderBottomRightRadius = "var(--border-radius)";
+        blueRegion?.remove();
+        textElement.style.borderTopRightRadius = "var(--border-radius)";
+        textElement.style.borderBottomRightRadius = "var(--border-radius)";
     }
 
-    (box.querySelector('.icon') as HTMLElement).style.backgroundColor = 
-        isRow2 && !box.querySelector('.icon')?.classList.contains('right-icon') 
-            ? 'var(--icon-bg-color-row2)' 
-            : 'var(--icon-bg-color)';
+    updateIconBackground(box);
+};
+
+const updateIconBackground = (box: HTMLElement) => {
+    const iconElement = box.querySelector('.icon') as HTMLElement;
+    const parentElement = box.parentNode as HTMLElement;
+    iconElement.style.backgroundColor = parentElement.id === 'row2' && !iconElement.classList.contains('right-icon') ? 'var(--icon-bg-color-row2)' : 'var(--icon-bg-color)';
 };
 
 const toggleEyeIcon = (blueRegion: HTMLElement) => {
     const box = blueRegion.closest('.box') as HTMLElement;
-    if (box.parentElement?.id !== 'row2') return;
+    const parentElement = box.parentNode as HTMLElement;
 
-    const itemValue = box.querySelector('.text')?.textContent || '';
-    const isHidden = blueRegion.classList.toggle('closed-eye');
-    blueRegion.classList.toggle('open-eye', !isHidden);
-    box.classList.toggle('hidden', isHidden);
-    box.style.opacity = isHidden ? '0.5' : '1';
-    
-    (isHidden ? addToHideFoldersAndFiles : removeFromHideFoldersAndFiles)(itemValue);
+    if (parentElement.id !== 'row2') return;
+
+    const textElement = box.querySelector('.text') as HTMLElement;
+    const itemValue = textElement.textContent || '';
+
+    if (blueRegion.classList.contains('open-eye')) {
+        blueRegion.classList.replace('open-eye', 'closed-eye');
+        box.classList.add('hidden');
+        box.style.opacity = '0.5';
+        addToHideFoldersAndFiles(itemValue);
+    } else {
+        blueRegion.classList.replace('closed-eye', 'open-eye');
+        box.classList.remove('hidden');
+        box.style.opacity = '1';
+        removeFromHideFoldersAndFiles(itemValue);
+    }
 };
 
 const addToHideFoldersAndFiles = (item: string) => {
     const hiddenItems = getHiddenItems();
     if (!hiddenItems.includes(item)) {
-        setHiddenItems([...hiddenItems, item]);
-        postMessage('addToHideFoldersAndFiles', { item });
+        hiddenItems.push(item);
+        setHiddenItems(hiddenItems);
     }
+    postMessage('addToHideFoldersAndFiles', { item });
 };
 
 const removeFromHideFoldersAndFiles = (item: string) => {
@@ -256,45 +373,80 @@ const removeFromHideFoldersAndFiles = (item: string) => {
     if (index > -1) {
         hiddenItems.splice(index, 1);
         setHiddenItems(hiddenItems);
-        postMessage('removeFromHideFoldersAndFiles', { item });
     }
+    postMessage('removeFromHideFoldersAndFiles', { item });
 };
 
 const updateFileTypes = () => {
-    const getTypes = (rowId: string) => $$(`#${rowId} .box .text`).map(el => el.textContent || '');
-    const [activeFileTypes, ignoredFileTypes] = ['row1', 'row2'].map(getTypes);
+    const row1 = document.getElementById('row1');
+    const row2 = document.getElementById('row2');
 
-    const hiddenStates = Object.fromEntries(
-        $$('#row2 .box').map(box => [
-            box.querySelector('.text')?.textContent || '',
-            box.querySelector('.right-icon')?.classList.contains('closed-eye') || false
-        ])
-    );
+    if (!row1 || !row2) return;
 
-    postMessage('updateFileTypes', { activeFileTypes, ignoredFileTypes, hiddenStates });
+    const activeFileTypes = Array.from(row1.querySelectorAll('.box .text')).map(el => el.textContent || '');
+    const ignoredFileTypes = Array.from(row2.querySelectorAll('.box .text')).map(el => el.textContent || '');
+
+    const hiddenStates: Record<string, boolean> = {};
+    row2.querySelectorAll('.box').forEach(box => {
+        const textElement = box.querySelector('.text');
+        const rightIcon = box.querySelector('.right-icon');
+        if (textElement && rightIcon) {
+            hiddenStates[textElement.textContent!] = rightIcon.classList.contains('closed-eye');
+        }
+    });
+
+    postMessage('updateFileTypes', { activeFileTypes, ignoredFileTypes });
+    postMessage('updateHiddenStates', { hiddenStates });
+};
+
+const removeBox = (box: HTMLElement) => {
+    box.remove();
+    updateFileTypes();
 };
 
 const updateClipboardContent = (content: string = '') => {
-    ($('#clipboardDataBox') as HTMLTextAreaElement).value = content;
+    const clipboardDataBox = document.getElementById('clipboardDataBox') as HTMLTextAreaElement;
+    clipboardDataBox.value = content;
     postMessage('requestCounts', { text: content });
 };
 
-const updateCount = (id: string, count?: number) => 
-    ($(`#${id}`) as HTMLInputElement).value = count?.toString() || '';
+const updateTokenCount = (count?: number) => {
+    const tokenCountElement = document.getElementById('tokenCount') as HTMLInputElement;
+    tokenCountElement.value = count?.toString() || '';
+};
+
+const updateCharCount = (count?: number) => {
+    const charCountElement = document.getElementById('charCount') as HTMLInputElement;
+    charCountElement.value = count?.toString() || '';
+};
+
+const requestFileTypes = () => postMessage('getFileTypes');
+
+const requestHiddenFoldersAndFiles = () => postMessage('getHideFoldersAndFiles');
 
 const getHiddenItems = (): string[] => JSON.parse(localStorage.getItem('hiddenItems') || '[]');
+
 const setHiddenItems = (items: string[]) => localStorage.setItem('hiddenItems', JSON.stringify(items));
 
 const updateHiddenBoxes = (hiddenItems: string[] = []) => {
-    $$('#row2 .box').forEach(box => {
-        const itemValue = box.querySelector('.text')?.textContent || '';
+    const row2 = document.getElementById('row2');
+    if (!row2) return;
+
+    row2.querySelectorAll('.box').forEach(box => {
+        const textElement = box.querySelector('.text');
         const blueRegion = box.querySelector('.right-icon') as HTMLElement;
+        const itemValue = textElement?.textContent || '';
+
         if (blueRegion) {
-            const isHidden = hiddenItems.includes(itemValue);
-            ['closed-eye', 'open-eye', 'hidden'].forEach(cls => 
-                box.classList.toggle(cls, cls === 'hidden' ? isHidden : cls === 'closed-eye')
-            );
-            (box as HTMLElement).style.opacity = isHidden ? '0.5' : '1';
+            if (hiddenItems.includes(itemValue)) {
+                blueRegion.classList.replace('open-eye', 'closed-eye');
+                (box as HTMLElement).classList.add('hidden');
+                (box as HTMLElement).style.opacity = '0.5';
+            } else {
+                blueRegion.classList.replace('closed-eye', 'open-eye');
+                (box as HTMLElement).classList.remove('hidden');
+                (box as HTMLElement).style.opacity = '1';
+            }
         }
     });
 };
