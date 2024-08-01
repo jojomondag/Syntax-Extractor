@@ -1,19 +1,5 @@
 {
-    "syntaxExtractor.clipboardDataBoxHeight": 197,
-    "syntaxExtractor.fileTypes": [
-        ".json",
-        ".vsix",
-        ".js",
-        ".gitignore",
-        ".map",
-        ".ts",
-        ".html",
-        ".css"
-    ],
-    "syntaxExtractor.compressionLevel": 1,
-    "syntaxExtractor.fileTypesToIgnore": [
-        ".vscodeignore",
-        ".png",
-        ".md"
-    ]
+  "syntaxExtractor.fileTypes": [],
+  "syntaxExtractor.fileTypesToIgnore": [],
+  "syntaxExtractor.compressionLevel": "medium"
 }
