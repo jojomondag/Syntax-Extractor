@@ -1,144 +1,52 @@
 {
-  "name": "syntax-extractor",
-  "displayName": "Syntax Extractor",
-  "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.3.2",
-  "publisher": "JosefNobach",
-  "icon": "out/resources/SyntaxExtractor256x256.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jojomondag/syntaxExtractor.git"
-  },
-  "engines": {
-    "vscode": "^1.87.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "configuration": {
-      "title": "syntaxExtractor",
-      "properties": {
-        "syntaxExtractor.fileTypesAndFoldersToCheck": {
-          "type": "array",
-          "default": [],
-          "description": "File types and folders to be handled by the extension."
-        },
-        "syntaxExtractor.fileTypesAndFoldersToIgnore": {
-          "type": "array",
-          "default": [],
-          "description": "File types and folders to be ignored by the extension."
-        },
-        "syntaxExtractor.fileTypesAndFoldersToHide": {
-          "type": "array",
-          "default": [],
-          "description": "File types and folders to be hidden (eye icon closed)."
-        },
-        "syntaxExtractor.compressionLevel": {
-          "type": "number",
-          "default": 2,
-          "description": "Compression level for the extension."
-        },
-        "syntaxExtractor.clipboardDataBoxHeight": {
-          "type": "number",
-          "default": 100,
-          "description": "Height of the clipboard data box in pixels."
-        }
-      }
+    "name": "syntax-extractor",
+    "displayName": "Syntax Extractor",
+    "description": "Syntax Extractor, helps you Gather your Code",
+    "version": "0.3.2",
+    "publisher": "JosefNobach",
+    "icon": "out/resources/SyntaxExtractor256x256.png",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/jojomondag/syntaxExtractor.git"
     },
-    "commands": [
-      {
-        "command": "syntaxExtractorSidebar.buttonCommand",
-        "title": "Button Command"
-      },
-      {
-        "command": "syntaxExtractorSidebar.createWebview",
-        "title": "Open Webpage"
-      },
-      {
-        "command": "syntaxExtractor.extractAndCopyText",
-        "title": "Extract and Copy Text",
-        "category": "Syntax Extractor"
-      },
-      {
-        "command": "syntaxExtractor.extractFileFolderTree",
-        "title": "Extract File/Folder Tree",
-        "category": "Syntax Extractor"
-      },
-      {
-        "command": "syntaxExtractor.addFileTypesOrFolders",
-        "title": "Add File/Folders",
-        "category": "Syntax Extractor"
-      }
+    "engines": {
+      "vscode": "^1.87.0"
+    },
+    "categories": [
+      "Other"
     ],
-    "menus": {
-      "explorer/context": [
-        {
-          "command": "syntaxExtractor.extractAndCopyText",
-          "group": "0_navigation@0"
-        },
-        {
-          "command": "syntaxExtractor.extractFileFolderTree",
-          "group": "0_navigation@1"
-        },
-        {
-          "command": "syntaxExtractor.addFileTypesOrFolders",
-          "group": "0_navigation@2"
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "codeExtractor.extractCode",
+                "title": "Extract Code Structure"
+            }
+        ],
+        "menus": {
+            "explorer/context": [
+                {
+                    "command": "codeExtractor.extractCode",
+                    "when": "explorerResourceIsFolder",
+                    "group": "navigation"
+                }
+            ]
         }
-      ]
     },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "syntaxExtractorSidebar",
-          "title": "Syntax Extractor",
-          "icon": "media/icon.png"
-        }
-      ]
+    "scripts": {
+        "lint": "eslint .",
+        "pretest": "npm run lint",
+        "test": "node ./test/runTest.js"
     },
-    "views": {
-      "syntaxExtractorSidebar": [
-        {
-          "id": "emptyView",
-          "name": "Empty View"
-        },
-        {
-          "id": "syntaxExtractorSidebarButton",
-          "name": "Open Webpage",
-          "when": "workspaceHasCode",
-          "command": "syntaxExtractorSidebarButton"
-        }
-      ],
-      "explorer": [
-        {
-          "id": "buttonView",
-          "name": "Button View",
-          "when": "workspaceHasCode"
-        }
-      ]
+    "devDependencies": {
+        "@types/vscode": "^1.60.0",
+        "@types/glob": "^7.1.3",
+        "@types/mocha": "^8.2.2",
+        "@types/node": "14.x",
+        "eslint": "^7.32.0",
+        "glob": "^7.1.7",
+        "mocha": "^9.1.1",
+        "typescript": "^4.4.3",
+        "@vscode/test-electron": "^1.6.2"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "webpack --mode production",
-    "compile": "webpack --mode production",
-    "watch": "webpack --mode development --watch",
-    "package": "vsce package",
-    "publish": "vsce publish"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.87.0",
-    "copy-webpack-plugin": "^12.0.2",
-    "css-loader": "^6.11.0",
-    "eslint": "^7.10.0",
-    "style-loader": "^3.3.4",
-    "ts-loader": "^9.5.1",
-    "typescript": "^4.0.3",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {
-    "chardet": "^2.0.0",
-    "tiktoken": "^1.0.13"
-  }
 }

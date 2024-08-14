@@ -1,5 +1,4 @@
 {
-  "syntaxExtractor.fileTypes": [],
-  "syntaxExtractor.fileTypesToIgnore": [],
-  "syntaxExtractor.compressionLevel": "medium"
+    "syntaxExtractor.clipboardDataBoxHeight": 100,
+    "syntaxExtractor.compressionLevel": 1
 }
