@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 const path = require('path');
-const fs = require('fs').promises; // Import the 'fs' module for reading file contents
-const { isText } = require('istextorbinary'); // Import isText from istextorbinary
+const fs = require('fs').promises;
+const { isText } = require('istextorbinary');
 const { traverseDirectory } = require('../core/fileTraversal');
 const { createHeader } = require('../core/utils');
 const { writeToClipboard, showInfoMessage, showErrorMessage } = require('../services/vscodeServices');
