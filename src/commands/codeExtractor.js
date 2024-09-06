@@ -67,7 +67,7 @@ const extractCode = async (uris) => {
             combinedResult.fileContents += result.fileContents;
         }
 
-        const headerContent = createHeader(combinedResult.fileTypes, combinedResult.files);
+        const headerContent = createHeader(combinedResult.fileTypes);
         const folderStructureOutput = `\n${basePath}\n${combinedResult.folderStructure}`; // Base path included once
         const finalContent = `${headerContent}\n\nFolder Structure:${folderStructureOutput}\n\nFile Contents:\n${formatFileContents(combinedResult.fileContents)}`;
 
