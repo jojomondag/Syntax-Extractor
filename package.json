@@ -5,45 +5,61 @@
     "version": "0.3.2",
     "publisher": "JosefNobach",
     "engines": {
-        "vscode": "^1.87.0"
+      "vscode": "^1.87.0"
     },
-    "categories": [
-        "Other"
-    ],
+    "categories": ["Other"],
     "main": "./src/extension.js",
     "contributes": {
-        "commands": [
-            {
-                "command": "codeExtractor.extractCode",
-                "title": "Extract Code Structure"
-            }
-        ],
-        "menus": {
-            "explorer/context": [
-                {
-                    "command": "codeExtractor.extractCode",
-                    "group": "navigation"
-                }
-            ]
+      "commands": [
+        {
+          "command": "codeExtractor.extractCode",
+          "title": "Extract Code Structure"
         }
+      ],
+      "menus": {
+        "explorer/context": [
+          {
+            "command": "codeExtractor.extractCode",
+            "group": "navigation"
+          }
+        ]
+      },
+      "viewsContainers": {
+        "activitybar": [
+          {
+            "id": "syntaxExtractorContainer",
+            "title": "Syntax Extractor",
+            "icon": "resources/SyntaxExtractor256x256.png"
+          }
+        ]
+      },
+      "views": {
+        "syntaxExtractorContainer": [
+          {
+            "id": "syntaxExtractorView",
+            "name": "Code Overview"
+          }
+        ]
+      }
     },
     "scripts": {
-        "lint": "eslint .",
-        "pretest": "npm run lint",
-        "test": "node ./test/runTest.js"
+      "lint": "eslint .",
+      "pretest": "npm run lint",
+      "test": "node ./test/runTest.js"
     },
     "devDependencies": {
-        "@types/glob": "^7.1.3",
-        "@types/mocha": "^8.2.2",
-        "@types/node": "14.x",
-        "@types/vscode": "^1.87.0",
-        "@vscode/test-electron": "^1.6.2",
-        "eslint": "^7.32.0",
-        "glob": "^7.1.7",
-        "mocha": "^9.1.1",
-        "typescript": "^4.4.3"
+      "@types/glob": "^7.1.3",
+      "@types/mocha": "^8.2.2",
+      "@types/node": "14.x",
+      "@types/vscode": "^1.87.0",
+      "@vscode/test-electron": "^1.6.2",
+      "eslint": "^7.32.0",
+      "glob": "^7.1.7",
+      "mocha": "^9.1.1",
+      "typescript": "^4.4.3"
     },
     "dependencies": {
-        "istextorbinary": "^9.5.0"
+      "istextorbinary": "^9.5.0"
     }
-}
+  }
+  

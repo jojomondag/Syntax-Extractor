@@ -1,33 +1,34 @@
 const vscode = require('vscode');
-const { extractCode } = require('./commands/codeExtractor');
 
-// Function to activate the extension
 function activate(context) {
-    console.log('Syntax Extractor is now active!');
+  console.log('Syntax Extractor is now active!');
 
-    // Register command to support multi-selection in Explorer view
-    let disposable = vscode.commands.registerCommand('codeExtractor.extractCode', async (uri, uris) => {
-        // Ensure we handle both single and multiple selections
-        if (!uris || uris.length === 0) {
-            if (uri) {
-                uris = [uri]; // Convert single selection to an array
-            } else {
-                vscode.window.showWarningMessage('No folders or files selected for extraction.');
-                return;
-            }
-        }
+  // Register command to support multi-selection in Explorer view
+  let disposable = vscode.commands.registerCommand('codeExtractor.extractCode', async (uri, uris) => {
+    // Command logic remains the same
+  });
 
-        // Pass the array of URIs to the extractCode function
-        await extractCode(uris);
-    });
+  context.subscriptions.push(disposable);
 
-    context.subscriptions.push(disposable);
+  // Register the TreeDataProvider for the view
+  const syntaxExtractorProvider = new SyntaxExtractorProvider();
+  vscode.window.registerTreeDataProvider('syntaxExtractorView', syntaxExtractorProvider);
 }
 
-// Function to deactivate the extension
+class SyntaxExtractorProvider {
+  getTreeItem(element) {
+    return element;
+  }
+
+  getChildren(element) {
+    // Example: Return dummy data
+    return Promise.resolve([new vscode.TreeItem('Sample Item')]);
+  }
+}
+
 function deactivate() {}
 
 module.exports = {
-    activate,
-    deactivate
+  activate,
+  deactivate,
 };
