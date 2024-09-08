@@ -1,13 +1,14 @@
 const vscode = require('vscode');
 const { extractCode } = require('./commands/codeExtractor');
+const path = require('path');
+const fs = require('fs');
 
 let panel = undefined;
 
 function activate(context) {
     console.log('Syntax Extractor is now active!');
 
-    // Register the extract code command (existing functionality)
-    let extractCodeDisposable = vscode.commands.registerCommand('codeExtractor.extractCode', async (uri, uris) => {
+    let extractCodeDisposable = vscode.commands.registerCommand('syntaxExtractor.extractCode', async (uri, uris) => {
         if (!uris || uris.length === 0) {
             if (uri) {
                 uris = [uri];
@@ -19,41 +20,35 @@ function activate(context) {
         await extractCode(uris);
     });
 
-    // Create and register the empty tree view
+    let openWebviewDisposable = vscode.commands.registerCommand('syntaxExtractor.openWebview', () => {
+        createOrShowWebview(context.extensionUri);
+    });
+
     const emptyTreeDataProvider = {
         getTreeItem: () => null,
         getChildren: () => []
     };
     const treeView = vscode.window.createTreeView('emptyView', { treeDataProvider: emptyTreeDataProvider });
 
-    // Register the command to open the explorer and webview
-    let openExplorerAndWebviewDisposable = vscode.commands.registerCommand('syntaxExtractor.openExplorer', () => {
-        vscode.commands.executeCommand('workbench.view.explorer');
-        createOrShowWebview(context.extensionUri);
-    });
-
-    // Add event listener for tree view visibility change
     context.subscriptions.push(
         treeView.onDidChangeVisibility(e => {
             if (e.visible) {
-                // When our empty view becomes visible, open the explorer and webview
-                vscode.commands.executeCommand('syntaxExtractor.openExplorer');
+                vscode.commands.executeCommand('workbench.view.explorer');
+                createOrShowWebview(context.extensionUri);
             }
         })
     );
 
-    context.subscriptions.push(extractCodeDisposable, openExplorerAndWebviewDisposable);
+    context.subscriptions.push(extractCodeDisposable, openWebviewDisposable);
 }
 
 function createOrShowWebview(extensionUri) {
     if (panel) {
-        // If we already have a panel, show it in the target column
         panel.reveal(vscode.ViewColumn.Two);
     } else {
-        // Otherwise, create a new panel
         panel = vscode.window.createWebviewPanel(
-            'syntaxExtractorSettings',
-            'Syntax Extractor Settings',
+            'syntaxExtractorWebview',
+            'Syntax Extractor',
             vscode.ViewColumn.Two,
             {
                 enableScripts: true,
@@ -61,23 +56,14 @@ function createOrShowWebview(extensionUri) {
             }
         );
 
-        // Set the HTML content
-        panel.webview.html = getWebviewContent();
+        panel.webview.html = getWebviewContent(panel.webview, extensionUri);
 
-        // Handle messages from the webview
         panel.webview.onDidReceiveMessage(
-            message => {
-                switch (message.command) {
-                    case 'alert':
-                        vscode.window.showErrorMessage(message.text);
-                        return;
-                }
-            },
+            message => handleWebviewMessage(message),
             undefined,
             panel.webview
         );
 
-        // Reset when the panel is closed
         panel.onDidDispose(
             () => {
                 panel = undefined;
@@ -88,20 +74,29 @@ function createOrShowWebview(extensionUri) {
     }
 }
 
-function getWebviewContent() {
-    return `<!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Syntax Extractor Settings</title>
-    </head>
-    <body>
-        <h1>Syntax Extractor Settings</h1>
-        <p>Configure your settings here.</p>
-        <!-- Add your settings UI here -->
-    </body>
-    </html>`;
+function getWebviewContent(webview, extensionUri) {
+    const htmlPath = vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.html');
+    const htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
+
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.js'));
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'out', 'webview', 'webview.css'));
+
+    return htmlContent
+        .replace('${scriptUri}', scriptUri)
+        .replace('${styleUri}', styleUri);
+}
+
+function handleWebviewMessage(message) {
+    // Handle messages from the webview
+    switch (message.command) {
+        case 'setCompressionLevel':
+            // Update compression level
+            break;
+        case 'updateFileTypes':
+            // Update file types
+            break;
+        // Add more cases as needed
+    }
 }
 
 function deactivate() {}
