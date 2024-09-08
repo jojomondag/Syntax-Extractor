@@ -18,6 +18,10 @@
       {
         "command": "syntaxExtractor.openExplorer",
         "title": "Open Explorer"
+      },
+      {
+        "command": "syntaxExtractor.openWebview",
+        "title": "Open Syntax Extractor Settings"
       }
     ],
     "menus": {
