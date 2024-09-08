@@ -1,0 +1,137 @@
+@import './variables.css';
+
+.box {
+    position: relative;
+    display: flex;
+    flex-direction: column; /* Align items vertically */
+    align-items: center; /* Center items horizontally */
+    margin: var(--uniform-margin);
+    cursor: grab;
+    user-select: none;
+    border-radius: var(--border-radius);
+    transition: background-color var(--transition-speed), transform 0.5s ease, opacity var(--transition-speed);
+    overflow: visible;
+    padding: var(--uniform-padding); /* Add padding to accommodate the remove button */
+}
+
+.box .box-content {
+    display: flex;
+    align-items: center;
+    width: 100%; /* Ensure the content takes the full width */
+}
+
+.box .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 100%;
+    background-color: var(--icon-bg-color);
+    cursor: grab;
+    flex-shrink: 0;
+    margin-right: var(--uniform-padding); /* Add margin to separate from text */
+}
+
+#row2 .box .icon {
+    background-color: var(--icon-bg-color-row2);
+}
+
+#row2 .box .right-icon {
+    background-color: var(--right-icon-bg-color);
+}
+
+.box .left-icon {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+.box .left-icon.icon-file::before {
+    content: '';
+    display: inline-block;
+    background: var(--icon-file) no-repeat center center / contain;
+    width: 18px;
+    height: 18px;
+}
+
+.box .left-icon.icon-folder::before {
+    content: '';
+    display: inline-block;
+    background: var(--icon-folder) no-repeat center center / contain;
+    width: 18px;
+    height: 18px;
+}
+
+.box .text {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--text-bg-color);
+    cursor: grab;
+    height: 100%;
+    padding-left: var(--uniform-padding);
+    padding-right: var(--uniform-padding);
+    color: var(--color-text-light);
+    font-size: 0.9em;
+}
+
+.box .right-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 100%;
+    background-color: var(--right-icon-bg-color);
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    flex-shrink: 0;
+}
+
+#row1 .box .text {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+#row2 .box .text {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.box .right-icon::before {
+    content: '';
+    display: inline-block;
+    background: var(--icon-eye-open) no-repeat center center / contain;
+    width: 18px;
+    height: 18px;
+}
+
+.box .right-icon.open-eye::before {
+    background-image: var(--icon-eye-open);
+}
+
+.box .right-icon.closed-eye::before {
+    background-image: var(--icon-eye-closed);
+}
+
+.remove-button {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    line-height: 14px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    font-weight: bold;
+    margin-top: 10px; /* Adjust margin to position the button */
+    position: relative; /* Ensure it stays within the flow of the box */
+}
+
+.remove-button::after {
+    content: '-';
+}
