@@ -4,41 +4,97 @@
   "description": "Syntax Extractor, helps you Gather your Code",
   "version": "0.3.2",
   "publisher": "JosefNobach",
+  "icon": "out/resources/SyntaxExtractor256x256.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jojomondag/syntaxExtractor.git"
+  },
   "engines": {
     "vscode": "^1.87.0"
   },
-  "categories": ["Other"],
-  "main": "./src/extension.js",
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "syntaxExtractor",
+      "properties": {
+        "syntaxExtractor.fileTypesAndFoldersToCheck": {
+          "type": "array",
+          "default": [],
+          "description": "File types and folders to be handled by the extension."
+        },
+        "syntaxExtractor.fileTypesAndFoldersToIgnore": {
+          "type": "array",
+          "default": [],
+          "description": "File types and folders to be ignored by the extension."
+        },
+        "syntaxExtractor.fileTypesAndFoldersToHide": {
+          "type": "array",
+          "default": [],
+          "description": "File types and folders to be hidden (eye icon closed)."
+        },
+        "syntaxExtractor.compressionLevel": {
+          "type": "number",
+          "default": 2,
+          "description": "Compression level for the extension."
+        },
+        "syntaxExtractor.clipboardDataBoxHeight": {
+          "type": "number",
+          "default": 100,
+          "description": "Height of the clipboard data box in pixels."
+        }
+      }
+    },
     "commands": [
       {
-        "command": "codeExtractor.extractCode",
-        "title": "Extract Code Structure"
+        "command": "syntaxExtractor.openWebview",
+        "title": "Open Syntax Extractor Webview"
       },
       {
-        "command": "syntaxExtractor.openExplorer",
-        "title": "Open Explorer"
+        "command": "syntaxExtractor.extractAndCopyText",
+        "title": "Extract and Copy Text",
+        "category": "Syntax Extractor"
+      },
+      {
+        "command": "syntaxExtractor.extractFileFolderTree",
+        "title": "Extract File/Folder Tree",
+        "category": "Syntax Extractor"
+      },
+      {
+        "command": "syntaxExtractor.addFileTypesOrFolders",
+        "title": "Add File/Folders",
+        "category": "Syntax Extractor"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "codeExtractor.extractCode",
-          "group": "navigation"
+          "command": "syntaxExtractor.extractAndCopyText",
+          "group": "0_navigation@0"
+        },
+        {
+          "command": "syntaxExtractor.extractFileFolderTree",
+          "group": "0_navigation@1"
+        },
+        {
+          "command": "syntaxExtractor.addFileTypesOrFolders",
+          "group": "0_navigation@2"
         }
       ]
     },
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "syntaxExtractorContainer",
+          "id": "syntaxExtractorSidebar",
           "title": "Syntax Extractor",
-          "icon": "resources/SyntaxExtractor256x256.png"
+          "icon": "out/resources/SyntaxExtractor256x256.png"
         }
       ]
     },
     "views": {
-      "syntaxExtractorContainer": [
+      "syntaxExtractorSidebar": [
         {
           "id": "emptyView",
           "name": "Empty View"
@@ -47,22 +103,27 @@
     }
   },
   "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "node ./test/runTest.js"
+    "vscode:prepublish": "webpack --mode production",
+    "compile": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
-    "@types/glob": "^7.1.3",
-    "@types/mocha": "^8.2.2",
-    "@types/node": "14.x",
-    "@types/vscode": "^1.87.0",
-    "@vscode/test-electron": "^1.6.2",
+    "@types/node": "^22.5.4",
+    "@types/vscode": "^1.93.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^6.11.0",
     "eslint": "^7.32.0",
-    "glob": "^7.1.7",
-    "mocha": "^9.1.1",
-    "typescript": "^4.4.3"
+    "style-loader": "^3.3.4",
+    "ts-loader": "^9.5.1",
+    "typescript": "^4.9.5",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "istextorbinary": "^9.5.0"
+    "chardet": "^2.0.0",
+    "tiktoken": "^1.0.16",
+    "vscode": "^1.1.37"
   }
 }

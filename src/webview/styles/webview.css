@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @import './variables.css';
 
 *, *::before, *::after {
@@ -144,11 +145,71 @@ html, body {
     font-size: var(--size-font-large);
     color: var(--color-text-muted);
     margin: 0;
+=======
+:root {
+    --background-color: #1e1e1e;
+    --text-color: #d4d4d4;
+    --border-color: #3c3c3c;
+    --icon-bg-color: #252526;
+    --icon-bg-color-row2: #2d2d2d;
+    --button-bg-color: #0e639c;
+    --button-hover-bg-color: #1177bb;
+    --button-active-bg-color: #13466b;
+    --border-radius: 5px;
+    --icon-file: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23C5C5C5" d="M13.71 4.29l-3-3L10 1H4L3 2v12l1 1h9l1-1V5l-.29-.71zM13 14H4V2h5v4h4v8z"/></svg>');
+    --icon-folder: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23C5C5C5" d="M14.5 3H7.71l-.85-.85L6.51 2h-5l-.5.5v11l.5.5h13l.5-.5v-10L14.5 3zm-.51 11h-12V3h4.49l.86.85.85.15H14v10z"/></svg>');
+    --icon-garbage: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23C5C5C5" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/></svg>');
+    --icon-garbage-open: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23E51400" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/></svg>');
+    --icon-eye-open: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23C5C5C5" d="M8 3C3 3 0 8 0 8s3 5 8 5 8-5 8-5-3-5-8-5zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>');
+    --icon-eye-closed: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23C5C5C5" d="M8 3C3 3 0 8 0 8s3 5 8 5 8-5 8-5-3-5-8-5zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0-4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/><path fill="%23C5C5C5" d="M3.354 2.646l10 10 .707-.707-10-10-.707.707z"/></svg>');
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.compression-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.compression-button {
+    background-color: var(--button-bg-color);
+    border: none;
+    color: var(--text-color);
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s;
+}
+
+.compression-button:hover {
+    background-color: var(--button-hover-bg-color);
+}
+
+.compression-button:active {
+    background-color: var(--button-active-bg-color);
+}
+
+.compression-button.selected {
+    background-color: var(--button-active-bg-color);
+>>>>>>> 61f6efe63a692996a20cbcbb4b96d749ce6d1dab
 }
 
 .row {
     display: flex;
     flex-wrap: wrap;
+<<<<<<< HEAD
     justify-content: center;
     margin: var(--size-margin-medium) 0;
     width: 100%;
@@ -177,12 +238,33 @@ html, body {
 
 .box:active {
     cursor: grabbing;
+=======
+    gap: 10px;
+    margin-bottom: 20px;
+    min-height: 40px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.box {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 5px;
+    cursor: move;
+    user-select: none;
+    background-color: var(--icon-bg-color);
+    transition: opacity 0.3s;
+>>>>>>> 61f6efe63a692996a20cbcbb4b96d749ce6d1dab
 }
 
 .box.hidden {
     opacity: 0.5;
 }
 
+<<<<<<< HEAD
 .box.dragging {
     opacity: 0.8;
     transform: scale(1.05);
@@ -374,4 +456,106 @@ body[data-dragging="true"] .garbage-icon:hover {
     .filetype-input {
         font-size: var(--size-font-default);
     }
+=======
+.icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    background-color: var(--icon-bg-color);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+}
+
+.icon-file {
+    mask-image: var(--icon-file);
+}
+
+.icon-folder {
+    mask-image: var(--icon-folder);
+}
+
+.right-icon {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.open-eye {
+    mask-image: var(--icon-eye-open);
+}
+
+.closed-eye {
+    mask-image: var(--icon-eye-closed);
+}
+
+.garbage-icon {
+    width: 32px;
+    height: 32px;
+    background-image: var(--icon-garbage);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 20px auto;
+    cursor: pointer;
+}
+
+#clipboardDataBox {
+    width: 100%;
+    height: 100px;
+    margin-bottom: 10px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    resize: vertical;
+}
+
+.counts {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.counts input {
+    width: 48%;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 5px;
+}
+
+#openWebpageButton {
+    background-color: var(--button-bg-color);
+    border: none;
+    color: var(--text-color);
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    font-size: 16px;
+    margin: 20px auto;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s;
+}
+
+#openWebpageButton:hover {
+    background-color: var(--button-hover-bg-color);
+}
+
+.placeholder {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-dragging="true"] .box:not(.dragging) {
+    transition: transform 0.3s;
+}
+
+[data-dragging="true"] .box:not(.dragging):hover {
+    transform: translateY(-5px);
+>>>>>>> 61f6efe63a692996a20cbcbb4b96d749ce6d1dab
 }
