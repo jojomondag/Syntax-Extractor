@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syntax Extractor</title>
+    <link rel="stylesheet" href="${styleUri}">
+</head>
+<body>
+    <div id="app">
+        <div class="compression-buttons">
+            <button id="compressionLevelHard" class="compression-button">Hard</button>
+            <button id="compressionLevelMedium" class="compression-button">Medium</button>
+            <button id="compressionLevelLight" class="compression-button">Light</button>
+        </div>
+        <div id="row1" class="row"></div>
+        <div id="row2" class="row"></div>
+        <div class="garbage-icon"></div>
+        <textarea id="clipboardDataBox"></textarea>
+        <div class="counts">
+            <input type="text" id="tokenCount" readonly>
+            <input type="text" id="charCount" readonly>
+        </div>
+        <button id="openWebpageButton">Open Webpage</button>
+    </div>
+    <template id="box-template">
+        <div class="box">
+            <span class="icon left-icon"></span>
+            <span class="text"></span>
+        </div>
+    </template>
+    <script src="${scriptUri}"></script>
+</body>
+</html>
