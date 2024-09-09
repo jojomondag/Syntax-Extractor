@@ -1,15 +1,20 @@
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
+const tiktoken = require('tiktoken');
 
 const { extractCode } = require('./commands/codeExtractor');
 
-let currentPanel = undefined;  // Reference to the current webview panel
+let currentPanel = undefined;
+let clipboardListener = undefined;
+let encoder = null;
 
 function activate(context) {
     console.log('Syntax Extractor is now active!');
 
-    // Register the extract code command
+    // Initialize the tiktoken encoder
+    encoder = tiktoken.get_encoding("cl100k_base");  // This is suitable for GPT-3.5 and GPT-4
+
     let extractCodeDisposable = vscode.commands.registerCommand('codeExtractor.extractCode', async (uri, uris) => {
         if (!uris || uris.length === 0) {
             if (uri) {
@@ -19,16 +24,15 @@ function activate(context) {
                 return;
             }
         }
-        await extractCode(uris);
+        const extractedContent = await extractCode(uris);
+        updateOrCreateWebview(context, extractedContent);
     });
 
-    // Register the command to open the explorer and initialize webview
     let openExplorerDisposable = vscode.commands.registerCommand('syntaxExtractor.openExplorer', () => {
         vscode.commands.executeCommand('workbench.view.explorer');
         showWebview(context);
     });
 
-    // Add the tree view and listeners
     const emptyTreeDataProvider = {
         getTreeItem: () => null,
         getChildren: () => []
@@ -44,47 +48,91 @@ function activate(context) {
     );
 
     context.subscriptions.push(extractCodeDisposable, openExplorerDisposable);
+
+    // Set up clipboard listener
+    setupClipboardListener();
 }
 
-function showWebview(context) {
+function updateOrCreateWebview(context, content) {
     if (currentPanel) {
-        // If the panel is already open, reveal it in the same column
+        updateWebviewContent(content);
+    } else {
+        showWebview(context, () => updateWebviewContent(content));
+    }
+}
+
+function updateWebviewContent(content) {
+    if (currentPanel) {
+        const tokenCount = countTokens(content);
+        currentPanel.webview.postMessage({ 
+            command: 'updateClipboard', 
+            content: content,
+            tokenCount: tokenCount
+        });
+        console.log('Updated existing webview with new content');
+    }
+}
+
+function countTokens(text) {
+    if (!encoder) {
+        console.error('Tiktoken encoder not initialized');
+        return text.split(/\s+/).length; // Fallback to simple word count
+    }
+    const tokens = encoder.encode(text);
+    return tokens.length;
+}
+
+function showWebview(context, callback) {
+    if (currentPanel) {
         currentPanel.reveal(vscode.ViewColumn.One);
+        if (callback) callback();
         return;
     }
 
-    console.log('Initializing Webview...');  // Debugging output
-
     currentPanel = vscode.window.createWebviewPanel(
-        'syntaxExtractorWebview', // Identifies the type of the webview. Used internally
-        'Syntax Extractor View',  // Title of the panel displayed to the user
-        vscode.ViewColumn.One,    // Editor column to show the new webview panel in.
+        'syntaxExtractorWebview',
+        'Syntax Extractor View',
+        vscode.ViewColumn.One,
         {
-            enableScripts: true,  // Enable scripts in the webview
-            localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'))] // Restrict the webview to only load resources from the `webview` directory
+            enableScripts: true,
+            retainContextWhenHidden: true,
+            localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'))]
         }
     );
 
-    // Set the webview's HTML content by reading from the provided webview.html file
     const webviewHtml = getWebviewContent(context, currentPanel);
     currentPanel.webview.html = webviewHtml;
 
-    // Handle the panel being closed (disposing of the reference)
     currentPanel.onDidDispose(() => {
-        currentPanel = undefined;  // Reset the reference to undefined when the panel is closed
+        currentPanel = undefined;
+        if (clipboardListener) {
+            clipboardListener.dispose();
+            clipboardListener = undefined;
+        }
     });
+
+    // Wait for the webview to be ready
+    currentPanel.webview.onDidReceiveMessage(message => {
+        if (message.command === 'webviewReady') {
+            console.log('Webview is ready');
+            if (callback) callback();
+        }
+    });
+
+    // Initial clipboard content
+    updateClipboardContent();
 }
 
 function getWebviewContent(context, panel) {
     const webview = panel.webview;
-    const basePath = vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'));  // Corrected path
+    const basePath = vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'));
 
     // Read the HTML content from `webview.html`
     const htmlPath = vscode.Uri.joinPath(basePath, 'webview.html');
     let htmlContent;
     try {
         htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
-        console.log(`Loaded HTML content from: ${htmlPath.fsPath}`);  // Debugging output
+        console.log(`Loaded HTML content from: ${htmlPath.fsPath}`);
     } catch (error) {
         console.error(`Error reading webview.html: ${error.message}`);
         return `<html><body><h1>Error loading webview content</h1><p>${error.message}</p></body></html>`;
@@ -93,9 +141,9 @@ function getWebviewContent(context, panel) {
     // Load CSS files with appropriate URIs for the webview
     const variablesCssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', 'variables.css'));
     const webviewCssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', 'webview.css'));
-    const boxCssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', 'box.css'));  // Include box.css as well if needed
+    const boxCssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', 'box.css'));
 
-    console.log(`CSS URIs: ${variablesCssUri}, ${webviewCssUri}, ${boxCssUri}`);  // Debugging output
+    console.log(`CSS URIs: ${variablesCssUri}, ${webviewCssUri}, ${boxCssUri}`);
 
     // Update the HTML content to include the stylesheets dynamically
     htmlContent = htmlContent.replace('./styles/variables.css', variablesCssUri.toString());
@@ -105,7 +153,39 @@ function getWebviewContent(context, panel) {
     return htmlContent;
 }
 
-function deactivate() {}
+function setupClipboardListener() {
+    if (clipboardListener) {
+        clipboardListener.dispose();
+    }
+
+    clipboardListener = vscode.workspace.onDidChangeTextDocument(event => {
+        if (event.document.uri.scheme === 'clipboard') {
+            updateClipboardContent();
+        }
+    });
+}
+
+function updateClipboardContent() {
+    if (currentPanel) {
+        vscode.env.clipboard.readText().then(text => {
+            const tokenCount = countTokens(text);
+            currentPanel.webview.postMessage({ 
+                command: 'updateClipboard', 
+                content: text,
+                tokenCount: tokenCount
+            });
+        });
+    }
+}
+
+function deactivate() {
+    if (clipboardListener) {
+        clipboardListener.dispose();
+    }
+    if (encoder) {
+        encoder.free();
+    }
+}
 
 module.exports = {
     activate,

@@ -7,7 +7,9 @@
   "engines": {
     "vscode": "^1.87.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
@@ -63,6 +65,7 @@
     "typescript": "^4.4.3"
   },
   "dependencies": {
-    "istextorbinary": "^9.5.0"
+    "istextorbinary": "^9.5.0",
+    "tiktoken": "^1.0.16"
   }
 }

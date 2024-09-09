@@ -28,7 +28,7 @@ const findCommonBasePath = (paths) => {
 
 const extractCode = async (uris) => {
     // Ensure uris is an array
-    if (!Array.isArray(uris) || uris.length === 0) return;
+    if (!Array.isArray(uris) || uris.length === 0) return '';
 
     let combinedResult = {
         fileTypes: new Set(),
@@ -68,14 +68,18 @@ const extractCode = async (uris) => {
         }
 
         const headerContent = createHeader(combinedResult.fileTypes);
-        const folderStructureOutput = `\n${basePath}\n${combinedResult.folderStructure}`; // Base path included once
+        const folderStructureOutput = `\n${basePath}\n${combinedResult.folderStructure}`;
         const finalContent = `${headerContent}\n\nFolder Structure:${folderStructureOutput}\n\nFile Contents:\n${formatFileContents(combinedResult.fileContents)}`;
 
         await writeToClipboard(finalContent);
         showInfoMessage('Folder structure, file information, and contents copied to clipboard!');
+
+        return finalContent;  // Return the extracted content
+
     } catch (error) {
         console.error('Error in extractCode:', error);
         showErrorMessage(`An error occurred: ${error.message}`);
+        return '';  // Return an empty string in case of error
     }
 };
 

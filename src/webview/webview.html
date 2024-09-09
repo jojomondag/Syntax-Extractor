@@ -8,19 +8,56 @@
     <link rel="stylesheet" href="./styles/variables.css">
     <link rel="stylesheet" href="./styles/webview.css">
 </head>
+
+<script>
+    const vscode = acquireVsCodeApi();
+    let clipboardDataBox;
+
+    window.addEventListener('load', () => {
+        clipboardDataBox = document.getElementById('clipboardDataBox');
+        console.log('Webview loaded, clipboardDataBox:', clipboardDataBox);
+    });
+
+    window.addEventListener('message', event => {
+        const message = event.data;
+        console.log('Received message:', message);
+        switch (message.command) {
+            case 'updateClipboard':
+                console.log('Updating clipboard with content:', message.content);
+                if (clipboardDataBox) {
+                    clipboardDataBox.value = message.content;
+                    updateCounters(message.tokenCount);
+                } else {
+                    console.error('clipboardDataBox not found');
+                }
+                break;
+        }
+    });
+
+    function updateCounters(tokenCount) {
+        const text = clipboardDataBox.value;
+        document.getElementById('charCount').value = text.length;
+        document.getElementById('tokenCount').value = tokenCount || 'N/A';
+        console.log('Counters updated');
+    }
+
+    if (clipboardDataBox) {
+        clipboardDataBox.addEventListener('input', () => {
+            // When the user types directly into the textarea, we can't count tokens accurately
+            // So we'll just update the character count and set token count to N/A
+            updateCounters('N/A');
+        });
+    } else {
+        console.error('Unable to add input listener to clipboardDataBox');
+    }
+</script>
+
 <body>
     <main class="main-container">
         <!-- Content of the webview goes here -->
         <textarea id="clipboardDataBox" class="textarea clipboard-content" placeholder="Paste clipboard data here"></textarea>
         
-        <section class="horizontal-section">
-            <div id="compression-buttons">
-                <label class="label" for="compression-button">Compression</label>
-                <button class="compression-button" id="compressionLevelHard">Hard</button>
-                <button class="compression-button" id="compressionLevelMedium">Medium</button>
-                <button class="compression-button" id="compressionLevelLight">Light</button>
-            </div>            
-            
+        <section class="horizontal-section">            
             <div class="counters-container">
                 <div class="counter token-counter">
                     <label class="label" for="tokenCount">Tokens</label>
