@@ -135,25 +135,25 @@ function getWebviewOptions(context) {
 function setupWebviewMessageHandling(context, callback) {
     currentPanel.webview.onDidReceiveMessage(message => {
         switch (message.command) {
-            case 'webviewReady':
+            case 'webviewReady': {
                 console.log('Webview is ready');
-                // Retrieve saved height from global state
                 const savedHeight = context.globalState.get('textareaHeight', 200);  // Default to 200px
                 sendMessageToWebview('setTextareaHeight', { height: savedHeight });
                 if (callback) callback();
                 break;
-            case 'contentChanged':
+            }
+            case 'contentChanged': {
                 const tokenCount = countTokens(message.content);
                 sendMessageToWebview('updateTokenCount', { tokenCount });
                 break;
-            case 'textareaResized':
-                // Save the new height in global state
+            }
+            case 'textareaResized': {
                 context.globalState.update('textareaHeight', message.height);
                 break;
+            }
         }
     });
 }
-
 
 function sendMessageToWebview(command, data) {
     if (currentPanel) {
