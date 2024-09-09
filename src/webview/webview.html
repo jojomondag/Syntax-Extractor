@@ -4,69 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syntax Extractor</title>
-    <!-- Use placeholders to dynamically inject the stylesheet URIs -->
     <link rel="stylesheet" href="./styles/variables.css">
     <link rel="stylesheet" href="./styles/webview.css">
 </head>
-
-<script>
-    const vscode = acquireVsCodeApi();
-    let clipboardDataBox;
-
-    window.addEventListener('load', () => {
-        clipboardDataBox = document.getElementById('clipboardDataBox');
-        console.log('Webview loaded, clipboardDataBox:', clipboardDataBox);
-    });
-
-    window.addEventListener('message', event => {
-        const message = event.data;
-        console.log('Received message:', message);
-        switch (message.command) {
-            case 'updateClipboard':
-                console.log('Updating clipboard with content:', message.content);
-                if (clipboardDataBox) {
-                    clipboardDataBox.value = message.content;
-                    updateCounters(message.tokenCount);
-                } else {
-                    console.error('clipboardDataBox not found');
-                }
-                break;
-        }
-    });
-
-    function updateCounters(tokenCount) {
-        const text = clipboardDataBox.value;
-        document.getElementById('charCount').value = text.length;
-        document.getElementById('tokenCount').value = tokenCount || 'N/A';
-        console.log('Counters updated');
-    }
-
-    if (clipboardDataBox) {
-        clipboardDataBox.addEventListener('input', () => {
-            // When the user types directly into the textarea, we can't count tokens accurately
-            // So we'll just update the character count and set token count to N/A
-            updateCounters('N/A');
-        });
-    } else {
-        console.error('Unable to add input listener to clipboardDataBox');
-    }
-</script>
-
 <body>
     <main class="main-container">
-        <!-- Content of the webview goes here -->
         <textarea id="clipboardDataBox" class="textarea clipboard-content" placeholder="Paste clipboard data here"></textarea>
         
         <section class="horizontal-section">            
             <div class="counters-container">
                 <div class="counter token-counter">
                     <label class="label" for="tokenCount">Tokens</label>
-                    <input class="input token-count" type="text" id="tokenCount" readonly value="666">
+                    <input class="input token-count" type="text" id="tokenCount" readonly value="0">
                 </div>
                 
                 <div class="counter char-counter">
                     <label class="label" for="charCount">Chars</label>
-                    <input class="input char-count" type="text" id="charCount" readonly value="666">
+                    <input class="input char-count" type="text" id="charCount" readonly value="0">
                 </div>
             </div>
             
@@ -97,8 +51,49 @@
                 <span class="text"></span>
             </div>
         </template>        
-        
     </main>
-    <script src="webview.js"></script>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        const clipboardDataBox = document.getElementById('clipboardDataBox');
+        const tokenCountElement = document.getElementById('tokenCount');
+        const charCountElement = document.getElementById('charCount');
+    
+        // Function to update counters
+        function updateCounters(tokenCount) {
+            const text = clipboardDataBox.value;
+            charCountElement.value = text.length;
+            if (tokenCount !== undefined) {
+                tokenCountElement.value = tokenCount;
+            }
+        }
+    
+        // Listen for messages from the extension
+        window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.command) {
+                case 'updateClipboard':
+                    clipboardDataBox.value = message.content;
+                    updateCounters(message.tokenCount);
+                    break;
+                case 'updateTokenCount':
+                    tokenCountElement.value = message.tokenCount;
+                    break;
+            }
+        });
+    
+        // Add input event listener to the textarea
+        clipboardDataBox.addEventListener('input', () => {
+            updateCounters();
+            // Send the new content to the extension for token counting
+            vscode.postMessage({
+                command: 'contentChanged',
+                content: clipboardDataBox.value
+            });
+        });
+    
+        // Inform the extension that the webview is ready
+        vscode.postMessage({ command: 'webviewReady' });
+    </script>
 </body>
 </html>

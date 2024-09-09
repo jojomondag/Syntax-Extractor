@@ -111,11 +111,20 @@ function showWebview(context, callback) {
         }
     });
 
-    // Wait for the webview to be ready
+    // Handle messages from the webview
     currentPanel.webview.onDidReceiveMessage(message => {
-        if (message.command === 'webviewReady') {
-            console.log('Webview is ready');
-            if (callback) callback();
+        switch (message.command) {
+            case 'webviewReady':
+                console.log('Webview is ready');
+                if (callback) callback();
+                break;
+            case 'contentChanged':
+                const tokenCount = countTokens(message.content);
+                currentPanel.webview.postMessage({ 
+                    command: 'updateTokenCount', 
+                    tokenCount: tokenCount 
+                });
+                break;
         }
     });
 
