@@ -2,17 +2,20 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "publisher": "JosefNobach",
+  "icon": "resources/SyntaxExtractor256x256.png",
   "engines": {
     "vscode": "^1.87.0"
   },
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/jojomondag/Syntax-Extractor.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jojomondag/Syntax-Extractor.git"
   },
   "categories": [
     "Other"
+  ],
+  "activationEvents": [
   ],
   "main": "./src/extension.js",
   "contributes": {
