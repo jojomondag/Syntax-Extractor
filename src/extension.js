@@ -12,45 +12,59 @@ let encoder = null;
 function activate(context) {
     console.log('Syntax Extractor is now active!');
 
-    // Initialize the tiktoken encoder
-    encoder = tiktoken.get_encoding("cl100k_base");  // This is suitable for GPT-3.5 and GPT-4
+    encoder = tiktoken.get_encoding("cl100k_base");
 
-    let extractCodeDisposable = vscode.commands.registerCommand('codeExtractor.extractCode', async (uri, uris) => {
-        if (!uris || uris.length === 0) {
-            if (uri) {
-                uris = [uri];
-            } else {
-                vscode.window.showWarningMessage('No folders selected for extraction.');
-                return;
-            }
-        }
-        const extractedContent = await extractCode(uris);
-        updateOrCreateWebview(context, extractedContent);
+    registerCommands(context);
+    setupTreeView(context);
+    setupClipboardListener();
+}
+
+function registerCommands(context) {
+    const commands = [
+        { id: 'codeExtractor.extractCode', handler: (uri, uris) => handleExtractCode(context, uri, uris) },
+        { id: 'syntaxExtractor.openExplorer', handler: () => handleOpenExplorer(context) }
+    ];
+
+    commands.forEach(cmd => {
+        const disposable = vscode.commands.registerCommand(cmd.id, cmd.handler);
+        context.subscriptions.push(disposable);
     });
+}
 
-    let openExplorerDisposable = vscode.commands.registerCommand('syntaxExtractor.openExplorer', () => {
-        vscode.commands.executeCommand('workbench.view.explorer');
-        showWebview(context);
-    });
+async function handleExtractCode(context, uri, uris) {
+    if (!uris || uris.length === 0) {
+        uris = uri ? [uri] : [];
+    }
 
+    if (uris.length === 0) {
+        vscode.window.showWarningMessage('No folders selected for extraction.');
+        return;
+    }
+
+    const extractedContent = await extractCode(uris);
+    updateOrCreateWebview(context, extractedContent);
+}
+
+function handleOpenExplorer(context) {
+    vscode.commands.executeCommand('workbench.view.explorer');
+    showWebview(context);
+}
+
+function setupTreeView(context) {
     const emptyTreeDataProvider = {
         getTreeItem: () => null,
         getChildren: () => []
     };
+
     const treeView = vscode.window.createTreeView('emptyView', { treeDataProvider: emptyTreeDataProvider });
 
-    context.subscriptions.push(
-        treeView.onDidChangeVisibility(e => {
-            if (e.visible) {
-                vscode.commands.executeCommand('syntaxExtractor.openExplorer');
-            }
-        })
-    );
+    treeView.onDidChangeVisibility(e => {
+        if (e.visible) {
+            vscode.commands.executeCommand('syntaxExtractor.openExplorer');
+        }
+    });
 
-    context.subscriptions.push(extractCodeDisposable, openExplorerDisposable);
-
-    // Set up clipboard listener
-    setupClipboardListener();
+    context.subscriptions.push(treeView);
 }
 
 function updateOrCreateWebview(context, content) {
@@ -64,11 +78,7 @@ function updateOrCreateWebview(context, content) {
 function updateWebviewContent(content) {
     if (currentPanel) {
         const tokenCount = countTokens(content);
-        currentPanel.webview.postMessage({ 
-            command: 'updateClipboard', 
-            content: content,
-            tokenCount: tokenCount
-        });
+        sendMessageToWebview('updateClipboard', { content, tokenCount });
         console.log('Updated existing webview with new content');
     }
 }
@@ -76,10 +86,9 @@ function updateWebviewContent(content) {
 function countTokens(text) {
     if (!encoder) {
         console.error('Tiktoken encoder not initialized');
-        return text.split(/\s+/).length; // Fallback to simple word count
+        return text.split(/\s+/).length;
     }
-    const tokens = encoder.encode(text);
-    return tokens.length;
+    return encoder.encode(text).length;
 }
 
 function showWebview(context, callback) {
@@ -89,21 +98,22 @@ function showWebview(context, callback) {
         return;
     }
 
-    currentPanel = vscode.window.createWebviewPanel(
+    currentPanel = createWebviewPanel(context);
+    setupWebviewMessageHandling(context, callback);
+    updateClipboardContent();
+}
+
+function createWebviewPanel(context) {
+    const panel = vscode.window.createWebviewPanel(
         'syntaxExtractorWebview',
         'Syntax Extractor View',
         vscode.ViewColumn.One,
-        {
-            enableScripts: true,
-            retainContextWhenHidden: true,
-            localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'))]
-        }
+        getWebviewOptions(context)
     );
 
-    const webviewHtml = getWebviewContent(context, currentPanel);
-    currentPanel.webview.html = webviewHtml;
+    panel.webview.html = getWebviewContent(context, panel);
 
-    currentPanel.onDidDispose(() => {
+    panel.onDidDispose(() => {
         currentPanel = undefined;
         if (clipboardListener) {
             clipboardListener.dispose();
@@ -111,55 +121,66 @@ function showWebview(context, callback) {
         }
     });
 
-    // Handle messages from the webview
+    return panel;
+}
+
+function getWebviewOptions(context) {
+    return {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'))]
+    };
+}
+
+function setupWebviewMessageHandling(context, callback) {
     currentPanel.webview.onDidReceiveMessage(message => {
         switch (message.command) {
             case 'webviewReady':
                 console.log('Webview is ready');
+                // Retrieve saved height from global state
+                const savedHeight = context.globalState.get('textareaHeight', 200);  // Default to 200px
+                sendMessageToWebview('setTextareaHeight', { height: savedHeight });
                 if (callback) callback();
                 break;
             case 'contentChanged':
                 const tokenCount = countTokens(message.content);
-                currentPanel.webview.postMessage({ 
-                    command: 'updateTokenCount', 
-                    tokenCount: tokenCount 
-                });
+                sendMessageToWebview('updateTokenCount', { tokenCount });
+                break;
+            case 'textareaResized':
+                // Save the new height in global state
+                context.globalState.update('textareaHeight', message.height);
                 break;
         }
     });
+}
 
-    // Initial clipboard content
-    updateClipboardContent();
+
+function sendMessageToWebview(command, data) {
+    if (currentPanel) {
+        currentPanel.webview.postMessage({ command, ...data });
+    }
 }
 
 function getWebviewContent(context, panel) {
     const webview = panel.webview;
     const basePath = vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview'));
-
-    // Read the HTML content from `webview.html`
     const htmlPath = vscode.Uri.joinPath(basePath, 'webview.html');
-    let htmlContent;
+
     try {
-        htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
+        let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
         console.log(`Loaded HTML content from: ${htmlPath.fsPath}`);
+
+        const cssFiles = ['variables.css', 'webview.css', 'box.css'];
+        cssFiles.forEach(file => {
+            const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', file));
+            htmlContent = htmlContent.replace(`./styles/${file}`, cssUri.toString());
+        });
+
+        return htmlContent;
     } catch (error) {
         console.error(`Error reading webview.html: ${error.message}`);
         return `<html><body><h1>Error loading webview content</h1><p>${error.message}</p></body></html>`;
     }
-
-    // Load CSS files with appropriate URIs for the webview
-    const variablesCssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', 'variables.css'));
-    const webviewCssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', 'webview.css'));
-    const boxCssUri = webview.asWebviewUri(vscode.Uri.joinPath(basePath, 'styles', 'box.css'));
-
-    console.log(`CSS URIs: ${variablesCssUri}, ${webviewCssUri}, ${boxCssUri}`);
-
-    // Update the HTML content to include the stylesheets dynamically
-    htmlContent = htmlContent.replace('./styles/variables.css', variablesCssUri.toString());
-    htmlContent = htmlContent.replace('./styles/webview.css', webviewCssUri.toString());
-    htmlContent = htmlContent.replace('./styles/box.css', boxCssUri.toString());
-
-    return htmlContent;
 }
 
 function setupClipboardListener() {
@@ -178,11 +199,7 @@ function updateClipboardContent() {
     if (currentPanel) {
         vscode.env.clipboard.readText().then(text => {
             const tokenCount = countTokens(text);
-            currentPanel.webview.postMessage({ 
-                command: 'updateClipboard', 
-                content: text,
-                tokenCount: tokenCount
-            });
+            sendMessageToWebview('updateClipboard', { content: text, tokenCount });
         });
     }
 }
@@ -196,7 +213,4 @@ function deactivate() {
     }
 }
 
-module.exports = {
-    activate,
-    deactivate
-};
+module.exports = { activate, deactivate };

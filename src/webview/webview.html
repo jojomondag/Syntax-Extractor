@@ -26,31 +26,6 @@
             
             <button id="openWebpageButton" class="button webpage-button">Open Webpage</button>
         </section>
-        
-        <!-- Box Container -->
-        <div class="container">
-            <div class="instructions">
-                <p>Press once to move the items. Click and hold to drag and drop.</p>
-            </div>
-            <div class="row" id="row1">
-                <!-- Boxes will be inserted here -->
-            </div>
-            <div class="line-container">
-                <div class="line"></div>
-                <div class="garbage-icon"></div>
-                <div class="line"></div>
-            </div>
-            <div class="row" id="row2">
-                <!-- Empty row for moved boxes -->
-            </div>
-        </div>
-
-        <template id="box-template">
-            <div class="box" draggable="true">
-                <span class="icon left-icon"></span>
-                <span class="text"></span>
-            </div>
-        </template>        
     </main>
 
     <script>
@@ -59,7 +34,6 @@
         const tokenCountElement = document.getElementById('tokenCount');
         const charCountElement = document.getElementById('charCount');
     
-        // Function to update counters
         function updateCounters(tokenCount) {
             const text = clipboardDataBox.value;
             charCountElement.value = text.length;
@@ -68,9 +42,7 @@
             }
         }
     
-        // Listen for messages from the extension
-        window.addEventListener('message', event => {
-            const message = event.data;
+        function handleMessage(message) {
             switch (message.command) {
                 case 'updateClipboard':
                     clipboardDataBox.value = message.content;
@@ -79,21 +51,36 @@
                 case 'updateTokenCount':
                     tokenCountElement.value = message.tokenCount;
                     break;
+                case 'setTextareaHeight':  // Handle the new message
+                    clipboardDataBox.style.height = `${message.height}px`;  // Set textarea height
+                    break;
             }
-        });
+        }
     
-        // Add input event listener to the textarea
+        window.addEventListener('message', event => handleMessage(event.data));
+    
         clipboardDataBox.addEventListener('input', () => {
             updateCounters();
-            // Send the new content to the extension for token counting
             vscode.postMessage({
                 command: 'contentChanged',
                 content: clipboardDataBox.value
             });
         });
     
-        // Inform the extension that the webview is ready
-        vscode.postMessage({ command: 'webviewReady' });
+        // Set up ResizeObserver for the textarea
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                vscode.postMessage({
+                    command: 'textareaResized',
+                    height: entry.contentRect.height
+                });
+            }
+        });
+    
+        resizeObserver.observe(clipboardDataBox);
+    
+        vscode.postMessage({ command: 'webviewReady' });  // Notify that webview is ready
     </script>
+    
 </body>
 </html>

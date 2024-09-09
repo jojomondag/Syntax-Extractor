@@ -1,12 +1,12 @@
 {
-    "syntaxExtractor.clipboardDataBoxHeight": 100,
+    "syntaxExtractor.clipboardDataBoxHeight": 268,
     "syntaxExtractor.fileTypes": [
         ".ts",
         ".js",
         ".png",
-        ".gitignore",
         ".env",
         ".json",
+        ".gitignore",
         ".npmrc",
         ".svelte",
         ".html",

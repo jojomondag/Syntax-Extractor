@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { isBinary } = require('istextorbinary');
 
 const traverseDirectory = async (dir, level = 0, basePath = '') => {
     const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -52,12 +53,27 @@ const traverseDirectory = async (dir, level = 0, basePath = '') => {
 
 const getFileContent = async (filePath, basePath) => {
     try {
+        // Check if the file is binary
+        if (await isBinaryFile(filePath)) {
+            return `\n--- ${path.relative(basePath, filePath)}`;
+        }
+
         const content = await fs.readFile(filePath, 'utf8');
         const relativeFilePath = path.relative(basePath, filePath);
         return `\n--- ${relativeFilePath} ---\n${content.trimEnd()}\n`;
     } catch (error) {
         console.error(`Error reading file ${filePath}:`, error);
         return `\n--- ${filePath} ---\nError reading file: ${error.message}\n`;
+    }
+};
+
+const isBinaryFile = async (filePath) => {
+    try {
+        const buffer = await fs.readFile(filePath);
+        return isBinary(null, buffer);
+    } catch (error) {
+        console.error(`Error checking if file is binary: ${filePath}`, error);
+        return false; // Assume it's not binary if we can't check
     }
 };
 

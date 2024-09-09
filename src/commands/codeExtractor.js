@@ -4,11 +4,9 @@ const { traverseDirectory } = require('../core/fileTraversal');
 const { createHeader } = require('../core/utils');
 const { writeToClipboard, showInfoMessage, showErrorMessage } = require('../services/vscodeServices');
 
-// Improved function to find the true common base path for a list of paths
 const findCommonBasePath = (paths) => {
     if (paths.length === 0) return '';
     
-    // Split all paths by directory separator and find common parts
     const splitPaths = paths.map(p => p.split(path.sep));
     const minLength = Math.min(...splitPaths.map(p => p.length));
     
@@ -27,9 +25,28 @@ const findCommonBasePath = (paths) => {
 };
 
 const extractCode = async (uris) => {
-    // Ensure uris is an array
     if (!Array.isArray(uris) || uris.length === 0) return '';
 
+    const selectedPaths = uris.map(uri => uri.fsPath);
+    const basePath = findCommonBasePath(selectedPaths);
+    console.log('True base path determined:', basePath);
+
+    try {
+        const combinedResult = await processUris(uris, basePath);
+        const finalContent = formatFinalContent(combinedResult, basePath);
+
+        await writeToClipboard(finalContent);
+        showInfoMessage('Folder structure, file information, and contents copied to clipboard!');
+
+        return finalContent;
+    } catch (error) {
+        console.error('Error in extractCode:', error);
+        showErrorMessage(`An error occurred: ${error.message}`);
+        return '';
+    }
+};
+
+const processUris = async (uris, basePath) => {
     let combinedResult = {
         fileTypes: new Set(),
         files: new Set(),
@@ -37,50 +54,36 @@ const extractCode = async (uris) => {
         fileContents: ''
     };
 
-    // Get all the selected paths
-    const selectedPaths = uris.map(uri => uri.fsPath);
+    for (const uri of uris) {
+        if (!(await isValidDirectory(uri))) continue;
 
-    // Determine the true common base path for the selected folders
-    const basePath = findCommonBasePath(selectedPaths);
-    console.log('True base path determined:', basePath);
+        console.log('Starting extraction for:', uri.fsPath);
+        const result = await traverseDirectory(uri.fsPath, 0, basePath);
+        
+        console.log('Extraction complete for:', uri.fsPath, {
+            fileTypesCount: result.fileTypes.size,
+            filesCount: result.files.size,
+            folderStructureLength: result.folderStructure.length,
+            fileContentsLength: result.fileContents.length,
+        });
 
-    try {
-        for (const uri of uris) {
-            if (!(await isValidDirectory(uri))) continue;  // Check if the selected item is a valid directory
-
-            console.log('Starting extraction for:', uri.fsPath);
-            const result = await traverseDirectory(uri.fsPath, 0, basePath);  // Pass basePath to adjust relative paths
-
-            console.log('Extraction complete for:', uri.fsPath, {
-                fileTypesCount: result.fileTypes.size,
-                filesCount: result.files.size,
-                folderStructureLength: result.folderStructure.length,
-                fileContentsLength: result.fileContents.length,
-            });
-
-            // Combine results
-            result.fileTypes.forEach(type => combinedResult.fileTypes.add(type));
-            result.files.forEach(file => combinedResult.files.add(file));
-
-            // Directly append the relative folder structure without redundant headers
-            combinedResult.folderStructure += `${result.folderStructure}`;
-            combinedResult.fileContents += result.fileContents;
-        }
-
-        const headerContent = createHeader(combinedResult.fileTypes);
-        const folderStructureOutput = `\n${basePath}\n${combinedResult.folderStructure}`;
-        const finalContent = `${headerContent}\n\nFolder Structure:${folderStructureOutput}\n\nFile Contents:\n${formatFileContents(combinedResult.fileContents)}`;
-
-        await writeToClipboard(finalContent);
-        showInfoMessage('Folder structure, file information, and contents copied to clipboard!');
-
-        return finalContent;  // Return the extracted content
-
-    } catch (error) {
-        console.error('Error in extractCode:', error);
-        showErrorMessage(`An error occurred: ${error.message}`);
-        return '';  // Return an empty string in case of error
+        mergeResults(combinedResult, result);
     }
+
+    return combinedResult;
+};
+
+const mergeResults = (combinedResult, result) => {
+    result.fileTypes.forEach(type => combinedResult.fileTypes.add(type));
+    result.files.forEach(file => combinedResult.files.add(file));
+    combinedResult.folderStructure += result.folderStructure;
+    combinedResult.fileContents += result.fileContents;
+};
+
+const formatFinalContent = (combinedResult, basePath) => {
+    const headerContent = createHeader(combinedResult.fileTypes);
+    const folderStructureOutput = `\n${basePath}\n${combinedResult.folderStructure}`;
+    return `${headerContent}\n\nFolder Structure:${folderStructureOutput}\n\nFile Contents:\n${formatFileContents(combinedResult.fileContents)}`;
 };
 
 const isValidDirectory = async (uri) => {
@@ -93,12 +96,8 @@ const isValidDirectory = async (uri) => {
     }
 };
 
-// Helper function to format file contents with simple headers
 const formatFileContents = (contents) => {
-    return contents.replace(/--- (.*?) ---/g, (match, p1) => {
-        // Only show the filename (relative path) without the full path
-        return `-${path.basename(p1)}-\n`;
-    });
+    return contents.replace(/--- (.*?) ---/g, (match, p1) => `-${path.basename(p1)}-\n`);
 };
 
 module.exports = { extractCode };
