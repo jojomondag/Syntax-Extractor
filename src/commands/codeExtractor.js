@@ -1,8 +1,65 @@
 const vscode = require('vscode');
 const path = require('path');
+const fs = require('fs').promises;
 const { traverseDirectory } = require('../core/fileTraversal');
 const { createHeader } = require('../core/utils');
 const { writeToClipboard, showInfoMessage, showErrorMessage } = require('../services/vscodeServices');
+
+const extractCode = async (uris) => {
+    if (!Array.isArray(uris) || uris.length === 0) return '';
+
+    const selectedPaths = uris.map(uri => uri.fsPath);
+    const basePath = findCommonBasePath(selectedPaths);
+    console.log('True base path determined:', basePath);
+
+    try {
+        let combinedResult = {
+            fileTypes: new Set(),
+            files: new Set(),
+            folderStructure: '',
+            fileContents: ''
+        };
+
+        for (const uri of uris) {
+            const stats = await vscode.workspace.fs.stat(uri);
+            if (stats.type === vscode.FileType.Directory) {
+                const result = await traverseDirectory(uri.fsPath, 0, basePath);
+                mergeResults(combinedResult, result);
+            } else if (stats.type === vscode.FileType.File) {
+                const fileContent = await fs.readFile(uri.fsPath, 'utf8');
+                const relativeFilePath = path.relative(basePath, uri.fsPath);
+                combinedResult.files.add(relativeFilePath);
+                combinedResult.fileTypes.add(path.extname(uri.fsPath).slice(1).toLowerCase());
+                combinedResult.fileContents += `\n-${relativeFilePath}-\n${fileContent.trimEnd()}\n`;
+                
+                // Add file to folder structure
+                const pathParts = relativeFilePath.split(path.sep);
+                let currentPath = '';
+                pathParts.forEach((part, index) => {
+                    const isLast = index === pathParts.length - 1;
+                    const indent = '  '.repeat(index);
+                    currentPath = path.join(currentPath, part);
+                    if (isLast) {
+                        combinedResult.folderStructure += `${indent}└── ${part}\n`;
+                    } else {
+                        combinedResult.folderStructure += `${indent}├── ${part}/\n`;
+                    }
+                });
+            }
+        }
+
+        const finalContent = formatFinalContent(combinedResult, basePath);
+
+        await writeToClipboard(finalContent);
+        showInfoMessage('Folder structure, file information, and contents copied to clipboard!');
+
+        return finalContent;
+    } catch (error) {
+        console.error('Error in extractCode:', error);
+        showErrorMessage(`An error occurred: ${error.message}`);
+        return '';
+    }
+};
 
 const findCommonBasePath = (paths) => {
     if (paths.length === 0) return '';
@@ -24,55 +81,6 @@ const findCommonBasePath = (paths) => {
     return commonBaseParts.join(path.sep);
 };
 
-const extractCode = async (uris) => {
-    if (!Array.isArray(uris) || uris.length === 0) return '';
-
-    const selectedPaths = uris.map(uri => uri.fsPath);
-    const basePath = findCommonBasePath(selectedPaths);
-    console.log('True base path determined:', basePath);
-
-    try {
-        const combinedResult = await processUris(uris, basePath);
-        const finalContent = formatFinalContent(combinedResult, basePath);
-
-        await writeToClipboard(finalContent);
-        showInfoMessage('Folder structure, file information, and contents copied to clipboard!');
-
-        return finalContent;
-    } catch (error) {
-        console.error('Error in extractCode:', error);
-        showErrorMessage(`An error occurred: ${error.message}`);
-        return '';
-    }
-};
-
-const processUris = async (uris, basePath) => {
-    let combinedResult = {
-        fileTypes: new Set(),
-        files: new Set(),
-        folderStructure: '',
-        fileContents: ''
-    };
-
-    for (const uri of uris) {
-        if (!(await isValidDirectory(uri))) continue;
-
-        console.log('Starting extraction for:', uri.fsPath);
-        const result = await traverseDirectory(uri.fsPath, 0, basePath);
-        
-        console.log('Extraction complete for:', uri.fsPath, {
-            fileTypesCount: result.fileTypes.size,
-            filesCount: result.files.size,
-            folderStructureLength: result.folderStructure.length,
-            fileContentsLength: result.fileContents.length,
-        });
-
-        mergeResults(combinedResult, result);
-    }
-
-    return combinedResult;
-};
-
 const mergeResults = (combinedResult, result) => {
     result.fileTypes.forEach(type => combinedResult.fileTypes.add(type));
     result.files.forEach(file => combinedResult.files.add(file));
@@ -83,21 +91,7 @@ const mergeResults = (combinedResult, result) => {
 const formatFinalContent = (combinedResult, basePath) => {
     const headerContent = createHeader(combinedResult.fileTypes);
     const folderStructureOutput = `\n${basePath}\n${combinedResult.folderStructure}`;
-    return `${headerContent}\n\nFolder Structure:${folderStructureOutput}\n\nFile Contents:\n${formatFileContents(combinedResult.fileContents)}`;
-};
-
-const isValidDirectory = async (uri) => {
-    try {
-        return (await vscode.workspace.fs.stat(uri)).type === vscode.FileType.Directory;
-    } catch (error) {
-        console.error('Error checking directory:', error);
-        showInfoMessage('Please select a valid folder in the explorer.');
-        return false;
-    }
-};
-
-const formatFileContents = (contents) => {
-    return contents.replace(/--- (.*?) ---/g, (match, p1) => `-${path.basename(p1)}-\n`);
+    return `${headerContent}\n\nFolder Structure:${folderStructureOutput}\n\nFile Contents:\n${combinedResult.fileContents}`;
 };
 
 module.exports = { extractCode };

@@ -7,43 +7,42 @@ const traverseDirectory = async (dir, level = 0, basePath = '') => {
     let fileTypes = new Set(), files = new Set();
     let folderStructure = '', fileContents = '';
 
-    // Get relative path of the current directory
     const relativeDirPath = path.relative(basePath, dir);
     if (relativeDirPath) {
-        folderStructure += `${'  '.repeat(level)}├── ${path.basename(dir)}/\n`;
+        const dirParts = relativeDirPath.split(path.sep);
+        dirParts.forEach((part, index) => {
+            folderStructure += `${'  '.repeat(level + index)}├── ${part}/\n`;
+        });
+        level += dirParts.length - 1;
     }
 
-    // If the directory is empty, we add it to the folder structure
-    if (entries.length === 0) {
-        folderStructure += `${'  '.repeat(level + 1)}(empty)\n`;
-    }
+    const sortedEntries = entries.sort((a, b) => {
+        if (a.isDirectory() && !b.isDirectory()) return -1;
+        if (!a.isDirectory() && b.isDirectory()) return 1;
+        return a.name.localeCompare(b.name);
+    });
 
-    for (const entry of entries) {
+    for (let i = 0; i < sortedEntries.length; i++) {
+        const entry = sortedEntries[i];
         const entryPath = path.join(dir, entry.name);
-        const indent = '  '.repeat(level + 1);  // Indent for visualizing the folder structure
+        const indent = '  '.repeat(level + 1);
+        const isLast = i === sortedEntries.length - 1;
+        const prefix = isLast ? '└── ' : '├── ';
 
         if (entry.isDirectory()) {
-            // Recursively traverse subdirectories
             const subResult = await traverseDirectory(entryPath, level + 1, basePath);
-            folderStructure += subResult.folderStructure;  // Append subfolder structure
-            fileContents += subResult.fileContents;  // Append file contents from subfolder
-
-            // Merge sets from subdirectory results
+            folderStructure += subResult.folderStructure;
+            fileContents += subResult.fileContents;
             subResult.fileTypes.forEach(type => fileTypes.add(type));
             subResult.files.forEach(file => files.add(file));
         } else {
-            // Add relative path of the file
             const fileRelativePath = path.relative(basePath, entryPath);
             files.add(fileRelativePath);
+            folderStructure += `${indent}${prefix}${entry.name}\n`;
 
-            // Use tree format for files
-            folderStructure += `${indent}└── ${entry.name}\n`;
-
-            // Determine file type by extension
-            const ext = path.extname(entry.name).slice(1);
+            const ext = path.extname(entry.name).toLowerCase().slice(1);
             if (ext) fileTypes.add(ext);
 
-            // Read and store file content
             fileContents += await getFileContent(entryPath, basePath);
         }
     }
@@ -53,27 +52,24 @@ const traverseDirectory = async (dir, level = 0, basePath = '') => {
 
 const getFileContent = async (filePath, basePath) => {
     try {
-        // Check if the file is binary
-        if (await isBinaryFile(filePath)) {
-            return `\n--- ${path.relative(basePath, filePath)}`;
-        }
-
-        const content = await fs.readFile(filePath, 'utf8');
+        const buffer = await fs.readFile(filePath);
         const relativeFilePath = path.relative(basePath, filePath);
-        return `\n--- ${relativeFilePath} ---\n${content.trimEnd()}\n`;
+
+        if (!isBinary(null, buffer)) {
+            let content;
+            try {
+                content = buffer.toString('utf8');
+            } catch (error) {
+                console.warn(`Error decoding file as UTF-8: ${filePath}`, error);
+                content = buffer.toString('latin1');  // Fallback to Latin-1 encoding
+            }
+            return `\n-${relativeFilePath}-\n${content.trimEnd()}\n`;
+        } else {
+            return `\n--- ${relativeFilePath} (binary file)\n`;
+        }
     } catch (error) {
         console.error(`Error reading file ${filePath}:`, error);
-        return `\n--- ${filePath} ---\nError reading file: ${error.message}\n`;
-    }
-};
-
-const isBinaryFile = async (filePath) => {
-    try {
-        const buffer = await fs.readFile(filePath);
-        return isBinary(null, buffer);
-    } catch (error) {
-        console.error(`Error checking if file is binary: ${filePath}`, error);
-        return false; // Assume it's not binary if we can't check
+        return `\n-${filePath}-\nError reading file: ${error.message}\n`;
     }
 };
 

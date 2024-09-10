@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "publisher": "JosefNobach",
   "icon": "resources/SyntaxExtractor256x256.png",
   "engines": {
@@ -15,8 +15,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-  ],
+  "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
