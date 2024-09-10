@@ -72,48 +72,6 @@ html, body {
     font-size: var(--size-font-default);
 }
 
-.compression-button,
-.webpage-button {
-    height: var(--size-element-height);
-    padding: 0 var(--size-padding-large);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    border: none;
-    border-radius: var(--size-border-radius);
-    cursor: pointer;
-    transition: background-color var(--transition-speed);
-    font-size: var(--size-font-default);
-    white-space: nowrap;
-    margin-right: var(--size-margin-small);
-    min-width: 80px;
-}
-
-.compression-button {
-    background-color: var(--color-background-medium);
-    color: var(--color-text);
-}
-
-.compression-button:hover {
-    background-color: var(--color-background-dark);
-}
-
-.compression-button.selected {
-    background-color: var(--color-background-active);
-    color: var(--color-text-light);
-}
-
-.webpage-button {
-    background-color: var(--color-button);
-    color: var(--color-text-light);
-    min-width: 120px;
-}
-
-.webpage-button:hover {
-    background-color: var(--color-button-hover);
-}
-
 @media (max-width: 890px) {
     .horizontal-section {
         flex-direction: column;

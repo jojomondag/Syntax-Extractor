@@ -3,9 +3,6 @@
     --background-light: #f7f7f7;
     --background-medium: #e7e7e7;
     --background-dark: #d4d4d4;
-    --background-active: #4CAF50;
-    --background-button: #007BFF;
-    --background-button-hover: #0056b3;
     --border-color: #ccc;
     --transition-speed: 0.3s ease;
 
@@ -26,9 +23,6 @@
     --color-background-light: #f7f7f7;
     --color-background-medium: #e7e7e7;
     --color-background-dark: #d4d4d4;
-    --color-background-active: #4CAF50;
-    --color-button: #007BFF;
-    --color-button-hover: #0056b3;
 
     --uniform-padding: 2px; /* Reduced padding */
     --uniform-margin: 2px; /* Reduced margin */
