@@ -10,10 +10,11 @@ const traverseDirectory = async (dir, level = 0, basePath = '') => {
     const relativeDirPath = path.relative(basePath, dir);
     if (relativeDirPath) {
         const dirParts = relativeDirPath.split(path.sep);
-        dirParts.forEach((part, index) => {
-            folderStructure += `${'  '.repeat(level + index)}├── ${part}/\n`;
-        });
-        level += dirParts.length - 1;
+        // To avoid duplications, we should not prepend paths unnecessarily
+        const indent = '  '.repeat(level);  // Use the current level for indentation
+
+        folderStructure += `${indent}└── ${dirParts[dirParts.length - 1]}/\n`; // Corrected to add only the last part of the path
+        level++;  // Increment level for subdirectories
     }
 
     const sortedEntries = entries.sort((a, b) => {
@@ -25,12 +26,12 @@ const traverseDirectory = async (dir, level = 0, basePath = '') => {
     for (let i = 0; i < sortedEntries.length; i++) {
         const entry = sortedEntries[i];
         const entryPath = path.join(dir, entry.name);
-        const indent = '  '.repeat(level + 1);
+        const indent = '  '.repeat(level);
         const isLast = i === sortedEntries.length - 1;
         const prefix = isLast ? '└── ' : '├── ';
 
         if (entry.isDirectory()) {
-            const subResult = await traverseDirectory(entryPath, level + 1, basePath);
+            const subResult = await traverseDirectory(entryPath, level, basePath);
             folderStructure += subResult.folderStructure;
             fileContents += subResult.fileContents;
             subResult.fileTypes.forEach(type => fileTypes.add(type));
