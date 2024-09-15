@@ -9,6 +9,8 @@
 </head>
 <body>
     <main class="main-container">
+        <textarea id="initialPromptMessageBox" class="textarea welcome-initialPrompt" placeholder="initial prompt here"></textarea>
+        
         <textarea id="clipboardDataBox" class="textarea clipboard-content" placeholder="Paste clipboard data here"></textarea>
         
         <section class="horizontal-section">            
@@ -28,13 +30,14 @@
 
     <script>
         const vscode = acquireVsCodeApi();
+        const initialPromptMessageBox = document.getElementById('initialPromptMessageBox');
         const clipboardDataBox = document.getElementById('clipboardDataBox');
         const tokenCountElement = document.getElementById('tokenCount');
         const charCountElement = document.getElementById('charCount');
     
         function updateCounters(tokenCount) {
-            const text = clipboardDataBox.value;
-            charCountElement.value = text.length;
+            const clipboardText = clipboardDataBox.value;
+            charCountElement.value = clipboardText.length;
             if (tokenCount !== undefined) {
                 tokenCountElement.value = tokenCount;
             }
@@ -42,6 +45,12 @@
     
         function handleMessage(message) {
             switch (message.command) {
+                case 'initializeWebview':
+                    initialPromptMessageBox.value = message.initialPromptMessage;
+                    clipboardDataBox.style.height = `${message.clipboardHeight}px`;
+                    initialPromptMessageBox.style.height = `${message.initialPromptHeight}px`;
+                    updateCounters();
+                    break;
                 case 'updateClipboard':
                     clipboardDataBox.value = message.content;
                     updateCounters(message.tokenCount);
@@ -49,36 +58,40 @@
                 case 'updateTokenCount':
                     tokenCountElement.value = message.tokenCount;
                     break;
-                case 'setTextareaHeight':  // Handle the new message
-                    clipboardDataBox.style.height = `${message.height}px`;  // Set textarea height
-                    break;
             }
         }
     
         window.addEventListener('message', event => handleMessage(event.data));
     
-        clipboardDataBox.addEventListener('input', () => {
-            updateCounters();
-            vscode.postMessage({
-                command: 'contentChanged',
-                content: clipboardDataBox.value
+        [initialPromptMessageBox, clipboardDataBox].forEach(textarea => {
+            textarea.addEventListener('input', () => {
+                vscode.postMessage({
+                    command: 'contentChanged',
+                    initialPromptMessage: initialPromptMessageBox.value,
+                    clipboardContent: clipboardDataBox.value
+                });
             });
         });
+
+        clipboardDataBox.addEventListener('input', () => {
+            updateCounters();
+        });
     
-        // Set up ResizeObserver for the textarea
+        // Set up ResizeObserver for both textareas
         const resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
                 vscode.postMessage({
                     command: 'textareaResized',
-                    height: entry.contentRect.height
+                    height: entry.contentRect.height,
+                    id: entry.target.id
                 });
             }
         });
     
         resizeObserver.observe(clipboardDataBox);
+        resizeObserver.observe(initialPromptMessageBox);
     
-        vscode.postMessage({ command: 'webviewReady' });  // Notify that webview is ready
+        vscode.postMessage({ command: 'webviewReady' });
     </script>
-    
 </body>
 </html>

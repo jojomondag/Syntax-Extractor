@@ -41,8 +41,18 @@ async function handleExtractCode(context, uri, uris) {
         return;
     }
 
+    const initialPromptMessage = context.globalState.get('initialPromptMessage', '');
     const extractedContent = await extractCode(uris);
+    const combinedContent = initialPromptMessage + '\n\n' + extractedContent;
+
+    // Update the clipboard with the combined content
+    await vscode.env.clipboard.writeText(combinedContent);
+
+    // Update the webview
     updateOrCreateWebview(context, extractedContent);
+
+    // Show a success message
+    vscode.window.showInformationMessage('Content extracted and copied to clipboard!');
 }
 
 function handleOpenExplorer(context) {
@@ -77,9 +87,12 @@ function updateOrCreateWebview(context, content) {
 
 function updateWebviewContent(content) {
     if (currentPanel) {
-        const tokenCount = countTokens(content);
-        sendMessageToWebview('updateClipboard', { content, tokenCount });
+        sendMessageToWebview('updateClipboard', { content });
         console.log('Updated existing webview with new content');
+        
+        // Calculate and update token count for clipboard content only
+        const tokenCount = countTokens(content);
+        sendMessageToWebview('updateTokenCount', { tokenCount });
     }
 }
 
@@ -137,18 +150,33 @@ function setupWebviewMessageHandling(context, callback) {
         switch (message.command) {
             case 'webviewReady': {
                 console.log('Webview is ready');
-                const savedHeight = context.globalState.get('textareaHeight', 200);  // Default to 200px
-                sendMessageToWebview('setTextareaHeight', { height: savedHeight });
+                const savedClipboardHeight = context.globalState.get('clipboardTextareaHeight', 200);
+                const savedInitialPromptHeight = context.globalState.get('initialPromptTextareaHeight', 100);
+                const savedInitialPromptMessage = context.globalState.get('initialPromptMessage', '');
+                sendMessageToWebview('initializeWebview', { 
+                    clipboardHeight: savedClipboardHeight,
+                    initialPromptHeight: savedInitialPromptHeight,
+                    initialPromptMessage: savedInitialPromptMessage
+                });
                 if (callback) callback();
                 break;
             }
             case 'contentChanged': {
-                const tokenCount = countTokens(message.content);
+                const combinedText = message.initialPromptMessage + '\n\n' + message.clipboardContent;
+                const tokenCount = countTokens(message.clipboardContent);
                 sendMessageToWebview('updateTokenCount', { tokenCount });
+                // Save the initial prompt message
+                context.globalState.update('initialPromptMessage', message.initialPromptMessage);
+                // Update clipboard with combined content
+                vscode.env.clipboard.writeText(combinedText);
                 break;
             }
             case 'textareaResized': {
-                context.globalState.update('textareaHeight', message.height);
+                if (message.id === 'clipboardDataBox') {
+                    context.globalState.update('clipboardTextareaHeight', message.height);
+                } else if (message.id === 'initialPromptMessageBox') {
+                    context.globalState.update('initialPromptTextareaHeight', message.height);
+                }
                 break;
             }
         }
@@ -198,8 +226,7 @@ function setupClipboardListener() {
 function updateClipboardContent() {
     if (currentPanel) {
         vscode.env.clipboard.readText().then(text => {
-            const tokenCount = countTokens(text);
-            sendMessageToWebview('updateClipboard', { content: text, tokenCount });
+            sendMessageToWebview('updateClipboard', { content: text });
         });
     }
 }
