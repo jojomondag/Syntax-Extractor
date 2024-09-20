@@ -56,7 +56,8 @@ const getFileContent = async (filePath, basePath) => {
         const buffer = await fs.readFile(filePath);
         const relativeFilePath = path.relative(basePath, filePath);
 
-        if (!isBinary(null, buffer)) {
+        // Pass the filePath to isBinary for accurate detection based on file extension
+        if (!isBinary(filePath, buffer)) {
             let content;
             try {
                 content = buffer.toString('utf8');
@@ -66,7 +67,7 @@ const getFileContent = async (filePath, basePath) => {
             }
             return `\n-${relativeFilePath}-\n${content.trimEnd()}\n`;
         } else {
-            return `\n--- ${relativeFilePath} (binary file)\n`;
+            return `\n--- ${relativeFilePath} \n`;
         }
     } catch (error) {
         console.error(`Error reading file ${filePath}:`, error);

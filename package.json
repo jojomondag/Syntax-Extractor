@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.3.6",
+  "version": "0.3.8",
   "publisher": "JosefNobach",
   "icon": "resources/SyntaxExtractor256x256.png",
   "engines": {
@@ -15,7 +15,10 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:codeExtractor.extractCode",
+    "onCommand:syntaxExtractor.openExplorer"
+  ],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
@@ -54,6 +57,12 @@
       ]
     }
   },
+  "files": [
+    "README.md",
+    "package.json",
+    "src/**",
+    "resources/**"
+  ],
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
