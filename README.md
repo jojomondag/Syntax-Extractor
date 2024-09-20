@@ -1,6 +1,7 @@
 # Syntax Extractor
 
-<img src="resources/SyntaxExtractor256x256.png" alt="Syntax Extractor Icon" width="120" />
+<img src="resources/Syntax Extractor.png" alt="Syntax Extractor" width="1000" />
+
 
 **Syntax Extractor** is a powerful Visual Studio Code extension designed to extract and analyze your code structure, helping developers streamline their workflow.
 
