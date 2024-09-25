@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.3.8",
+  "version": "0.4.1",
   "publisher": "JosefNobach",
   "icon": "resources/SyntaxExtractor256x256.png",
   "engines": {
