@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs').promises;
-const { traverseDirectory } = require('../core/fileTraversal');
+const { traverseDirectory, getFileContent } = require('../core/fileTraversal');
 const { createHeader } = require('../core/utils');
 const { writeToClipboard, showInfoMessage, showErrorMessage } = require('../services/vscodeServices');
 
@@ -26,11 +26,17 @@ const extractCode = async (uris) => {
                 const result = await traverseDirectory(uri.fsPath, 0, basePath);
                 mergeResults(combinedResult, result);
             } else if (stats.type === vscode.FileType.File) {
-                const fileContent = await fs.readFile(uri.fsPath, 'utf8');
                 const relativeFilePath = path.relative(basePath, uri.fsPath);
+                const fileContent = await getFileContent(uri.fsPath, basePath);
                 combinedResult.files.add(relativeFilePath);
-                combinedResult.fileTypes.add(path.extname(uri.fsPath).slice(1).toLowerCase());
-                combinedResult.fileContents += `\n-${relativeFilePath}-\n${fileContent.trimEnd()}\n`;
+
+                // Determine if the file is binary based on the content format
+                if (!fileContent.startsWith('\n---')) { // Not a binary file
+                    const ext = path.extname(uri.fsPath).slice(1).toLowerCase();
+                    combinedResult.fileTypes.add(ext);
+                }
+
+                combinedResult.fileContents += fileContent;
                 
                 // Add file to folder structure
                 const pathParts = relativeFilePath.split(path.sep);

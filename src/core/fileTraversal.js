@@ -10,10 +10,9 @@ const traverseDirectory = async (dir, level = 0, basePath = '') => {
     const relativeDirPath = path.relative(basePath, dir);
     if (relativeDirPath) {
         const dirParts = relativeDirPath.split(path.sep);
-        // To avoid duplications, we should not prepend paths unnecessarily
         const indent = '  '.repeat(level);  // Use the current level for indentation
 
-        folderStructure += `${indent}└── ${dirParts[dirParts.length - 1]}/\n`; // Corrected to add only the last part of the path
+        folderStructure += `${indent}└── ${dirParts[dirParts.length - 1]}/\n`; // Add only the last part of the path
         level++;  // Increment level for subdirectories
     }
 
@@ -32,10 +31,9 @@ const traverseDirectory = async (dir, level = 0, basePath = '') => {
 
         if (entry.isDirectory()) {
             const subResult = await traverseDirectory(entryPath, level, basePath);
+            mergeResults(fileTypes, files, subResult);
             folderStructure += subResult.folderStructure;
             fileContents += subResult.fileContents;
-            subResult.fileTypes.forEach(type => fileTypes.add(type));
-            subResult.files.forEach(file => files.add(file));
         } else {
             const fileRelativePath = path.relative(basePath, entryPath);
             files.add(fileRelativePath);
@@ -75,4 +73,9 @@ const getFileContent = async (filePath, basePath) => {
     }
 };
 
-module.exports = { traverseDirectory };
+const mergeResults = (fileTypes, files, result) => {
+    result.fileTypes.forEach(type => fileTypes.add(type));
+    result.files.forEach(file => files.add(file));
+};
+
+module.exports = { traverseDirectory, getFileContent };
