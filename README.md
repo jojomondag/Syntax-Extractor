@@ -1,6 +1,6 @@
 # Syntax Extractor
 
-<img src="https://raw.githubusercontent.com/jojomondag/Syntax-Extractor/main/resources/Syntax%20Extractor.png" width="800">
+<img src="https://github.com/jojomondag/Syntax-Extractor/blob/main/resources/Syntax%20Extractor.png?raw=true" width="800">
 
 **Syntax Extractor** is a Visual Studio Code extension.
 
