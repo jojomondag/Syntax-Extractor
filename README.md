@@ -3,7 +3,9 @@
 <img src="https://github.com/jojomondag/Syntax-Extractor/blob/193671e4ed55818b937ad570e5426352ef538d88/resources/Syntax%20Extractor.png" width="800">
 
 
-**Syntax Extractor** is a powerful Visual Studio Code extension designed to extract and analyze your code structure, helping developers streamline their workflow.
+**Syntax Extractor** is a Visual Studio Code extension. 
+
+The main purpose of this extension is to extract the structure and content of code files or directories selected in Visual Studio Code, automatically organizing them into a readable format. It copies the results (including folder structure, file types, and content) to the clipboard and displays them in a webview for easy review and sharing. The key goal is to help a large language model (LLM) quickly understand the codebase, enabling it to provide more accurate and context-aware answers. This improves the LLM's ability to assist with troubleshooting, debugging, and development tasks, making collaboration and problem-solving more efficient.
 
 ## Table of Contents
 
