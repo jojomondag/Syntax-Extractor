@@ -43,7 +43,7 @@ The main purpose of this extension is to extract the structure and content of co
 - **Webview Interface**
   
   - After running the extract command, the extracted data will be displayed in the **Syntax Extractor** webview.
-  - The webview provides an interactive interface to navigate and manage your code structure.
+  - The webview provides an interactive interface wher you can see amount of tokens for your copied text.
 
 - **Clipboard**
   
