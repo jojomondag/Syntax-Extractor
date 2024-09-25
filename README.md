@@ -15,10 +15,8 @@ The main purpose of this extension is to extract the structure and content of co
   - [Viewing Extracted Data](#viewing-extracted-data)
   - [Exporting Data](#exporting-data)
 - [Installation](#installation)
-- [Prerequisites](#prerequisites)
-- [License](#license)
+  - [Via VSCode Marketplace](#1-via-vscode-marketplace)
 - [Contact](#contact)
-- [Acknowledgments](#acknowledgments)
 
 ## Features
 
@@ -52,6 +50,11 @@ The main purpose of this extension is to extract the structure and content of co
   
   - The extracted data is also copied to your clipboard, allowing you to paste it into documentation, emails, or other applications.
 
+### Exporting Data
+
+- **Export Options**
+
+  - You can export the extracted data in different formats such as JSON, Markdown, or plain text. Simply use the export options available in the **Syntax Extractor** webview.
 
 ## Installation
 
@@ -64,3 +67,7 @@ The main purpose of this extension is to extract the structure and content of co
 
 ### [marketplace.visualstudio](https://marketplace.visualstudio.com/items?itemName=JosefNobach.syntax-extractor)
 ### [GitHub Repository](https://github.com/jojomondag/Syntax-Extractor)
+
+## Contact
+
+For any inquiries, please feel free to reach out to **Josef Nobach** ([@jojomondag](https://github.com/jojomondag)) via GitHub.
