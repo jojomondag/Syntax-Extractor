@@ -2,7 +2,7 @@
   "name": "syntax-extractor",
   "displayName": "Syntax Extractor",
   "description": "Syntax Extractor, helps you Gather your Code",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publisher": "JosefNobach",
   "icon": "resources/SyntaxExtractor256x256.png",
   "engines": {
@@ -16,6 +16,12 @@
     "Other"
   ],
   "main": "./src/extension.js",
+  "activationEvents": [
+    "onView:emptyView",
+    "onCommand:codeExtractor.extractCode",
+    "onCommand:syntaxExtractor.openExplorer",
+    "onCommand:codeExtractor.removeComments"
+  ],
   "contributes": {
     "commands": [
       {
@@ -61,16 +67,11 @@
       ]
     }
   },
-  "files": [
-    "README.md",
-    "package.json",
-    "src/**",
-    "resources/**"
-  ],
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
-    "test": "node ./test/runTest.js"
+    "test": "node ./test/runTest.js",
+    "postinstall": "npm install tiktoken"
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",
