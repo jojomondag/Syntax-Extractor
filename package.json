@@ -15,10 +15,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:codeExtractor.extractCode",
-    "onCommand:syntaxExtractor.openExplorer"
-  ],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
@@ -29,12 +25,20 @@
       {
         "command": "syntaxExtractor.openExplorer",
         "title": "Open Explorer"
+      },
+      {
+        "command": "codeExtractor.removeComments",
+        "title": "Remove Comments"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "codeExtractor.extractCode",
+          "group": "navigation"
+        },
+        {
+          "command": "codeExtractor.removeComments",
           "group": "navigation"
         }
       ]

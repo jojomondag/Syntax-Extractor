@@ -4,6 +4,7 @@ const fs = require('fs');
 const tiktoken = require('tiktoken');
 
 const { extractCode } = require('./commands/codeExtractor');
+const { removeComments } = require('./commands/commentRemover');
 
 let currentPanel = undefined;
 let clipboardListener = undefined;
@@ -22,7 +23,8 @@ function activate(context) {
 function registerCommands(context) {
     const commands = [
         { id: 'codeExtractor.extractCode', handler: (uri, uris) => handleExtractCode(context, uri, uris) },
-        { id: 'syntaxExtractor.openExplorer', handler: () => handleOpenExplorer(context) }
+        { id: 'syntaxExtractor.openExplorer', handler: () => handleOpenExplorer(context) },
+        { id: 'codeExtractor.removeComments', handler: (uri, uris) => handleRemoveComments(uri, uris) }
     ];
 
     commands.forEach(cmd => {
@@ -53,6 +55,32 @@ async function handleExtractCode(context, uri, uris) {
 
     // Show a success message
     vscode.window.showInformationMessage('Content extracted and copied to clipboard!');
+}
+
+async function handleRemoveComments(uri, uris) {
+    console.log('handleRemoveComments called with:', { uri: uri?.fsPath, uris: uris?.map(u => u.fsPath) });
+    
+    if (!uris || uris.length === 0) {
+        uris = uri ? [uri] : [];
+        console.log('Normalized uris:', uris.map(u => u.fsPath));
+    }
+
+    if (uris.length === 0) {
+        vscode.window.showWarningMessage('No files or folders selected for comment removal.');
+        return;
+    }
+
+    const proceed = await vscode.window.showWarningMessage(
+        'This will permanently remove comments from the selected files. Are you sure you want to continue?',
+        'Yes', 'No'
+    );
+
+    if (proceed === 'Yes') {
+        console.log('Starting comment removal for:', uris.map(u => u.fsPath));
+        await removeComments(uris);
+    } else {
+        console.log('Comment removal cancelled by user');
+    }
 }
 
 function handleOpenExplorer(context) {
